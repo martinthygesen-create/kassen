@@ -255,6 +255,54 @@ const DECOY_BODE = [
   'Parkerede cyklen midt i indgangen',
 ];
 
+// Kasse-motor-generalisering, tredje tema (Sladrekassen — Martins eget
+// bekræftede test-eksempel, se KASSEMOTORPLAN.md's "Testet på to navne"-
+// afsnit). Samme prompt-form som QUIPLASH_PROMPTS/QUIPLASH_PROMPTS_BODE,
+// anvendt på sladder-domænet i stedet for brok/bøde. 8 prompts — samme
+// bevidste v1-størrelse som Bødekassens pulje.
+const QUIPLASH_PROMPTS_SLADRE = [
+  'Den mest sandsynlige sladderhistorie om {target} lige nu er...',
+  'Skriv den mest saftige sladder om {target}',
+  '{target} ville helt sikkert blive sladret om hvis...',
+  'Den mest overdrevne rygte om {target} kunne være...',
+  'Hvis {target} havde sin egen sladderspalte, ville overskriften være...',
+  '{target}s hemmelige talent er at sladre om...',
+  'Det folk sladrer mest om {target} er...',
+  'Om 10 år sladrer folk stadig om {target} og...',
+];
+
+const QUIPLASH_DECOYS_SLADRE = [
+  'At sladre om naboens nye kæreste til hele gaden',
+  'At fortælle alle om en hemmelig fest ingen blev inviteret til',
+  'At dele et rygte videre uden at tjekke om det er sandt',
+  'At hviske noget "hemmeligt" højt nok til at alle hører det',
+  'At love at tie stille, og så sige det til den første man møder',
+  'At overdrive en historie hver gang den fortælles videre',
+  'At påstå man "bare spurgte", mens man reelt sladrede',
+  'At kende alle detaljer om noget der ikke vedkommer en',
+];
+
+// Kun 1 stk, samme forsigtighed som WORLD_TRIVIA_BODE — en velkendt,
+// bredt dokumenteret etymologi (godsibb = "gud" + "sibb"/slægtning, dvs.
+// gudforælder/nær ven), ikke opdigtet. Udvid KUN med dobbelttjekkede fakta.
+const WORLD_TRIVIA_SLADRE = [
+  { question: 'Det engelske ord "gossip" (sladder) stammer fra det angelsaksiske "godsibb". Hvad betegnede det oprindeligt?', correct: 'En gudforælder eller nær ven', distractors: ['En kongelig budbringer', 'En kirkelig embedsmand', 'En markedssælger'] },
+];
+const WORLD_TRUEFALSE_SLADRE = [
+  { statement: 'Ordet "gossip" kommer oprindeligt fra et gammelengelsk udtryk for en gudforælder eller nær ven, ikke fra et udtryk for at "snakke meget".', isTrue: true },
+];
+
+const DECOY_SLADRE = [
+  'Fortalte en hemmelighed videre samme dag som løftet om tavshed',
+  'Sladrede om en kollega ved kaffemaskinen',
+  'Delte et skærmbillede af en privat besked',
+  'Genfortalte en historie med ekstra detaljer, der ikke var sande',
+  'Lyttede med på en samtale, der ikke handlede om en selv',
+  'Videresendte et rygte uden at tjekke det først',
+  'Sladrede om en ven til en anden ven',
+  'Fortalte alle om en overraskelsesfest, før den var en overraskelse',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til konstanterne
 // ovenfor (ingen indholds-omskrivning, kun et lookup-lag) — DECOY_BROK
@@ -282,6 +330,17 @@ const CONTENT_BY_THEME = {
     worldTrueFalse: WORLD_TRUEFALSE_BODE,
     decoyBrok: DECOY_BODE,
     gameName: 'Bødespillet',
+  },
+  // Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
+  // KASSEMOTORPLAN.md's klassifikations-tabel: kvorum, alle tre spil mulige).
+  sladre: {
+    quiplashPrompts: QUIPLASH_PROMPTS_SLADRE,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_SLADRE,
+    worldTrivia: WORLD_TRIVIA_SLADRE,
+    worldTrueFalse: WORLD_TRUEFALSE_SLADRE,
+    decoyBrok: DECOY_SLADRE,
+    gameName: 'Sladrespillet',
   },
 };
 function getThemeContent(themeId) {
@@ -350,6 +409,15 @@ const QUESTION_TEMPLATES_BY_THEME = {
     quoteWho: quote => `Ifølge Bødekassen fik nogen en bøde for: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse fik ${name} en bøde for?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne bødekasse?',
+  },
+  sladre: {
+    mostCount: 'Hvem har sladret mest i denne sladrekasse?',
+    fewestCount: 'Hvem har sladret mindst i denne sladrekasse?',
+    totalCount: 'Hvor mange sladderhistorier er der registreret i alt i denne sladrekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden at sladre?',
+    quoteWho: quote => `Ifølge Sladrekassen sladrede nogen om: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilken sladderhistorie stod ${name} bag?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne sladrekasse?',
   },
 };
 function getQuestionTemplates(themeId) {

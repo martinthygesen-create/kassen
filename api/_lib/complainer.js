@@ -287,6 +287,85 @@ const COMPLAINER_PROMPTS_BODE = [
   { id: 'rel3', category: 'relational', tier: 3, text: 'Du opdager at du selv har foreslået den bøderegel, du nu brokker dig mest over. Du brokker dig til din partner om hvor urimeligt dit eget forslag har vist sig at være. Hvad siger du?' },
 ];
 
+// Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
+// KASSEMOTORPLAN.md). 6 arketyper (mod originalens 10) — samme bevidste
+// v1-størrelse som Bødekassens pulje. Domæne: sladder/rygter i stedet for
+// brok eller regelbrud/undskyldning.
+const COMPLAINER_ARCHETYPES_SLADRE = [
+  {
+    id: 'frisoer', name: 'Den hviskende frisør',
+    promptHook: 'Med en kunde i stolen og øre for alt —',
+    instructions: [
+      'Du sænker stemmen dramatisk før du deler det bedste.',
+      'Du lover "det bliver kun mellem os" — og siger det alligevel videre.',
+      'Du kræver flere detaljer, jo mere pikante jo bedre.',
+    ],
+  },
+  {
+    id: 'nabo_bekymret', name: 'Den bekymrede nabo',
+    promptHook: 'Som en der "bare holder øje" af ren omsorg —',
+    instructions: [
+      'Du indpakker al sladder som bekymring for de andre.',
+      'Du nævner "jeg siger det jo kun fordi jeg er bekymret".',
+      'Du overdriver hvor tit du "tilfældigt" lægger mærke til ting.',
+    ],
+  },
+  {
+    id: 'veninde_fornaermet', name: 'Den fornærmede veninde',
+    promptHook: 'Som en der aldrig glemmer en gammel strid —',
+    instructions: [
+      'Du bringer altid gamle konflikter op som "bare et eksempel".',
+      'Du er dybt fornærmet på andres vegne, uopfordret.',
+      'Du sukker og siger "jeg vil jo ikke sige noget, men...".',
+    ],
+  },
+  {
+    id: 'portner_vidende', name: 'Den vidende portner',
+    promptHook: 'Som en der ser alt, men siger det stille —',
+    instructions: [
+      'Du taler lavmælt, som om væggene lytter.',
+      'Du antyder mere end du siger direkte.',
+      'Du nyder tydeligt at vide noget, andre ikke ved.',
+    ],
+  },
+  {
+    id: 'kollega_snakkesalig', name: 'Den snakkesalige kollega',
+    promptHook: 'Som en der aldrig kan holde på noget —',
+    instructions: [
+      'Du deler det højlydt, uden filter.',
+      'Du tilføjer "men sig det ikke videre" — mens du selv gør præcis det.',
+      'Du er stolt af altid at vide det først.',
+    ],
+  },
+  {
+    id: 'svigermor_mistaenksom', name: 'Den mistænksomme svigermor',
+    promptHook: 'Som en der ser skjulte motiver overalt —',
+    instructions: [
+      'Du antyder at der er "mere i det end man tror".',
+      'Du sammenligner med "dengang" for at understrege pointen.',
+      'Du er urokkeligt sikker på at have ret, helt uden beviser.',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_SLADRE = ['ven', 'familie', 'arbejde', 'nabo'];
+
+// Samme fire-delt scenarie-skabelon som COMPLAINER_PROMPTS/_BODE (udløsende
+// hændelse + personlig grund + specifikt publikum + spørgsmål), anvendt på
+// "hørte/opdagede noget om nogen" i stedet for brok/bøde. 8 prompts (inkl.
+// 2 'relational', som er åbne for alle situationer) — samme bevidste
+// v1-størrelse som Bødekassens pulje, udvid før rigtig levering.
+const COMPLAINER_PROMPTS_SLADRE = [
+  { id: 'ven1', category: 'ven', tier: 1, text: 'Du hører at en veninde har sagt noget grimt om dig bag din ryg. Du sladrer om det til en fælles ven, som egentlig bare ville høre om din weekend. Hvad siger du?' },
+  { id: 'ven2', category: 'ven', tier: 2, text: 'En ven i vennegruppen har åbenbart datet to personer samtidig. Du sladrer om det til en anden fælles ven, som er tæt med begge parter. Hvad siger du?' },
+  { id: 'familie1', category: 'familie', tier: 1, text: 'Din svoger har åbenbart lånt penge af hele familien uden at sige det til nogen. Du sladrer om det til din mor, som elsker den slags historier. Hvad siger du?' },
+  { id: 'familie2', category: 'familie', tier: 3, text: 'Du opdager at din bror har løjet om sin nye stilling for hele familien. Du sladrer om det til din kusine, som elsker familiedramaer. Hvad siger du?' },
+  { id: 'arbejde1', category: 'arbejde', tier: 2, text: 'Du hører rygter om at en kollega snart bliver fyret. Du sladrer om det til praktikanten, som lige er startet og ikke kender nogen endnu. Hvad siger du?' },
+  { id: 'nabo1', category: 'nabo', tier: 1, text: 'Din nabo har åbenbart holdt en hemmelig fest mens de andre var bortrejst. Du sladrer om det til postbuddet, som bare vil aflevere en pakke. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen sladrer til dig om en hemmelighed, men beder dig love ikke at sige det videre. Du sladrer alligevel til din partner samme aften. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 2, text: 'Du opdager at den du selv sladrer mest til, sladrer videre om dig til andre. Du sladrer om DET til en helt tredje person. Hvad siger du?' },
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
 // situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
@@ -306,6 +385,12 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS_BODE,
     prompts: COMPLAINER_PROMPTS_BODE,
     gameName: 'Bødefælden',
+  },
+  sladre: {
+    archetypes: COMPLAINER_ARCHETYPES_SLADRE,
+    situations: COMPLAINER_SITUATIONS_SLADRE,
+    prompts: COMPLAINER_PROMPTS_SLADRE,
+    gameName: 'Sladrefælden',
   },
 };
 function getThemeContent(themeId) {

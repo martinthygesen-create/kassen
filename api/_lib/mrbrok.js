@@ -108,6 +108,36 @@ const MRBROK_CLUE_TIPS_BODE = [
   'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
 ];
 
+// Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
+// KASSEMOTORPLAN.md). Domæne: sladder/rygter i stedet for brok/regelbrud.
+// 10 emner — samme bevidste v1-størrelse som Bødekassens pulje.
+const MRBROK_TOPICS_SLADRE = [
+  'Sladrende frisør — sladrer om kunder mens de sidder i stolen',
+  'Nysgerrig portner — sladrer om beboerne i opgangen',
+  'Skarptunget veninde — sladrer om fælles venner bag deres ryg',
+  'Storsnudet kollega — sladrer om chefens beslutninger i krogene',
+  'Ivrig nabo — sladrer om hvem der kommer og går i kvarteret',
+  'Skeptisk svigermor — sladrer om svigerbørnenes valg',
+  'Opmærksom buschauffør — sladrer om faste passagerers vaner',
+  'Snakkesalig ekspedient — sladrer om kundernes indkøb',
+  'Nysgerrig klasselærer — sladrer om forældrenes opførsel til møder',
+  'Vagtsom vicevært — sladrer om hvem der laver mest støj',
+];
+
+// Samme ni hints som brok/bøde-varianterne, "brokker/undskylder dig"
+// erstattet med "sladrer" (relevant for et sladder-domæne).
+const MRBROK_CLUE_TIPS_SLADRE = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Sladr om en PERSON i situationen, ikke bare selve tingen',
+  'Svar med en antydning, ikke et direkte udsagn',
+  'Vend spørgsmålet en anelse — svar med den sladder du helst selv ville dele',
+  'Nævn hvor tit du hører "den slags" sladder',
+  'Beskriv hvordan du plejer at reagere når du hører godt sladder',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til MRBROK_TOPICS/
 // MRBROK_CLUE_TIPS ovenfor (ingen indholds-omskrivning, kun et lookup-lag
@@ -120,6 +150,7 @@ const CONTENT_BY_THEME = {
   // tema-afhængige, ikke "MrBrok" bogstaveligt, se planens punkt om at
   // spilnavne er brok-brandede og skal reskinnes pr. tema.
   bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Bødedetektiven' },
+  sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Sladrehanen' },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;

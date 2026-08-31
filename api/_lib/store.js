@@ -94,7 +94,8 @@ function emptyState() {
     confirmationModel: 'quorum', // 'quorum' | 'host-approval' — styrer KUN krukke-hændelser, aldrig selve spillet
     dailyRhythm: true,          // slukker/tænder streaks+lodtrækning+SILENCE_LINES samlet, når false
     cohostIds: [],               // sekundær rolle ud over isAdmin() — se api/admin.js
-    accessModel: 'open',         // 'open' | 'approval' — join-godkendelse (ikke brugt endnu, Fase 4+)
+    accessModel: 'open',         // 'open' | 'approval' — join-godkendelse
+    pendingMembers: [],          // {id, name, email, requestedAt} — kun brugt når accessModel==='approval'
   };
 }
 
@@ -323,6 +324,7 @@ function applyMigrations(state) {
   if (state.dailyRhythm === undefined) state.dailyRhythm = true;
   if (!state.cohostIds) state.cohostIds = [];
   if (!state.accessModel) state.accessModel = 'open';
+  if (!state.pendingMembers) state.pendingMembers = [];
   if (!state.pendingList) {
     // migrering fra det gamle enkelt-pending-felt til en liste
     state.pendingList = state.pending ? [state.pending] : [];
@@ -418,7 +420,7 @@ async function createRoom(roomId, opts) {
   if (opts && opts.poolPolarity) state.poolPolarity = opts.poolPolarity;
   if (opts && opts.confirmationModel) state.confirmationModel = opts.confirmationModel;
   if (opts && opts.dailyRhythm === false) state.dailyRhythm = false;
-  if (opts && opts.accessModel) state.accessModel = opts.accessModel;
+  if (opts && opts.accessModel === 'approval') state.accessModel = 'approval';
   await setState(roomId, state);
   return state;
 }

@@ -1119,12 +1119,21 @@ const SKIN_PRESETS = [
     ruleTagline: 'Brokker du dig, koster det 1€.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
+    gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Det Store Brokkeri' },
   },
   {
     id: 'bode', name: 'Bødekassen', emoji: '💸',
     ruleTagline: 'Kom for sent, eller bryd en aftalt regel, og det koster en bøde.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: false,
     smaatText: 'Regelbrud, bekræftet af alle',
+    gameNames: { spil: 'Bødespillet', mrbrok: 'Bødedetektiven', complainer: 'Bødefælden' },
+  },
+  {
+    id: 'sladre', name: 'Sladrekassen', emoji: '🗣️',
+    ruleTagline: 'Sladrer du om nogen, koster det en krone.', unit: 'kr',
+    poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
+    smaatText: 'Sladder, bekræftet af alle',
+    gameNames: { spil: 'Sladrespillet', mrbrok: 'Sladrehanen', complainer: 'Sladrefælden' },
   },
 ];
 
@@ -1156,19 +1165,16 @@ function renderCreateOrJoin(errorMsg){
       `).join('')}
     </div>
   ` : '';
+  const gp = id => (name)=>{
+    const skin = SKIN_PRESETS.find(s=>s.id===id) || SKIN_PRESETS[0];
+    return skin.gameNames[name];
+  };
   app.innerHTML = `
     <div class="onboard">
       <div class="emoji">🍯</div>
-      <h1>Brokkekassen</h1>
-      <p>Ferie-reglen: brokker du dig, koster det 1€. Opret jeres eget rum, eller gå med i et du har fået et link til.</p>
+      <h1>…Kassen</h1>
+      <p>Peer-bekræftet regnskab + mini-spil, delt med jeres gruppe. Opret jeres egen kasse nedenfor, eller gå med i en I har fået et link til.</p>
       ${errorMsg ? `<p style="color:var(--coral); font-weight:600; margin-top:-14px;">${errorMsg}</p>` : ''}
-      <div class="onboard-card">
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Har du fået et link?</label>
-        <input type="text" id="joinInput" placeholder="Indsæt link eller kode her" autocapitalize="off" autocorrect="off" spellcheck="false" />
-        <button class="sheet-btn primary" id="joinRoomBtn" style="margin-top:0;">Gå til brokkekassen</button>
-        <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
-      </div>
-      <div class="divider">eller</div>
       <div class="onboard-card">
         <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
         <div class="app-pick-scroll-wrap" style="margin:10px 0 12px;">
@@ -1193,30 +1199,58 @@ function renderCreateOrJoin(errorMsg){
         </div>
       </div>
       <div class="onboard-card">
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller begge)</label>
+        <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller flere)</label>
         <div class="app-pick-scroll-wrap" style="margin:10px 0 16px;">
-          <div class="app-pick-row">
+          <div class="app-pick-row" id="gamePickRow">
             <div class="onboard-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
               <div class="app-pick-icon">🫙</div>
-              <div class="app-pick-label">Brokkekassen</div>
+              <div class="app-pick-label" data-gamename-label="kasse">${escapeHtml(SKIN_PRESETS[0].name)}</div>
             </div>
             <div class="onboard-pick app-pick selected" data-pick="spil" style="background:var(--sea); color:#fff;">
               <div class="app-pick-icon">👉</div>
-              <div class="app-pick-label">Brokspillet</div>
+              <div class="app-pick-label" data-gamename-label="spil">${escapeHtml(gp('brok')('spil'))}</div>
             </div>
             <div class="onboard-pick app-pick selected" data-pick="mrbrok" style="background:var(--sea); color:#fff;">
               <div class="app-pick-icon">🕵️</div>
-              <div class="app-pick-label">MrBrok</div>
+              <div class="app-pick-label" data-gamename-label="mrbrok">${escapeHtml(gp('brok')('mrbrok'))}</div>
             </div>
             <div class="onboard-pick app-pick selected" data-pick="complainer" style="background:var(--sea); color:#fff;">
               <div class="app-pick-icon">🪤</div>
-              <div class="app-pick-label">Det Store Brokkeri</div>
+              <div class="app-pick-label" data-gamename-label="complainer">${escapeHtml(gp('brok')('complainer'))}</div>
             </div>
           </div>
           <div class="app-pick-scroll-hint left">‹</div>
           <div class="app-pick-scroll-hint right">›</div>
         </div>
+      </div>
+      <div class="onboard-card">
+        <label class="field-label" style="color:rgba(255,247,232,0.6);">Lukketid</label>
+        <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 16px;">
+          <div class="onboard-pick app-pick selected" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-label">Nulstiller hver dag</div>
+          </div>
+          <div class="onboard-pick app-pick" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-label">Kører til I lukker den</div>
+          </div>
+        </div>
+        <label class="field-label" style="color:rgba(255,247,232,0.6);">Adgang</label>
+        <div class="app-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
+          <div class="onboard-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-label">Alle med linket kan joine</div>
+          </div>
+          <div class="onboard-pick app-pick" data-access-model="approval" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-label">Nye skal godkendes</div>
+          </div>
+        </div>
+        <p class="hint" style="margin:0 0 14px; font-size:11.5px; color:rgba(255,247,232,0.45);">Medvært kan tilføjes efter oprettelse, under ⚙️-menuen, så snart de er kommet med i rummet.</p>
         <button class="sheet-btn primary" id="createBtn" style="margin-top:0;">Opret nyt rum</button>
+      </div>
+      <div class="divider">eller</div>
+      <div class="onboard-card">
+        <label class="field-label" style="color:rgba(255,247,232,0.6);">Har du fået et link?</label>
+        <input type="text" id="joinInput" placeholder="Indsæt link eller kode her" autocapitalize="off" autocorrect="off" spellcheck="false" />
+        <button class="sheet-btn ghost" id="joinRoomBtn" style="margin-top:0;">Gå til kassen</button>
+        <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
       </div>
       ${myRoomsList}
       ${homeScreenTip(false)}
@@ -1253,12 +1287,37 @@ function renderCreateOrJoin(errorMsg){
         document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>{
           o.classList.toggle('selected', o.dataset.confirmationModel === skin.confirmationModel);
         });
+        document.querySelectorAll('#rhythmPickRow .onboard-pick').forEach(o=>{
+          o.classList.toggle('selected', o.dataset.dailyRhythm === (skin.dailyRhythm ? '1' : '0'));
+        });
+        // Kasse-motor-generalisering, Fase 4-bug rettet: spilnavnene i
+        // "hvad vil I have med"-vælgeren fulgte IKKE det valgte tema (stod
+        // altid som "MrBrok"/"Det Store Brokkeri" uanset skin) — opdateres
+        // her, samme kilde (skin.gameNames) som createBtn-payloaden bruger.
+        const kasseLabel = document.querySelector('[data-gamename-label="kasse"]');
+        if(kasseLabel) kasseLabel.textContent = skin.name;
+        ['spil','mrbrok','complainer'].forEach(key=>{
+          const label = document.querySelector(`[data-gamename-label="${key}"]`);
+          if(label) label.textContent = skin.gameNames[key];
+        });
       }
     };
   });
   document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(el=>{
     el.onclick = ()=>{
       document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+  });
+  document.querySelectorAll('#rhythmPickRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll('#rhythmPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+  });
+  document.querySelectorAll('#accessPickRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll('#accessPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
       el.classList.add('selected');
     };
   });
@@ -1278,7 +1337,7 @@ function renderCreateOrJoin(errorMsg){
       renderWhoAmI();
     }catch(e){
       toast('Ukendt brokkekasse — tjek linket');
-      btn.textContent = 'Gå til brokkekassen';
+      btn.textContent = 'Gå til kassen';
     }
   };
   document.getElementById('joinRoomBtn').onclick = goJoin;
@@ -1287,10 +1346,10 @@ function renderCreateOrJoin(errorMsg){
     const btn = document.getElementById('createBtn');
     btn.innerHTML = '<span class="spinner"></span>';
     try{
-      const kasseEnabled = document.querySelector('[data-pick="kasse"]').classList.contains('selected');
-      const gameEnabled = document.querySelector('[data-pick="spil"]').classList.contains('selected');
-      const mrbrokEnabled = document.querySelector('[data-pick="mrbrok"]').classList.contains('selected');
-      const complainerEnabled = document.querySelector('[data-pick="complainer"]').classList.contains('selected');
+      const kasseEnabled = document.querySelector('#gamePickRow [data-pick="kasse"]').classList.contains('selected');
+      const gameEnabled = document.querySelector('#gamePickRow [data-pick="spil"]').classList.contains('selected');
+      const mrbrokEnabled = document.querySelector('#gamePickRow [data-pick="mrbrok"]').classList.contains('selected');
+      const complainerEnabled = document.querySelector('#gamePickRow [data-pick="complainer"]').classList.contains('selected');
       // Kasse-motor-generalisering, Fase 4: skabelon + autoritets-valg sendes
       // med. Falder tilbage til Brokkekassens egne defaults hvis noget mod
       // forventning ikke er valgt i UI'en (kan ikke ske i praksis — enkelt-
@@ -1300,11 +1359,17 @@ function renderCreateOrJoin(errorMsg){
       const skin = SKIN_PRESETS.find(s => s.id === (selectedSkinEl && selectedSkinEl.dataset.skinId)) || SKIN_PRESETS[0];
       const selectedConfirmationEl = document.querySelector('#confirmationPickRow .onboard-pick.selected');
       const confirmationModel = (selectedConfirmationEl && selectedConfirmationEl.dataset.confirmationModel) || skin.confirmationModel;
+      // Operationelle valg (Fase 4-punkt 2, se KASSEMOTORPLAN.md's "To
+      // lag"-afsnit): uafhængige af skabelon-valget, spørges altid ens.
+      const selectedRhythmEl = document.querySelector('#rhythmPickRow .onboard-pick.selected');
+      const dailyRhythm = selectedRhythmEl ? selectedRhythmEl.dataset.dailyRhythm === '1' : skin.dailyRhythm;
+      const selectedAccessEl = document.querySelector('#accessPickRow .onboard-pick.selected');
+      const accessModel = (selectedAccessEl && selectedAccessEl.dataset.accessModel) || 'open';
       const r = await api('room', {
         kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
         themeId: skin.id, themeName: skin.name, ruleTagline: skin.ruleTagline,
         unit: skin.unit, poolPolarity: skin.poolPolarity,
-        confirmationModel, dailyRhythm: skin.dailyRhythm,
+        confirmationModel, dailyRhythm, accessModel,
       });
       roomId = r.roomId;
       const u = new URL(location.href); u.search = '?r=' + roomId;
@@ -1312,7 +1377,7 @@ function renderCreateOrJoin(errorMsg){
       localStorage.setItem('bk_lastRoom', roomId);
       state = r.state;
       renderWhoAmI(true);
-    }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret ny brokkekasse'; }
+    }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret nyt rum'; }
   };
 }
 
@@ -1351,6 +1416,11 @@ function renderWhoAmI(justCreated){
     document.getElementById('joinBtn').innerHTML = '<span class="spinner"></span>';
     try{
       const r = await api('room', { action: 'join', roomId, name, email });
+      if(r.pending){
+        saveIdentity(name, email);
+        renderAwaitingApproval(r.pendingId, name);
+        return;
+      }
       profile = { memberId: r.memberId, name };
       localStorage.setItem('bk_profile_' + roomId, JSON.stringify(profile));
       localStorage.setItem('bk_lastRoom', roomId);
@@ -1374,6 +1444,41 @@ function renderWhoAmI(justCreated){
       navigator.clipboard.writeText(roomId).then(()=>toast('Kode kopieret! 🔢')).catch(()=>prompt('Kopiér koden manuelt:', roomId));
     };
   }
+}
+
+// Kasse-motor-generalisering, operationelt "adgang"-valg
+// (accessModel:'approval', se KASSEMOTORPLAN.md): vises mens man venter på
+// værtens/medværtens godkendelse (se api/room.js's join-handler + api/
+// admin.js's approveMember). Poller samme state-endpoint som resten af
+// appen, med det ventende id som "member" — genkendes som medlem i det
+// øjeblik admin godkender (samme id genbruges, se admin.js).
+function renderAwaitingApproval(pendingId, name){
+  app.innerHTML = `
+    <div class="onboard">
+      <div class="emoji">⏳</div>
+      <h1>Venter på godkendelse</h1>
+      <p>Hej ${escapeHtml(name)}! Værten skal lige godkende dig, før du kommer ind. Denne skærm opdaterer automatisk.</p>
+    </div>
+  `;
+  const poll = setInterval(async ()=>{
+    try{
+      const { state: s } = await api('state?room=' + encodeURIComponent(roomId) + '&member=' + encodeURIComponent(pendingId));
+      if(s.members.find(m=>m.id===pendingId)){
+        clearInterval(poll);
+        profile = { memberId: pendingId, name };
+        localStorage.setItem('bk_profile_' + roomId, JSON.stringify(profile));
+        localStorage.setItem('bk_lastRoom', roomId);
+        rememberRoom();
+        state = s;
+        if(!state.kasseEnabled && state.gameEnabled) activeApp = 'spil';
+        else if(!state.kasseEnabled && !state.gameEnabled && state.mrbrokEnabled) activeApp = 'mrbrok';
+        else if(!state.kasseEnabled && !state.gameEnabled && !state.mrbrokEnabled && state.complainerEnabled) activeApp = 'complainer';
+        else if(state.kasseEnabled) activeApp = 'kasse';
+        render();
+        startPolling();
+      }
+    }catch(e){ /* stille — prøver bare igen ved næste poll */ }
+  }, 4000);
 }
 
 // Vises PRÆCIS én gang pr. rum, lige efter rummets opretter selv er kommet
@@ -5875,6 +5980,18 @@ function openAdminMenuSheet(){
     <h2>Admin ⚙️</h2>
     <p class="hint">Kun du styrer puljen og historikken herfra.</p>
 
+    ${(state.accessModel === 'approval' && state.pendingMembers && state.pendingMembers.length) ? `
+      <div class="divider">ventende medlemmer</div>
+      ${state.pendingMembers.map(p => `
+        <div class="bal-row">
+          <div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(p.name)}</div>
+          <div class="feed-body"><div class="bal-name">${escapeHtml(p.name)}</div></div>
+          <button class="sheet-btn ghost" style="width:auto; margin:0 4px 0 0; padding:6px 10px; font-size:12px;" data-approve-member="${p.id}">Godkend</button>
+          <button class="sheet-btn ghost" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" data-reject-member="${p.id}">Afvis</button>
+        </div>
+      `).join('')}
+    ` : ''}
+
     <div class="divider">admin</div>
     <button class="sheet-btn primary" id="adminGoalBtn">🎯 Sæt mål for potten</button>
     <button class="sheet-btn primary" id="adminBroadcastBtn">📣 Send besked til alle</button>
@@ -5939,6 +6056,28 @@ function openAdminMenuSheet(){
     document.getElementById('adminFinalCloseBtn').onclick = ()=>{ closeSheet(); setTimeout(openFinalCloseSheet, 230); };
     document.getElementById('adminDeleteRoomBtn').onclick = ()=>{ closeSheet(); setTimeout(openDeleteRoomSheet, 230); };
     document.getElementById('adminMenuCloseBtn').onclick = closeSheet;
+    document.querySelectorAll('[data-approve-member]').forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const r = await api('admin', { action: 'approveMember', roomId, actorId: profile.memberId, pendingId: btn.dataset.approveMember });
+          state = r.state;
+          closeSheet();
+          toast('✅ Medlem godkendt');
+          render();
+        }catch(e){ toast(e.message); }
+      };
+    });
+    document.querySelectorAll('[data-reject-member]').forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const r = await api('admin', { action: 'rejectMember', roomId, actorId: profile.memberId, pendingId: btn.dataset.rejectMember });
+          state = r.state;
+          closeSheet();
+          toast('Anmodning afvist');
+          render();
+        }catch(e){ toast(e.message); }
+      };
+    });
   });
 }
 

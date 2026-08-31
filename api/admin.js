@@ -157,6 +157,34 @@ module.exports = async (req, res) => {
       return res.status(200).json({ state: redactStateFor(state, actorId) });
     }
 
+    if (action === 'approveMember') {
+      // Kasse-motor-generalisering, operationelt "adgang"-valg: flytter en
+      // ventende medlemsanmodning (se api/room.js's join-handler) ind i
+      // rigtige members — SAMME id bevares, så klientens allerede gemte
+      // memberId (fra join-svaret) bliver gyldigt uden at brugeren skal
+      // gøre noget selv, den finder det bare ved næste poll.
+      const { pendingId } = req.body || {};
+      if (!hasAdminAccess(state, actorId)) return res.status(403).json({ error: 'kun den der oprettede brokkekassen (eller en medvært) kan godkende medlemmer' });
+      if (!pendingId) return res.status(400).json({ error: 'mangler data' });
+      if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
+      const idx = state.pendingMembers.findIndex(p => p.id === pendingId);
+      if (idx === -1) return res.status(404).json({ error: 'anmodningen findes ikke længere' });
+      const [pending] = state.pendingMembers.splice(idx, 1);
+      state.members.push({ id: pending.id, name: pending.name, email: pending.email || null });
+      await setState(roomId, state);
+      return res.status(200).json({ state: redactStateFor(state, actorId) });
+    }
+
+    if (action === 'rejectMember') {
+      const { pendingId } = req.body || {};
+      if (!hasAdminAccess(state, actorId)) return res.status(403).json({ error: 'kun den der oprettede brokkekassen (eller en medvært) kan afvise medlemmer' });
+      if (!pendingId) return res.status(400).json({ error: 'mangler data' });
+      if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
+      state.pendingMembers = state.pendingMembers.filter(p => p.id !== pendingId);
+      await setState(roomId, state);
+      return res.status(200).json({ state: redactStateFor(state, actorId) });
+    }
+
     return res.status(400).json({ error: 'ukendt handling' });
   } catch (e) {
     res.status(500).json({ error: e.message });
