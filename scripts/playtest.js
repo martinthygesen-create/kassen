@@ -38,6 +38,10 @@ const path = require('path');
 const store = require(path.join(__dirname, '..', 'api', '_lib', 'store'));
 const game = require(path.join(__dirname, '..', 'api', '_lib', 'game'));
 const gameFlow = require(path.join(__dirname, '..', 'api', '_lib', 'gameFlow'));
+const mrbrok = require(path.join(__dirname, '..', 'api', '_lib', 'mrbrok'));
+const mrbrokFlow = require(path.join(__dirname, '..', 'api', '_lib', 'mrbrokFlow'));
+const complainer = require(path.join(__dirname, '..', 'api', '_lib', 'complainer'));
+const complainerFlow = require(path.join(__dirname, '..', 'api', '_lib', 'complainerFlow'));
 
 const FAST = process.argv.includes('--fast');
 const REALISTIC_DELAY_MS = () => FAST ? 0 : 50 + Math.floor(Math.random() * 200);
@@ -195,6 +199,111 @@ async function playtestBrokspillet(themeId, botNames) {
   return state;
 }
 
+// --- Del 3: MrBrok, én fuld runde (clue → vote/steal → gameover) ---
+// Spejler api/mrbrok.js's action-håndtering direkte mod _lib/mrbrokFlow.js,
+// samme "kald samme resolve*-funktioner" mønster som botSubmitForRound
+// ovenfor for Brokspillet — se TODO'en der tidligere stod her.
+async function playtestMrBrok(themeId, botNames) {
+  log('--- MrBrok, én fuld runde ---');
+  const state = makeBotState(themeId, botNames);
+  const playerObjs = state.members;
+  const players = playerObjs.map(m => m.id);
+  const mrBrokId = mrbrok.pickMrBrok(state, playerObjs).id;
+  const scores = {};
+  players.forEach(id => { if (id !== mrBrokId) scores[id] = 0; });
+  state.mrbrok = {
+    active: true, wager: 'fun', players, activeIds: players.slice(), eliminatedIds: [],
+    mrBrokId, topic: mrbrok.pickTopic(state), warmupRounds: 2,
+    round: 0, scores, caught: false, voteHistory: [], current: null, startedAt: Date.now(),
+  };
+  mrbrokFlow.beginClueRound(state, 1);
+
+  let guard = 0;
+  while (state.mrbrok.current.type !== 'gameover' && guard < 60) {
+    const cur = state.mrbrok.current;
+    if (cur.type === 'clue') {
+      mrbrokFlow.advanceClue(state);
+    } else if (cur.type === 'vote') {
+      state.mrbrok.activeIds.forEach(id => {
+        const others = state.mrbrok.activeIds.filter(p => p !== id);
+        cur.votes[id] = others[Math.floor(Math.random() * others.length)];
+      });
+      mrbrokFlow.resolveVote(state);
+    } else if (cur.type === 'steal' && !cur.guess) {
+      cur.guess = 'Testgæt fra playtest';
+    } else if (cur.type === 'steal' && cur.guess) {
+      state.mrbrok.activeIds.forEach(id => { cur.votes[id] = Math.random() < 0.5; });
+      mrbrokFlow.resolveSteal(state);
+    } else {
+      throw new Error(`PLAYTEST-FEJL: ukendt MrBrok-fase: ${cur.type}`);
+    }
+    guard++;
+    await sleep(REALISTIC_DELAY_MS());
+  }
+  assert(guard < 60, `MrBrok nåede aldrig 'gameover' inden for ${guard} forsøg — mulig uendelig løkke`);
+  assert(state.mrbrok.current.type === 'gameover', `forventede fase 'gameover', fik '${state.mrbrok.current && state.mrbrok.current.type}'`);
+  log(`✅ MrBrok fuldført til gameover (mrBrokWon=${state.mrbrok.current.mrBrokWon})`);
+  return state;
+}
+
+// --- Del 4: Det Store Brokkeri, én fuld runde (complain → vote → bet →
+// ... → reveal → interrogation → guess → judge → gameover) ---
+// Samme mønster, spejler api/complainer.js mod _lib/complainerFlow.js.
+async function playtestComplainer(themeId, botNames) {
+  log('--- Det Store Brokkeri, én fuld runde ---');
+  const state = makeBotState(themeId, botNames);
+  const playerObjs = state.members;
+  const players = playerObjs.map(m => m.id);
+  const { archetypes, situations } = complainer.assignArchetypesAndSituations(playerObjs, themeId);
+  const guiltyId = players[Math.floor(Math.random() * players.length)];
+  const scores = {}; const brokScores = {};
+  players.forEach(id => { scores[id] = 0; brokScores[id] = 0; });
+  const totalRounds = 3;
+  state.complainer = {
+    active: true, wager: 'fun', players, archetypes, situations, totalRounds,
+    guiltyId, revealed: false, revealedAt: null,
+    round: 0, scores, pendingGamble: null, lastGambleResult: null,
+    brokScores, brokApprovals: {},
+    challengeEnabled: true, challengeUsedBy: {},
+    topSuspectHistory: [], history: [], usedPromptIds: {},
+    current: null, startedAt: Date.now(),
+  };
+  complainerFlow.beginComplainRound(state, 1);
+
+  let guard = 0;
+  while (state.complainer.current.type !== 'gameover' && guard < 80) {
+    const cur = state.complainer.current;
+    if (cur.type === 'complain') {
+      complainerFlow.advanceComplain(state);
+    } else if (cur.type === 'interrogation') {
+      complainerFlow.advanceInterrogation(state);
+    } else if (cur.type === 'vote') {
+      players.forEach(id => {
+        const others = players.filter(p => p !== id);
+        cur.votes[id] = others[Math.floor(Math.random() * others.length)];
+      });
+      complainerFlow.resolveSuspicionRound(state);
+    } else if (cur.type === 'bet') {
+      cur.choice = 'safe';
+      complainerFlow.resolveBet(state);
+    } else if (cur.type === 'guess') {
+      const others = players.filter(p => p !== guiltyId);
+      complainerFlow.submitGuess(state, others[Math.floor(Math.random() * others.length)], 'Testdetalje fra playtest');
+    } else if (cur.type === 'judge') {
+      players.filter(p => p !== guiltyId).forEach(id => { cur.votes[id] = Math.random() < 0.5; });
+      complainerFlow.resolveJudge(state);
+    } else {
+      throw new Error(`PLAYTEST-FEJL: ukendt Det Store Brokkeri-fase: ${cur.type}`);
+    }
+    guard++;
+    await sleep(REALISTIC_DELAY_MS());
+  }
+  assert(guard < 80, `Det Store Brokkeri nåede aldrig 'gameover' inden for ${guard} forsøg — mulig uendelig løkke`);
+  assert(state.complainer.current.type === 'gameover', `forventede fase 'gameover', fik '${state.complainer.current && state.complainer.current.type}'`);
+  log(`✅ Det Store Brokkeri fuldført til gameover (guiltyWon=${state.complainer.current.guiltyWon})`);
+  return state;
+}
+
 async function main() {
   const themeId = process.argv[2];
   if (!themeId || themeId.startsWith('--')) {
@@ -206,8 +315,9 @@ async function main() {
   try {
     await playtestKrukke(themeId, botNames);
     await playtestBrokspillet(themeId, botNames);
-    console.log(`\n✅ Alle dækkede scenarier bestået for tema '${themeId}'.`);
-    console.log('   (MrBrok/Det Store Brokkeri fulde runde-drivere er IKKE dækket endnu, se filens header.)\n');
+    await playtestMrBrok(themeId, botNames);
+    await playtestComplainer(themeId, botNames);
+    console.log(`\n✅ Alle dækkede scenarier bestået for tema '${themeId}'.\n`);
     process.exit(0);
   } catch (e) {
     console.error(`\n❌ ${e.message}\n`);
@@ -217,14 +327,11 @@ async function main() {
 
 if (require.main === module) main();
 
-module.exports = { playtestKrukke, playtestBrokspillet, makeBotState };
+module.exports = { playtestKrukke, playtestBrokspillet, playtestMrBrok, playtestComplainer, makeBotState };
 
-// TODO (Fase 6, opfølgning — ikke bygget i denne omgang):
-// - playtestMrBrok(themeId, botNames): drive state.mrbrok.current gennem
-//   clue → vote/steal → gameover, samme mønster som botSubmitForRound,
-//   ved at spejle api/mrbrok.js's action-håndtering.
-// - playtestComplainer(themeId, botNames): drive state.complainer.current
-//   gennem complain → vote → judge → reveal → guess, samme mønster,
-//   ved at spejle api/complainer.js's action-håndtering.
-// - Ægte tidsudløbs-test (PENDING_EXPIRE_AFTER, BROKSPILLET_AUTO_MS): kør
-//   med et forfalsket/fremad-spolet ur i stedet for reel ventetid.
+// TODO (opfølgning — ikke bygget i denne omgang):
+// - Ægte tidsudløbs-test (PENDING_EXPIRE_AFTER, BROKSPILLET_AUTO_MS,
+//   MRBROK_COMPLAINT_COUNTDOWN_MS, COMPLAINT_COUNTDOWN_MS): kør med et
+//   forfalsket/fremad-spolet ur i stedet for reel ventetid.
+// - EXPERIMENTAL "Udfordring" (applyComplainerChallenge) er ikke dækket af
+//   playtestComplainer ovenfor — driveren tager altid den simple 'safe'-vej.
