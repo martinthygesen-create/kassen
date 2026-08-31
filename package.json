@@ -2,6 +2,10 @@
   "name": "brokkekassen",
   "version": "2.0.0",
   "private": true,
+  "scripts": {
+    "validate-theme": "node scripts/validate-theme.js",
+    "playtest": "node scripts/playtest.js"
+  },
   "dependencies": {
     "@upstash/redis": "^1.34.0",
     "web-push": "^3.6.7"
