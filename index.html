@@ -787,11 +787,12 @@ function shareUrl(){
 }
 async function doShare(){
   const url = shareUrl();
+  const roomName = (state && state.themeName) || 'Brokkekassen';
   if(navigator.share){
-    try{ await navigator.share({ title:'Brokkekassen', text:'Kom med i vores brokkekasse!', url }); return; }
+    try{ await navigator.share({ title: roomName, text: `Kom med i vores ${roomName.toLowerCase()}!`, url }); return; }
     catch(e){ if(e && e.name === 'AbortError') return; }
   }
-  try{ await navigator.clipboard.writeText(url); toast('Link til Brokkekassen kopieret. Send det til deltagere.'); }
+  try{ await navigator.clipboard.writeText(url); toast(`Link til ${roomName} kopieret. Send det til deltagere.`); }
   catch(e){ prompt('Kopiér linket manuelt:', url); }
 }
 // Linket til selve APPEN (uden ?r=roomId) — til at anbefale appen videre til
@@ -1386,7 +1387,7 @@ function renderWhoAmI(justCreated){
     <div class="onboard">
       <div class="emoji">👋</div>
       <h1>Hvem er du?</h1>
-      <p>${justCreated ? 'Brokkekassen er oprettet! Skriv dit navn, så er du med.' : 'Skriv dit navn for at komme ind i brokkekassen.'} Ingen adgangskode nødvendig.</p>
+      <p>${justCreated ? `${escapeHtml(state.themeName || 'Brokkekassen')} er oprettet! Skriv dit navn, så er du med.` : `Skriv dit navn for at komme ind i ${escapeHtml((state.themeName || 'Brokkekassen').toLowerCase())}.`} Ingen adgangskode nødvendig.</p>
       ${homeScreenTip(true)}
       <div class="onboard-card">
         <label class="field-label" style="color:rgba(255,247,232,0.6);">Dit navn</label>
@@ -1494,10 +1495,11 @@ function showRoomIntroSplash(){
   localStorage.setItem(seenKey, '1');
 
   const items = [];
-  if(state.kasseEnabled) items.push(['🫙','Brokkekassen','Fælles regnskab — brok dig, og det koster en krone i puljen']);
-  if(state.gameEnabled) items.push(['👉','Brokspillet','Hurtige quiz- og afstemningsrunder I spiller sammen']);
-  if(state.mrbrokEnabled) items.push(['🕵️','MrBrok','Find den skjulte MrBrok, før de andre bliver afsløret']);
-  if(state.complainerEnabled) items.push(['🪤','Det Store Brokkeri','Brok dig i karakter — men ingen ved endnu hvem der er skyldig']);
+  const gn = state.gameNames || {};
+  if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'brok dig, og det koster en krone i puljen'}`]);
+  if(state.gameEnabled) items.push(['👉', gn.spil || 'Brokspillet', 'Hurtige quiz- og afstemningsrunder I spiller sammen']);
+  if(state.mrbrokEnabled) items.push(['🕵️', gn.mrbrok || 'MrBrok', `Find den skjulte ${gn.mrbrok || 'MrBrok'}, før de andre bliver afsløret`]);
+  if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', 'Brok dig i karakter — men ingen ved endnu hvem der er skyldig']);
   if(items.length < 2) return; // ingen grund til at forklare "skift mellem" hvis der kun er én ting valgt
 
   const backdropHtml = `<div class="room-splash-backdrop" id="roomSplashBackdrop"><div class="room-splash" id="roomSplashInner"></div></div>`;
@@ -1838,7 +1840,7 @@ function renderInner(){
     <main id="main"></main>
     <div class="bottombar">
       ${state.closed
-        ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">🔒 Brokkekassen er lukket</button>`
+        ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">🔒 ${escapeHtml(state.themeName || 'Brokkekassen')} er lukket</button>`
         : `<button class="btn-brok" id="btnBrok">📢 Nogen brokker sig…</button>`}
     </div>
   `;
@@ -1862,19 +1864,19 @@ function openAppMenuSheet(){
       <div class="app-pick-row">
         ${state.kasseEnabled ? `<div class="app-pick" data-goto-app="kasse" style="background:${activeApp==='kasse'?'var(--sea)':'rgba(5,32,36,0.06)'}; color:${activeApp==='kasse'?'#fff':'var(--ink)'};">
           <div class="app-pick-icon">🫙</div>
-          <div class="app-pick-label">Brokkekassen</div>
+          <div class="app-pick-label">${escapeHtml((state && state.themeName) || 'Brokkekassen')}</div>
         </div>` : ''}
         ${state.gameEnabled ? `<div class="app-pick" data-goto-app="spil" style="background:${activeApp==='spil'?'var(--sea)':'rgba(5,32,36,0.06)'}; color:${activeApp==='spil'?'#fff':'var(--ink)'};">
           <div class="app-pick-icon">👉</div>
-          <div class="app-pick-label">Brokspillet</div>
+          <div class="app-pick-label">${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}</div>
         </div>` : ''}
         ${state.mrbrokEnabled ? `<div class="app-pick" data-goto-app="mrbrok" style="background:${activeApp==='mrbrok'?'var(--sea)':'rgba(5,32,36,0.06)'}; color:${activeApp==='mrbrok'?'#fff':'var(--ink)'};">
           <div class="app-pick-icon">🕵️</div>
-          <div class="app-pick-label">MrBrok</div>
+          <div class="app-pick-label">${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}</div>
         </div>` : ''}
         ${state.complainerEnabled ? `<div class="app-pick" data-goto-app="complainer" style="background:${activeApp==='complainer'?'var(--sea)':'rgba(5,32,36,0.06)'}; color:${activeApp==='complainer'?'#fff':'var(--ink)'};">
           <div class="app-pick-icon">🪤</div>
-          <div class="app-pick-label">Det Store Brokkeri</div>
+          <div class="app-pick-label">${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}</div>
         </div>` : ''}
       </div>
       <div class="app-pick-scroll-hint left">‹</div>
@@ -3425,7 +3427,7 @@ function gameOverHtml(g, cur){
     <div class="game-card" id="gameoverReveal" style="text-align:center; margin-top:16px;">
       <div style="font-size:34px;" id="gameoverLoserEmoji">🫵</div>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">Taberen er... <span id="gameoverLoserName">${losers.map(m=>escapeHtml(m.name)).join(' & ')}</span>!</p>
-      ${g.wager==='euro' ? '<p class="hint" style="color:rgba(255,247,232,0.7);">1€ lagt i Brokkekassens pulje.</p>' : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
+      ${g.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">1${escapeHtml(state.unit || '€')} lagt i ${escapeHtml(state.themeName || 'Brokkekassen')}s pulje.</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
     </div>
     ${gameHighscoreHtml()}
     <button class="game-btn" id="playAgainBtn" style="margin-top:16px;">👉 Spil igen</button>
@@ -6013,7 +6015,7 @@ function openAdminMenuSheet(){
     <div class="divider">kan ikke fortrydes</div>
     <button class="sheet-btn danger" id="adminResetBtn">🧹 Nulstil alt</button>
     <p class="hint" style="${hintStyle}">Sletter regnskab og historik. Rummet består.</p>
-    <button class="sheet-btn danger" id="adminFinalCloseBtn">🔒 Luk denne brokkekasse for altid</button>
+    <button class="sheet-btn danger" id="adminFinalCloseBtn">🔒 Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid</button>
     <p class="hint" style="${hintStyle}">Arkiverer og lukker for nyt brok. Historik bevares.</p>
     <button class="sheet-btn danger" id="adminDeleteRoomBtn">🗑️ Slet dette rum permanent</button>
     <p class="hint" style="${hintStyle}">Sletter alt med det samme. Ingen fortrydelse.</p>
@@ -6220,14 +6222,14 @@ function openResetSheet(){
 
 function openFinalCloseSheet(){
   openSheet(`
-    <h2>Luk denne brokkekasse for altid 🔒</h2>
-    <p class="hint">Gør evt. den sidste åbne pulje op, gemmer den i historikken og lukker denne brokkekasse helt af — ingen kan starte flere brok herefter. I kan stadig se Regnskab og Historik. Kan ikke fortrydes.</p>
+    <h2>Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid 🔒</h2>
+    <p class="hint">Gør evt. den sidste åbne pulje op, gemmer den i historikken og lukker helt af — ingen kan starte flere hændelser herefter. I kan stadig se Regnskab og Historik. Kan ikke fortrydes.</p>
     <button class="sheet-btn danger" id="doFinalClose">Ja, luk for altid</button>
     <button class="sheet-btn ghost" id="cancelFinalClose">Annuller</button>
   `, ()=>{
     document.getElementById('cancelFinalClose').onclick = closeSheet;
     document.getElementById('doFinalClose').onclick = async ()=>{
-      try{ const r = await api('admin', { action: 'close', roomId, actorId: profile.memberId }); state = r.state; closeSheet(); toast('🔒 Brokkekassen er lukket — tak for turen!'); activeTab='broklisten'; brokListSubTab='alltime'; render(); }
+      try{ const r = await api('admin', { action: 'close', roomId, actorId: profile.memberId }); state = r.state; closeSheet(); toast(`🔒 ${state.themeName || 'Brokkekassen'} er lukket — tak for turen!`); activeTab='broklisten'; brokListSubTab='alltime'; render(); }
       catch(e){ toast(e.message); }
     };
   });
