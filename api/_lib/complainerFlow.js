@@ -11,7 +11,7 @@
 
 const { uid } = require('./store');
 const { pickRandom, shuffle } = require('./game');
-const { assignArchetypesAndSituations, pickPromptFor, composePromptText } = require('./complainer');
+const { assignArchetypesAndSituations, pickPromptFor, composePromptText, getThemeContent } = require('./complainer');
 // Genbruger de delte tids-konstanter og "phase stamp"-hjælperen fra
 // Brokspillets gameFlow.js (samme mønster MrBrok allerede gør) — importerer
 // kun herfra, rører ALDRIG selve filen eller dens spil-specifikke logik.
@@ -326,9 +326,11 @@ function resolveJudge(state) {
 function endComplainerGame(state, guiltyWon) {
   const c = state.complainer;
   if (c.wager === 'euro') {
+    // Kasse-motor-generalisering (Fase 1): spilnavn nu tema-afhængigt.
+    const gameName = getThemeContent(state.themeId).gameName;
     const payerIds = guiltyWon ? c.players.filter(id => id !== c.guiltyId) : [c.guiltyId];
     payerIds.forEach(id => {
-      state.events.push({ id: uid(), memberId: id, message: 'Tabte Det Store Brokkeri', ts: Date.now(), votes: [], free: false, gameLoss: true });
+      state.events.push({ id: uid(), memberId: id, message: `Tabte ${gameName}`, ts: Date.now(), votes: [], free: false, gameLoss: true });
     });
   }
   if (!state.complainerStats) state.complainerStats = {};

@@ -1,5 +1,5 @@
 const { uid } = require('./store');
-const { beginRound, pickChanceVisual } = require('./game');
+const { beginRound, pickChanceVisual, getThemeContent } = require('./game');
 
 const ROUND_POINTS = 2;
 
@@ -264,8 +264,13 @@ function endGame(state) {
   const loserIds = memberIds.filter(id => (scores[id] || 0) === minScore);
   const winnerIds = memberIds.filter(id => (scores[id] || 0) === maxScore);
   if (state.game.wager === 'euro') {
+    // Kasse-motor-generalisering (Fase 1): spilnavnet er nu tema-afhængigt,
+    // ikke hardcoded — se god-finding-men-du-lovely-zephyr.md. Selve
+    // "taber betaler"-retningen er uændret her (poolPolarity-routing er
+    // Fase 2, ikke rørt i denne fase).
+    const gameName = getThemeContent(state.themeId).gameName;
     loserIds.forEach(id => {
-      state.events.push({ id: uid(), memberId: id, message: 'Tabte Brokspillet', ts: Date.now(), votes: [], free: false, gameLoss: true });
+      state.events.push({ id: uid(), memberId: id, message: `Tabte ${gameName}`, ts: Date.now(), votes: [], free: false, gameLoss: true });
     });
   }
 

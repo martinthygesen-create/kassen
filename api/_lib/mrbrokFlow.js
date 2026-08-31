@@ -6,6 +6,7 @@
 
 const { uid } = require('./store');
 const { shuffle } = require('./game');
+const { getThemeContent } = require('./mrbrok');
 const { stampPhase, MIN_COMPLAIN_AGE_MS, BROKSPILLET_AUTO_MS, COMPLAINT_COUNTDOWN_MS } = require('./gameFlow');
 
 // MrBrok er mere snak-tungt end Brokspillet (folk siger deres clue højt og
@@ -72,9 +73,11 @@ function resolveSteal(state) {
 function endMrbrokGame(state, mrBrokWon) {
   const m = state.mrbrok;
   if (m.wager === 'euro') {
+    // Kasse-motor-generalisering (Fase 1): spilnavn nu tema-afhængigt.
+    const gameName = getThemeContent(state.themeId).gameName;
     const payerIds = mrBrokWon ? m.players.filter(id => id !== m.mrBrokId) : [m.mrBrokId];
     payerIds.forEach(id => {
-      state.events.push({ id: uid(), memberId: id, message: 'Tabte MrBrok', ts: Date.now(), votes: [], free: false, gameLoss: true });
+      state.events.push({ id: uid(), memberId: id, message: `Tabte ${gameName}`, ts: Date.now(), votes: [], free: false, gameLoss: true });
     });
   }
   // Bot-testspillere tælles aldrig med i highscoren.

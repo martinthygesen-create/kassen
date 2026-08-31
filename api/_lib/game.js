@@ -59,8 +59,9 @@ const WINNER_TAUNT_PROMPTS = [
 ];
 
 function pickWinnerTauntPrompt(state) {
-  const idx = pickFromBag(state, 'winnerTaunt', WINNER_TAUNT_PROMPTS.length);
-  return WINNER_TAUNT_PROMPTS[idx];
+  const prompts = getThemeContent(state.themeId).winnerTauntPrompts;
+  const idx = pickFromBag(state, 'winnerTaunt', prompts.length);
+  return prompts[idx];
 }
 
 // "Chancen" kan vises på 3 måder (muldvarp/whack, hjul, spillemaskine) —
@@ -104,10 +105,11 @@ const QUIPLASH_DECOYS = [
 ];
 
 function pickQuiplashDecoys(state, n) {
+  const decoys = getThemeContent(state.themeId).quiplashDecoys;
   const picked = [];
   for (let i = 0; i < n; i++) {
-    const idx = pickFromBag(state, 'quiplashDecoy', QUIPLASH_DECOYS.length);
-    picked.push(QUIPLASH_DECOYS[idx]);
+    const idx = pickFromBag(state, 'quiplashDecoy', decoys.length);
+    picked.push(decoys[idx]);
   }
   return picked;
 }
@@ -180,6 +182,26 @@ const WORLD_TRUEFALSE = [
   { statement: 'Verdens længste registrerede kundeklagebrev fylder over 1.000 sider og handlede om en fejlleveret pakke.', isTrue: false },
 ];
 
+// Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
+// tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til konstanterne
+// ovenfor (ingen indholds-omskrivning, kun et lookup-lag) — DECOY_BROK
+// defineres længere nede i filen, tilføjes til CONTENT_BY_THEME.brok efter
+// sin egen definition (se modul-bund), ikke her, for ikke at bruge en
+// konstant før den er initialiseret.
+const CONTENT_BY_THEME = {
+  brok: {
+    quiplashPrompts: QUIPLASH_PROMPTS,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS,
+    worldTrivia: WORLD_TRIVIA,
+    worldTrueFalse: WORLD_TRUEFALSE,
+    gameName: 'Brokspillet',
+  },
+};
+function getThemeContent(themeId) {
+  return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
+}
+
 // "Shuffle bag": trækker uden tilbagelægning fra en pulje af indeks, så intet
 // gentages før ALT er brugt — brugte ting ryger bagerst i køen, ikke tilbage
 // i puljen med det samme. Gemmes på RUM-niveau (ikke i selve spil-sessionen),
@@ -196,25 +218,49 @@ function pickFromBag(state, bagKey, poolLength) {
 
 function pickQuiplashPrompt(state, members) {
   const target = pickRandom(members);
-  const idx = pickFromBag(state, 'quiplash', QUIPLASH_PROMPTS.length);
-  return { prompt: QUIPLASH_PROMPTS[idx].replace(/\{target\}/g, target.name), targetId: target.id };
+  const prompts = getThemeContent(state.themeId).quiplashPrompts;
+  const idx = pickFromBag(state, 'quiplash', prompts.length);
+  return { prompt: prompts[idx].replace(/\{target\}/g, target.name), targetId: target.id };
 }
 
 function pickWorldTrivia(state) {
-  const idx = pickFromBag(state, 'world', WORLD_TRIVIA.length);
-  const item = WORLD_TRIVIA[idx];
+  const pool = getThemeContent(state.themeId).worldTrivia;
+  const idx = pickFromBag(state, 'world', pool.length);
+  const item = pool[idx];
   return { question: item.question, isWorld: true, ...buildOptions(item.correct, item.distractors) };
 }
 
 function pickWorldTrueFalse(state) {
-  const idx = pickFromBag(state, 'worldTruefalse', WORLD_TRUEFALSE.length);
-  const item = WORLD_TRUEFALSE[idx];
+  const pool = getThemeContent(state.themeId).worldTrueFalse;
+  const idx = pickFromBag(state, 'worldTruefalse', pool.length);
+  const item = pool[idx];
   return { statement: item.statement, isTrue: item.isTrue, isWorld: true };
+}
+
+// Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
+// spørgsmåls-SKABELONER pr. tema, adskilt fra CONTENT_BY_THEME fordi disse
+// ikke er en pulje at vælge FRA — de udfyldes med rummets EGNE data ved
+// hver generering (se "Tredje indholdskilde"-fundet i planen). 'brok'
+// indeholder den UÆNDREDE originaltekst, kun flyttet ind i en tema-nøgle.
+const QUESTION_TEMPLATES_BY_THEME = {
+  brok: {
+    mostCount: 'Hvem har brokket sig flest gange i denne brokkekasse?',
+    fewestCount: 'Hvem har brokket sig færrest gange i denne brokkekasse?',
+    totalCount: 'Hvor mange brok er der registreret i alt i denne brokkekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
+    quoteWho: quote => `Ifølge Brokkekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne brokkekasse?',
+  },
+};
+function getQuestionTemplates(themeId) {
+  return QUESTION_TEMPLATES_BY_THEME[themeId] || QUESTION_TEMPLATES_BY_THEME.brok;
 }
 
 // Genererer et multiple-choice trivia-spørgsmål ud fra rummets EGNE rigtige
 // brok-data — binder spillet sammen med selve Brokkekassen.
 function generateTriviaQuestion(state) {
+  const t = getQuestionTemplates(state.themeId);
   const members = state.members;
   const allEvents = [...state.events, ...state.history.flatMap(r => r.events || [])].filter(e => !e.free && !e.voided);
   const counts = {};
@@ -230,20 +276,20 @@ function generateTriviaQuestion(state) {
       const correct = members.find(m => m.id === mostId).name;
       const distractors = members.filter(m => m.id !== mostId).map(m => m.name);
       const { options, correctIndex } = buildOptions(correct, distractors);
-      return { question: 'Hvem har brokket sig flest gange i denne brokkekasse?', options, correctIndex };
+      return { question: t.mostCount, options, correctIndex };
     });
     const fewestId = members.slice().sort((a, b) => counts[a.id] - counts[b.id])[0].id;
     candidates.push(() => {
       const correct = members.find(m => m.id === fewestId).name;
       const distractors = members.filter(m => m.id !== fewestId).map(m => m.name);
       const { options, correctIndex } = buildOptions(correct, distractors);
-      return { question: 'Hvem har brokket sig færrest gange i denne brokkekasse?', options, correctIndex };
+      return { question: t.fewestCount, options, correctIndex };
     });
     candidates.push(() => {
       const correct = String(totalCount);
       const distractors = [...new Set([totalCount + 2, Math.max(0, totalCount - 2), totalCount + 5].map(String))];
       const { options, correctIndex } = buildOptions(correct, distractors);
-      return { question: 'Hvor mange brok er der registreret i alt i denne brokkekasse?', options, correctIndex };
+      return { question: t.totalCount, options, correctIndex };
     });
   }
 
@@ -255,7 +301,7 @@ function generateTriviaQuestion(state) {
       candidates.push(() => {
         const distractors = members.filter(m => m.id !== topId).map(m => m.name);
         const { options, correctIndex } = buildOptions(topMember.name, distractors);
-        return { question: 'Hvem har den længste aktuelle streak uden brok?', options, correctIndex };
+        return { question: t.longestStreak, options, correctIndex };
       });
     }
   }
@@ -269,14 +315,21 @@ function generateTriviaQuestion(state) {
   // TILFÆLDIGT blandt alle rigtige brok hver gang (ikke altid "flest/
   // færrest"), så det jævner sig ud hvem der bliver spurgt om over mange
   // runder, i stedet for altid samme person.
-  const brokEvents = allEvents.filter(e => e.message && e.message.trim() && members.find(m => m.id === e.memberId));
+  //
+  // FUNDET FEJL (rettet her, se planens "MrBrok/Det Store Brokkeri-audit"):
+  // gameLoss-hændelser (fx "Tabte MrBrok") har en message og blev tidligere
+  // regnet med i citat-puljen, så et spørgsmål kunne citere en systembesked
+  // som var det en rigtig anklage. Ekskluderet her (kun fra CITAT-puljen —
+  // tælles stadig korrekt med i counts/totalCount ovenfor, hvor
+  // straf-mekanikken hører hjemme).
+  const brokEvents = allEvents.filter(e => e.message && e.message.trim() && !e.gameLoss && members.find(m => m.id === e.memberId));
   if (brokEvents.length && members.length >= 3) {
     candidates.push(() => {
       const ev = pickRandom(brokEvents);
       const correct = members.find(m => m.id === ev.memberId);
       const distractors = shuffle(members.filter(m => m.id !== ev.memberId)).slice(0, 3).map(m => m.name);
       const { options, correctIndex } = buildOptions(correct.name, distractors);
-      return { question: `Ifølge Brokkekassen brokkede nogen sig over: "${ev.message}" — hvem var det?`, options, correctIndex };
+      return { question: t.quoteWho(ev.message), options, correctIndex };
     });
     // Kun med hvis der reelt findes nok ANDRE forskellige brok-tekster at
     // bruge som decoys — ellers ville spørgsmålet ikke kunne stilles fair.
@@ -293,7 +346,7 @@ function generateTriviaQuestion(state) {
         const otherTexts = [...new Set(brokEvents.filter(e => e.memberId !== target.id).map(e => e.message))];
         const distractors = shuffle(otherTexts).slice(0, 3);
         const { options, correctIndex } = buildOptions(correct, distractors);
-        return { question: `Hvilket af disse ting brokkede ${target.name} sig over?`, options, correctIndex };
+        return { question: t.quoteWhich(target.name), options, correctIndex };
       });
     }
   }
@@ -301,7 +354,7 @@ function generateTriviaQuestion(state) {
   if (!candidates.length) {
     const distractors = [String(members.length + 1), String(Math.max(1, members.length - 1)), String(members.length + 2)];
     const { options, correctIndex } = buildOptions(String(members.length), [...new Set(distractors)]);
-    return { question: 'Hvor mange medlemmer er der i denne brokkekasse?', options, correctIndex };
+    return { question: t.memberCountFallback, options, correctIndex };
   }
   return pickRandom(candidates)();
 }
@@ -382,6 +435,10 @@ const DECOY_BROK = [
   'Ingen ledige borde noget sted',
   'Trappen var spærret af igen',
 ];
+// Tilføjet efter egen definition, ikke inde i CONTENT_BY_THEME's objekt-
+// literal ovenfor — DECOY_BROK er en const der endnu ikke er initialiseret
+// på det tidspunkt filen når dertil (temporal dead zone).
+CONTENT_BY_THEME.brok.decoyBrok = DECOY_BROK;
 
 // Rigtige, tidligere loggede brok fra selve Brokkekassen (hvis den er i
 // brug) blandes ind som decoys sammen med den generiske liste ovenfor —
@@ -397,13 +454,14 @@ function realEventTexts(state) {
 }
 
 function pickDecoyBroks(state, n, excludeText) {
-  const pool = [...new Set([...realEventTexts(state), ...DECOY_BROK])].filter(t => t !== excludeText);
-  const shuffled = shuffle(pool.length ? pool : DECOY_BROK);
+  const decoyBrok = getThemeContent(state.themeId).decoyBrok;
+  const pool = [...new Set([...realEventTexts(state), ...decoyBrok])].filter(t => t !== excludeText);
+  const shuffled = shuffle(pool.length ? pool : decoyBrok);
   const picked = shuffled.slice(0, n);
   // Sikkerhedsnet for et helt nyt/tomt rum uden ret meget historik endnu —
   // fylder op fra den generiske liste hvis puljen var for lille til at
   // give `n` unikke forslag.
-  while (picked.length < n) picked.push(DECOY_BROK[Math.floor(Math.random() * DECOY_BROK.length)]);
+  while (picked.length < n) picked.push(decoyBrok[Math.floor(Math.random() * decoyBrok.length)]);
   return picked;
 }
 
@@ -578,4 +636,4 @@ function beginRound(state, players) {
   }
 }
 
-module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound };
+module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates };
