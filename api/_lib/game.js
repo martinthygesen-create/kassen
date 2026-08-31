@@ -182,6 +182,79 @@ const WORLD_TRUEFALSE = [
   { statement: 'Verdens længste registrerede kundeklagebrev fylder over 1.000 sider og handlede om en fejlleveret pakke.', isTrue: false },
 ];
 
+// Kasse-motor-generalisering, Fase 5 (BEVIS-TEMA). Samme prompt-form som
+// QUIPLASH_PROMPTS ovenfor, anvendt på bøde/regelbrud-domænet i stedet for
+// brok-domænet. 10 prompts (mod originalens 12) — BEVIDST en mindre
+// v1-pulje til bevis-formål, udvid før rigtig levering.
+const QUIPLASH_PROMPTS_BODE = [
+  'Den mest sandsynlige grund til at {target} får en bøde i morgen er...',
+  'Skriv den mest drilske kommentar til {target} om deres bøde-historik',
+  '{target} ville helt sikkert få en bøde hvis...',
+  'Den mest overdrevne undskyldning {target} kunne finde på er...',
+  'Hvis {target} havde sin egen bøde-kategori, ville den hedde...',
+  '{target}s hemmelige talent er at komme for sent til...',
+  'Det {target} bruger alt for lang tid på hver dag er...',
+  'Om 10 år får {target} stadig bøder for...',
+  'Den mest sandsynlige undskyldning {target} bruger for at slippe for en bøde er...',
+  'Hvis {target} var en bøde, hvor stor ville den være, og hvorfor?',
+];
+
+// Fase 5 bevis-tema: opdigtede vrangforestillinger til quiplash-afstemning,
+// generiske nok til at passe næsten alle QUIPLASH_PROMPTS_BODE ovenfor —
+// samme funktion som QUIPLASH_DECOYS, anvendt på bøde-domænet.
+const QUIPLASH_DECOYS_BODE = [
+  'At komme for sent fordi uret gik forkert — igen',
+  'At skylde på trafikken hver eneste gang',
+  'At love bod og bedring uden at mene det',
+  'At glemme aftalen fuldstændigt',
+  'At sige "jeg var lige på vej" i tre timer',
+  'At betale bøden med et smil og gøre det igen',
+  'At have en helt ny undskyldning hver gang',
+  'At påstå det var en misforståelse',
+  'At skylde på wifi-forbindelsen',
+  'At love at sætte en alarm næste gang',
+];
+
+// Fase 5 bevis-tema: ægte, verificerbare fakta om bøder/regler i den
+// virkelige verden — samme funktion som WORLD_TRIVIA, men KUN 3 stykker.
+// BEVIDST holdt lille: i modsætning til DECOY_BROK (opdigtet, ingen
+// sandhedsværdi krævet) skal disse være FAKTUELT KORREKTE, og jeg har
+// ikke websøgning til at verificere flere end de mest velkendte,
+// bredt dokumenterede eksempler her. Udvid KUN med fakta der er
+// dobbelttjekket, ikke bare opdigtet i samme stil — se Dommerens Del B.
+const WORLD_TRIVIA_BODE = [
+  { question: 'Singapore er verdenskendt for at forbyde import og salg af hvad, med høje bøder til følge?', correct: 'Tyggegummi', distractors: ['Balloner', 'Legetøjsvåben', 'Kunstige blomster'] },
+  { question: 'I flere lande, bl.a. Schweiz og Finland, beregnes en fartbøde ikke kun ud fra hastigheden, men også ud fra hvad?', correct: 'Din indkomst', distractors: ['Din alder', 'Bilens farve', 'Årstiden'] },
+  { question: 'Flere storbyer, bl.a. Venedig, har indført bøder for at gøre hvad på de mest berømte pladser?', correct: 'Fodre duer', distractors: ['Tage billeder', 'Sidde på trapperne', 'Spise is'] },
+];
+
+// Fase 5 bevis-tema: samme forsigtighed som WORLD_TRIVIA_BODE ovenfor —
+// kun velkendte, dobbelttjekkede fakta, bevidst holdt til 2 stykker.
+const WORLD_TRUEFALSE_BODE = [
+  { statement: 'I Singapore er det ulovligt at importere og sælge tyggegummi, med bøder for overtrædelse.', isTrue: true },
+  { statement: 'I flere lande, bl.a. Schweiz og Finland, beregnes fartbøder ud fra din indkomst, så en høj indkomst kan give en langt større bøde for samme overtrædelse.', isTrue: true },
+];
+
+// Fase 5 bevis-tema: samme funktion som DECOY_BROK — hverdags "bøde-
+// udløsende" hændelser, holdt generiske og genkendelige uanset gruppe.
+const DECOY_BODE = [
+  'Kom fem minutter for sent til mødet',
+  'Glemte at sætte telefonen på lydløs til mødet',
+  'Parkerede på den forkerte side af vejen',
+  'Glemte at aflevere nøglerne til tiden',
+  'Efterlod opvasken i køkkenet igen',
+  'Meldte afbud i sidste øjeblik',
+  'Glemte holdtrøjen til kampen',
+  'Kom uden cykel-lygte efter mørkets frembrud',
+  'Betalte kontingent en uge for sent',
+  'Efterlod bilen uden benzin til næste bruger',
+  'Glemte at booke lokalet til mødet',
+  'Sendte referatet en dag for sent',
+  'Tog den sidste kop kaffe uden at brygge ny',
+  'Glemte at melde sygdom til tiden',
+  'Parkerede cyklen midt i indgangen',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til konstanterne
 // ovenfor (ingen indholds-omskrivning, kun et lookup-lag) — DECOY_BROK
@@ -196,6 +269,19 @@ const CONTENT_BY_THEME = {
     worldTrivia: WORLD_TRIVIA,
     worldTrueFalse: WORLD_TRUEFALSE,
     gameName: 'Brokspillet',
+  },
+  // Fase 5 bevis-tema. winnerTauntPrompts GENBRUGER WINNER_TAUNT_PROMPTS
+  // uændret (allerede tema-agnostisk, se Simulerings-afsnittet i planen:
+  // "sejrs-hån" nævner ingen brok-specifik tekst). gameName "Bødespillet"
+  // følger navnekonventionen "{Tema}spillet" bekræftet i planen.
+  bode: {
+    quiplashPrompts: QUIPLASH_PROMPTS_BODE,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_BODE,
+    worldTrivia: WORLD_TRIVIA_BODE,
+    worldTrueFalse: WORLD_TRUEFALSE_BODE,
+    decoyBrok: DECOY_BODE,
+    gameName: 'Bødespillet',
   },
 };
 function getThemeContent(themeId) {
@@ -251,6 +337,19 @@ const QUESTION_TEMPLATES_BY_THEME = {
     quoteWho: quote => `Ifølge Brokkekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne brokkekasse?',
+  },
+  // Fase 5 bevis-tema: samme struktur, egen grammatik ("fået bøder" i
+  // stedet for "brokket sig", "bødekasse" i stedet for "brokkekasse") —
+  // IKKE en mekanisk ord-for-ord-substitution af brok-varianten, se planens
+  // pointe om at "ren tekst-omskrivning" kræver ægte skrivearbejde.
+  bode: {
+    mostCount: 'Hvem har fået flest bøder i denne bødekasse?',
+    fewestCount: 'Hvem har fået færrest bøder i denne bødekasse?',
+    totalCount: 'Hvor mange bøder er der registreret i alt i denne bødekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden en bøde?',
+    quoteWho: quote => `Ifølge Bødekassen fik nogen en bøde for: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilket af disse fik ${name} en bøde for?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne bødekasse?',
   },
 };
 function getQuestionTemplates(themeId) {

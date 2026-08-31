@@ -183,6 +183,110 @@ const COMPLAINER_PROMPTS = [
   { id: 'rel4', category: 'relational', tier: 3, text: 'En du står tæt på ville blive chokeret, hvis de hørte hvad du siger om dem, når de ikke er der. Du brokker dig om netop den person til en fælles ven. Hvad siger du?' },
 ];
 
+// Kasse-motor-generalisering, Fase 5 (BEVIS-TEMA). Samme håndværks-spec
+// som COMPLAINER_ARCHETYPES ovenfor: konkret fusioneret persona (rolle +
+// reaktions-stil på at blive taget i et regelbrud), 2-3 eksplicitte
+// instruktioner, promptHook der slutter på tankestreg. 8 arketyper (mod
+// originalens 10) — BEVIDST en mindre v1-pulje til bevis-formål, ikke den
+// endelige tilstræbte størrelse. Udvid FØR levering til rigtige brugere.
+const COMPLAINER_ARCHETYPES_BODE = [
+  {
+    id: 'bortforklarer', name: 'Den bortforklarende holdkaptajn',
+    promptHook: 'Som en der altid har en grund klar —',
+    instructions: [
+      'Du har ALTID en logisk forklaring parat, uanset hvor tynd den er.',
+      'Skyld gerne på trafik, vejret eller "systemet".',
+      'Bliv let fornærmet hvis nogen tvivler på undskyldningen.',
+    ],
+  },
+  {
+    id: 'fornaermet_kasserer', name: 'Den fornærmede kasserer',
+    promptHook: 'Som en der tager regnskabet personligt —',
+    instructions: [
+      'Du opfatter enhver bøde som en anklage mod din karakter.',
+      'Sukk tungt og nævn hvor meget arbejde du lægger i det hele.',
+      'Vend samtalen til hvor lidt de andre forstår dit ansvar.',
+    ],
+  },
+  {
+    id: 'skoedeslos', name: 'Den skødesløse praktikant',
+    promptHook: 'Som en der tager det hele med et skuldertræk —',
+    instructions: [
+      'Du synes reglerne er lidt overdrevne, og siger det gerne højt.',
+      'Svar kort og afslappet, som om det er en bagatel.',
+      'Foreslå at "det klarer sig nok" i stedet for at love bedring.',
+    ],
+  },
+  {
+    id: 'panisk', name: 'Den paniske nybegynder',
+    promptHook: 'Som en der er rædselsslagen for at gøre noget forkert —',
+    instructions: [
+      'Du overdriver hvor forfærdeligt det er, selvom det er småt.',
+      'Undskyld gentagne gange, gerne mere end nødvendigt.',
+      'Lov højt og tydeligt at det aldrig sker igen.',
+    ],
+  },
+  {
+    id: 'beregnende', name: 'Den beregnende veteran',
+    promptHook: 'Som en der har regnet på det i årevis —',
+    instructions: [
+      'Diskuter helt roligt om bøden reelt er "pengene værd".',
+      'Sammenlign med tidligere bøder og deres "pris".',
+      'Vær mistænkeligt afslappet omkring hele situationen.',
+    ],
+  },
+  {
+    id: 'passiv_aggressiv_kollega', name: 'Den passiv-aggressive kollega',
+    promptHook: 'Som en der helst antyder frem for at sige det ligeud —',
+    instructions: [
+      'Brug stikpiller i stedet for at indrømme noget direkte.',
+      'Sig "det er helt fint" på en måde der tydeligt betyder det modsatte.',
+      'Skift emne brat hvis nogen presser på for et rigtigt svar.',
+    ],
+  },
+  {
+    id: 'dobbeltmoralsk_dommer', name: 'Den dobbeltmoralske regelrytter',
+    promptHook: 'Som en der ellers ynder at håndhæve reglerne strengt —',
+    instructions: [
+      'Vær tydeligt flov over at blive taget i det samme du plejer at dømme andre for.',
+      'Forsøg at bortforklare hvorfor DIN situation er anderledes.',
+      'Lov at være "endnu strengere" fremover for at kompensere.',
+    ],
+  },
+  {
+    id: 'optimistisk_eftergiver', name: 'Den evigt optimistiske eftergiver',
+    promptHook: 'Som en der altid tror på en bedre fremtid —',
+    instructions: [
+      'Vær urokkeligt positiv, uanset hvor tit det er sket før.',
+      'Lov "helt sikkert næste gang" med overbevisning.',
+      'Vend det hele til noget muntert i stedet for en undskyldning.',
+    ],
+  },
+];
+
+// Fase 5 bevis-tema: samme kategori-struktur som brok-situationerne
+// (COMPLAINER_SITUATIONS), tilpasset en bøde/regelbrud-kontekst.
+const COMPLAINER_SITUATIONS_BODE = ['hold', 'arbejde', 'forening', 'familie'];
+
+// Fase 5 bevis-tema: samme fire-delt scenarie-skabelon som
+// COMPLAINER_PROMPTS ovenfor (udløsende hændelse + personlig grund +
+// specifikt publikum + spørgsmål) — anvendt på "fik en bøde/blev taget i
+// et regelbrud" i stedet for "brokkede sig over noget". 11 prompts (mod
+// originalens 19) — BEVIDST en mindre v1-pulje, udvid før rigtig levering.
+const COMPLAINER_PROMPTS_BODE = [
+  { id: 'hold1', category: 'hold', tier: 1, text: 'Du får en bøde for at komme ti minutter for sent til træning igen. Du brokker dig til en holdkammerat der lige er ankommet til tiden. Hvad siger du?' },
+  { id: 'hold2', category: 'hold', tier: 2, text: 'Træneren indfører en ny bøde for glemte sko, efter du selv har glemt dine to gange. Du brokker dig til klubbens materialemand, som bare vil have styr på tingene. Hvad siger du?' },
+  { id: 'hold3', category: 'hold', tier: 3, text: 'Holdkaptajnen offentliggør bødelisten i gruppechatten med dit navn øverst. Du brokker dig til din partner, som ikke aner noget om holdets interne regler. Hvad siger du?' },
+  { id: 'arbejde1', category: 'arbejde', tier: 1, text: 'Du bliver noteret for at komme for sent til morgenmødet for tredje gang denne måned. Du brokker dig til receptionisten, som lige er mødt selv. Hvad siger du?' },
+  { id: 'arbejde2', category: 'arbejde', tier: 2, text: 'Chefen indfører en bøde-kasse for mobiltelefoner der ringer under møder — og din ringer først. Du brokker dig til en kollega fra en helt anden afdeling. Hvad siger du?' },
+  { id: 'forening1', category: 'forening', tier: 1, text: 'Du glemmer at betale kontingent til tiden, og kassereren sender en påmindelse til hele bestyrelsen. Du brokker dig til din nabo, som ikke engang er medlem. Hvad siger du?' },
+  { id: 'forening2', category: 'forening', tier: 3, text: 'Bestyrelsen vedtager en ny bøde for udeblivelse fra generalforsamlingen — lige efter du selv meldte afbud. Du brokker dig til et helt nyt medlem, som knap nok kender reglerne endnu. Hvad siger du?' },
+  { id: 'familie1', category: 'familie', tier: 1, text: 'Du glemmer at hente børnene til tiden, og din partner indfører en "hjemme-bødekasse" på stedet. Du brokker dig til din mor over telefonen. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen andre får en bøde for præcis det du selv gjorde sidste uge uden konsekvens. Du brokker dig til en helt udenforstående ven om uretfærdigheden. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en bøde du "glemte" at betale for tre måneder siden. Du brokker dig til din bedste ven om at blive holdt op imod noget så gammelt. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 3, text: 'Du opdager at du selv har foreslået den bøderegel, du nu brokker dig mest over. Du brokker dig til din partner om hvor urimeligt dit eget forslag har vist sig at være. Hvad siger du?' },
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
 // situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
@@ -194,6 +298,14 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS,
     prompts: COMPLAINER_PROMPTS,
     gameName: 'Det Store Brokkeri',
+  },
+  // Fase 5 bevis-tema. gameName "Bødefælden" (ikke "Det Store Brokkeri" —
+  // spilnavne er tema-afhængige, se planen).
+  bode: {
+    archetypes: COMPLAINER_ARCHETYPES_BODE,
+    situations: COMPLAINER_SITUATIONS_BODE,
+    prompts: COMPLAINER_PROMPTS_BODE,
+    gameName: 'Bødefælden',
   },
 };
 function getThemeContent(themeId) {

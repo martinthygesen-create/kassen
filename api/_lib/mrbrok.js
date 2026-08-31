@@ -66,6 +66,48 @@ const MRBROK_CLUE_TIPS = [
   'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
 ];
 
+// Kasse-motor-generalisering, Fase 5 (BEVIS-TEMA, se
+// god-finding-men-du-lovely-zephyr.md): Bødekassens emner. Samme
+// håndværks-spec som brok-puljen ovenfor (bredt domæne+rolle, aldrig ét
+// snævert faktum) — anvendt på "bryder en regel/kommer for sent"-domænet
+// i stedet for "brokker sig"-domænet. 15 emner (mod originalens 20) —
+// BEVIDST en mindre v1-pulje til bevis-formål, IKKE den endelige
+// tilstræbte størrelse. Dommerens minimum-pulje-gate (Fase 6) skal have
+// en konkret tærskel at måle op imod — udvid denne pulje FØR levering til
+// rigtige brugere, dokumenteret her så det er let at finde igen ved test.
+const MRBROK_TOPICS_BODE = [
+  'Sløv målmand — kommer altid for sent til opvarmning',
+  'Glemsom holdkaptajn — glemmer bolde og veste i klubhuset',
+  'Doven bestyrelsesmedlem — møder aldrig forberedt til møderne',
+  'Sur kollega — parkerer altid på andres reserverede plads',
+  'Rodet praktikant — efterlader rod på det fælles skrivebord',
+  'Distræt lærer — glemmer konsekvent at aflevere karakterer til tiden',
+  'Skødesløs nabo — sætter skraldespanden forkert ud hver uge',
+  'Ligeglad chauffør — kommer for sent til hver eneste afhentning',
+  'Fraværende teammedlem — melder afbud i sidste øjeblik hver gang',
+  'Uorganiseret arrangør — glemmer altid at booke lokalet i tide',
+  'Sløset revisor — afleverer regnskabet en uge for sent hver gang',
+  'Distræt vagtchef — glemmer at aflåse hver anden vagt',
+  'Ukoncentreret dommer — fløjter forkerte afgørelser konsekvent',
+  'Glemsom kasserer — glemmer at opkræve kontingent i tide',
+  'Sløv vikar — møder uforberedt til hver eneste vagt',
+];
+
+// Samme ni hints som brok-varianten, men "brokke dig over" (kun relevant
+// for et klage-domæne) erstattet med "undskyld dig med" (relevant for et
+// regelbrud/bøde-domæne). Resten er allerede domæne-neutrale.
+const MRBROK_CLUE_TIPS_BODE = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Undskyld dig med en PERSON eller omstændighed, ikke bare selve reglen',
+  'Svar på en følelse ved det, ikke selve reglen',
+  'Vend spørgsmålet en anelse — svar på den undskyldning du helst ville bruge',
+  'Nævn hvor tit "det her" sker for dig',
+  'Beskriv hvordan du plejer at reagere når du bliver taget i det',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til MRBROK_TOPICS/
 // MRBROK_CLUE_TIPS ovenfor (ingen indholds-omskrivning, kun et lookup-lag
@@ -74,6 +116,10 @@ const MRBROK_CLUE_TIPS = [
 // aldrig et rum uden kurateret indhold endnu.
 const CONTENT_BY_THEME = {
   brok: { mrbrokTopics: MRBROK_TOPICS, mrbrokClueTips: MRBROK_CLUE_TIPS, gameName: 'MrBrok' },
+  // Fase 5 bevis-tema. gameName "Bødedetektiven" — spilnavne er
+  // tema-afhængige, ikke "MrBrok" bogstaveligt, se planens punkt om at
+  // spilnavne er brok-brandede og skal reskinnes pr. tema.
+  bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Bødedetektiven' },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
