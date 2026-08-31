@@ -49,7 +49,7 @@ function beginComplainRound(state, roundNumber) {
   c.round = roundNumber;
   const prompts = {};
   c.players.forEach(id => {
-    const prompt = pickPromptFor(id, c.situations[id], roundNumber, c.totalRounds, c.usedPromptIds[id] || []);
+    const prompt = pickPromptFor(id, c.situations[id], roundNumber, c.totalRounds, c.usedPromptIds[id] || [], state.themeId);
     // Prompten der reelt VISES kombinerer arketypens promptHook med den
     // valgte situationelle prompt (se composePromptText i _lib/complainer.js)
     // — så en "passiv-aggressiv pilot" og en "udadvendt lærer" ikke længere
@@ -57,7 +57,7 @@ function beginComplainRound(state, roundNumber) {
     // tier gemmes stadig ud fra den RÅ situationelle prompt (til
     // udvælgelses-/gentagelses-logikken i pickPromptFor), kun `text` er
     // sammensat.
-    const composedText = composePromptText(c.archetypes[id], prompt.text);
+    const composedText = composePromptText(c.archetypes[id], prompt.text, state.themeId);
     prompts[id] = { id: prompt.id, text: composedText, category: prompt.category, tier: prompt.tier };
     if (!c.usedPromptIds[id]) c.usedPromptIds[id] = [];
     c.usedPromptIds[id].push(prompt.id);

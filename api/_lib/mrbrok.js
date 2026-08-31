@@ -54,37 +54,6 @@ const MRBROK_TOPICS = [
   'Frustreret it-supporter — brokker dig over brugere der aldrig har prøvet at genstarte',
 ];
 
-// Emnet skal have "hvile" i mindst 60% af puljen (afrundet op) før det kan
-// gå igen — dvs. mindst 12 ud af 20 ANDRE emner skal være brugt først, ikke
-// bare "ikke det allersidste". Bevidst valgt fremfor en klassisk pop-bag
-// (se pickFromBag i game.js): en pop-bag er skrøbelig over for en tabt
-// samtidig skrivning (to hurtige "start"-kald der begge læser samme
-// state-version, se mutateState's CAS) — mister man ét pop fra posen,
-// smitter det usynligt af på ALLE fremtidige træk. En rullende historik
-// derimod hviler kun på selve historikken, så et enkelt tabt træk højst
-// koster én "hvileperiode" for det ene emne, ikke hele rotationen.
-const MIN_TOPIC_GAP = Math.ceil(MRBROK_TOPICS.length * 0.6);
-
-function pickTopic(state) {
-  if (!state.gameContentBank) state.gameContentBank = {};
-  if (!state.gameContentBank.mrbrokTopicHistory) state.gameContentBank.mrbrokTopicHistory = [];
-  const history = state.gameContentBank.mrbrokTopicHistory;
-  const recentlyUsed = new Set(history.slice(-MIN_TOPIC_GAP));
-  const candidates = MRBROK_TOPICS.map((_, i) => i).filter(i => !recentlyUsed.has(i));
-  const idx = pickRandom(candidates);
-  history.push(idx);
-  if (history.length > MIN_TOPIC_GAP) history.splice(0, history.length - MIN_TOPIC_GAP);
-  return MRBROK_TOPICS[idx];
-}
-
-// Forslag til hvordan man svarer VAGT NOK til ikke at hjælpe MrBrok, men
-// KLART NOK til at overbevise de andre (aldrig et konkret svar/ord) —
-// vises kun til den der har turen lige nu, via "Brug for et hint?"-
-// knappen, ren client-side hjælp (se index.html). Ingen "spil en karakter
-// med stemmen"-tips her — det er et andet spil (se diskussionen i
-// commit-historikken); MrBrok er en afsløringsleg, ikke en improv-øvelse.
-// Holdes her sammen med resten af MrBroks indhold, selvom de reelt kunne
-// have ligget rent client-side — samlet ét sted er lettere at redigere/udvide.
 const MRBROK_CLUE_TIPS = [
   'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
   'Hold svaret kort — giv ikke det hele væk på én gang',
@@ -97,4 +66,31 @@ const MRBROK_CLUE_TIPS = [
   'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
 ];
 
-module.exports = { MRBROK_TOPICS, MRBROK_CLUE_TIPS, pickTopic, pickMrBrok };
+// Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
+// tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til MRBROK_TOPICS/
+// MRBROK_CLUE_TIPS ovenfor (ingen indholds-omskrivning, kun et lookup-lag
+// tilføjet) — nye temaer tilføjes som nye nøgler her, ikke ved at ændre
+// pickTopic()'s logik. Ukendt themeId falder tilbage til 'brok', crasher
+// aldrig et rum uden kurateret indhold endnu.
+const CONTENT_BY_THEME = {
+  brok: { mrbrokTopics: MRBROK_TOPICS, mrbrokClueTips: MRBROK_CLUE_TIPS, gameName: 'MrBrok' },
+};
+function getThemeContent(themeId) {
+  return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
+}
+
+function pickTopic(state) {
+  const topics = getThemeContent(state.themeId).mrbrokTopics;
+  if (!state.gameContentBank) state.gameContentBank = {};
+  if (!state.gameContentBank.mrbrokTopicHistory) state.gameContentBank.mrbrokTopicHistory = [];
+  const history = state.gameContentBank.mrbrokTopicHistory;
+  const minGap = Math.ceil(topics.length * 0.6);
+  const recentlyUsed = new Set(history.slice(-minGap));
+  const candidates = topics.map((_, i) => i).filter(i => !recentlyUsed.has(i));
+  const idx = pickRandom(candidates);
+  history.push(idx);
+  if (history.length > minGap) history.splice(0, history.length - minGap);
+  return topics[idx];
+}
+
+module.exports = { MRBROK_TOPICS, MRBROK_CLUE_TIPS, CONTENT_BY_THEME, getThemeContent, pickTopic, pickMrBrok };

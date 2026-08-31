@@ -183,16 +183,34 @@ const COMPLAINER_PROMPTS = [
   { id: 'rel4', category: 'relational', tier: 3, text: 'En du står tæt på ville blive chokeret, hvis de hørte hvad du siger om dem, når de ikke er der. Du brokker dig om netop den person til en fælles ven. Hvad siger du?' },
 ];
 
+// Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
+// tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
+// situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
+// lookup-lag) — nye temaer tilføjes som nye nøgler, ukendt themeId falder
+// tilbage til 'brok', crasher aldrig et rum uden kurateret indhold endnu.
+const CONTENT_BY_THEME = {
+  brok: {
+    archetypes: COMPLAINER_ARCHETYPES,
+    situations: COMPLAINER_SITUATIONS,
+    prompts: COMPLAINER_PROMPTS,
+    gameName: 'Det Store Brokkeri',
+  },
+};
+function getThemeContent(themeId) {
+  return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
+}
+
 // Vælger arketype + situation til hver spiller. Ikke vægtet/roterende som
 // MrBrok's pickMrBrok — Det Store Brokkeri er endnu ung nok til at et simpelt
 // tilfældigt shuffle er fint (kan senere udbygges med samme
 // gentagelses-modstand hvis det bliver et problem i praksis).
-function assignArchetypesAndSituations(players) {
+function assignArchetypesAndSituations(players, themeId) {
+  const theme = getThemeContent(themeId);
   const archetypes = {};
   const situations = {};
   players.forEach(p => {
-    archetypes[p.id] = pickRandom(COMPLAINER_ARCHETYPES).id;
-    situations[p.id] = pickRandom(COMPLAINER_SITUATIONS);
+    archetypes[p.id] = pickRandom(theme.archetypes).id;
+    situations[p.id] = pickRandom(theme.situations);
   });
   return { archetypes, situations };
 }
@@ -212,18 +230,19 @@ function tierForRound(round, totalRounds) {
 // ønskede eskalerings-tier, og undgår prompts spilleren allerede har fået i
 // dette spil. Falder gradvist tilbage (forkert tier, så hvilken som helst
 // kategori) frem for nogensinde at returnere ingenting.
-function pickPromptFor(playerId, situation, round, totalRounds, usedIds) {
+function pickPromptFor(playerId, situation, round, totalRounds, usedIds, themeId) {
+  const prompts = getThemeContent(themeId).prompts;
   const used = new Set(usedIds || []);
   const desiredTier = tierForRound(round, totalRounds);
-  const eligible = (tier, anyCategory) => COMPLAINER_PROMPTS.filter(p =>
+  const eligible = (tier, anyCategory) => prompts.filter(p =>
     !used.has(p.id) &&
     (anyCategory || p.category === situation || p.category === 'relational') &&
     p.tier === tier
   );
   let pool = eligible(desiredTier, false);
-  if (!pool.length) pool = COMPLAINER_PROMPTS.filter(p => !used.has(p.id) && (p.category === situation || p.category === 'relational'));
-  if (!pool.length) pool = COMPLAINER_PROMPTS.filter(p => !used.has(p.id));
-  if (!pool.length) pool = COMPLAINER_PROMPTS; // hele puljen brugt — så må noget gå igen
+  if (!pool.length) pool = prompts.filter(p => !used.has(p.id) && (p.category === situation || p.category === 'relational'));
+  if (!pool.length) pool = prompts.filter(p => !used.has(p.id));
+  if (!pool.length) pool = prompts; // hele puljen brugt — så må noget gå igen
   return pickRandom(pool);
 }
 
@@ -238,8 +257,8 @@ function pickPromptFor(playerId, situation, round, totalRounds, usedIds) {
 // seneste din chef har bedt dig om..."). Kaldes fra complainerFlow.js's
 // beginComplainRound, som har både arketype-id'et og selve prompten ved
 // hånden.
-function composePromptText(archetypeId, promptText) {
-  const archetype = COMPLAINER_ARCHETYPES.find(a => a.id === archetypeId);
+function composePromptText(archetypeId, promptText, themeId) {
+  const archetype = getThemeContent(themeId).archetypes.find(a => a.id === archetypeId);
   if (!archetype || !archetype.promptHook || !promptText) return promptText;
   const lowered = promptText.charAt(0).toLowerCase() + promptText.slice(1);
   return `${archetype.promptHook} ${lowered}`;
@@ -293,6 +312,8 @@ module.exports = {
   COMPLAINER_ARCHETYPES,
   COMPLAINER_SITUATIONS,
   COMPLAINER_PROMPTS,
+  CONTENT_BY_THEME,
+  getThemeContent,
   assignArchetypesAndSituations,
   pickPromptFor,
   composePromptText,

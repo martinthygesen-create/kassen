@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         const wager = req.body.wager === 'euro' ? 'euro' : 'fun';
         const totalRounds = ALLOWED_ROUNDS.includes(req.body.totalRounds) ? req.body.totalRounds : DEFAULT_ROUNDS;
         const players = playerObjs.map(mm => mm.id);
-        const { archetypes, situations } = assignArchetypesAndSituations(playerObjs);
+        const { archetypes, situations } = assignArchetypesAndSituations(playerObjs, state.themeId);
         const guiltyId = players[Math.floor(Math.random() * players.length)];
         const scores = {};
         const brokScores = {};
