@@ -1152,6 +1152,156 @@ function activeAppDisplayName(){
   return (state && state.themeName) || 'Brokkekassen';
 }
 
+// Kasse-motor-generalisering, UX-redesign (svar på "vi har meget her på
+// forsiden" — se samtalens designfeedback): opret-flowet er nu et rigtigt
+// TRIN-flow i stedet for 4 kort stablet oven på hinanden. Trin 1 viser KUN
+// kasse-type-valget (det største, mest visuelle valg) — så snart man
+// trykker ét, foldes trin 2 (autoritet/spil/lukketid/adgang/opret) ud
+// nedenunder, med en lille "skift kasse-type"-linje tilbage til trin 1.
+// Join-kortet og "dine kasser" ligger UDENFOR denne wrap og påvirkes ikke.
+function renderCreateFlowStep1(){
+  const wrap = document.getElementById('createFlowWrap');
+  wrap.innerHTML = `
+    <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
+      <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
+        <div class="app-pick-row" id="skinPickRow">
+          ${SKIN_PRESETS.map(skin => `
+            <div class="onboard-pick app-pick" data-skin-id="${skin.id}" style="background:var(--sea); color:#fff;">
+              <div class="app-pick-icon">${skin.emoji}</div>
+              <div class="app-pick-label">${escapeHtml(skin.name)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Vælg én — resten af opsætningen tager kun et par sekunder.</p>
+    </div>
+  `;
+  markAppPickScrollable();
+  document.querySelectorAll('#skinPickRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>renderCreateFlowStep2(el.dataset.skinId);
+  });
+}
+
+function renderCreateFlowStep2(skinId){
+  const wrap = document.getElementById('createFlowWrap');
+  const skin = SKIN_PRESETS.find(s => s.id === skinId) || SKIN_PRESETS[0];
+  wrap.innerHTML = `
+    <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
+      <div style="font-size:22px;">${skin.emoji}</div>
+      <div style="flex:1; font-weight:700; color:#fff;">${escapeHtml(skin.name)}</div>
+      <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">Skift</button>
+    </div>
+    <div class="onboard-card">
+      <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.55); text-align:center;">${escapeHtml(skin.smaatText)}</p>
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
+      <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
+        <div class="onboard-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Alle bekræfter sammen</div>
+        </div>
+        <div class="onboard-pick app-pick${skin.confirmationModel==='host-approval'?' selected':''}" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Én bestemmer</div>
+        </div>
+      </div>
+    </div>
+    <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller flere)</label>
+      <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
+        <div class="app-pick-row" id="gamePickRow">
+          <div class="onboard-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-icon">🫙</div>
+            <div class="app-pick-label">${escapeHtml(skin.name)}</div>
+          </div>
+          <div class="onboard-pick app-pick selected" data-pick="spil" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-icon">👉</div>
+            <div class="app-pick-label">${escapeHtml(skin.gameNames.spil)}</div>
+          </div>
+          <div class="onboard-pick app-pick selected" data-pick="mrbrok" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-icon">🕵️</div>
+            <div class="app-pick-label">${escapeHtml(skin.gameNames.mrbrok)}</div>
+          </div>
+          <div class="onboard-pick app-pick selected" data-pick="complainer" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-icon">🪤</div>
+            <div class="app-pick-label">${escapeHtml(skin.gameNames.complainer)}</div>
+          </div>
+        </div>
+        <div class="app-pick-scroll-hint left">‹</div>
+        <div class="app-pick-scroll-hint right">›</div>
+      </div>
+    </div>
+    <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Lukketid</label>
+      <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 16px;">
+        <div class="onboard-pick app-pick${skin.dailyRhythm ? ' selected' : ''}" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Nulstiller hver dag</div>
+        </div>
+        <div class="onboard-pick app-pick${skin.dailyRhythm ? '' : ' selected'}" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Kører til I lukker den</div>
+        </div>
+      </div>
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Adgang</label>
+      <div class="app-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
+        <div class="onboard-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Alle med linket kan joine</div>
+        </div>
+        <div class="onboard-pick app-pick" data-access-model="approval" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Nye skal godkendes</div>
+        </div>
+      </div>
+      <p class="hint" style="margin:0 0 14px; font-size:11.5px; color:rgba(255,247,232,0.45);">Medvært kan tilføjes efter oprettelse, under ⚙️-menuen, så snart de er kommet med i rummet.</p>
+      <button class="sheet-btn primary" id="createBtn" style="margin-top:0;">Opret nyt rum</button>
+    </div>
+  `;
+  markAppPickScrollable();
+  document.getElementById('changeSkinBtn').onclick = renderCreateFlowStep1;
+  document.querySelectorAll('.onboard-pick[data-pick]').forEach(el=>{
+    el.onclick = ()=>{
+      const willSelect = !el.classList.contains('selected');
+      if(!willSelect){
+        const otherSelected = document.querySelectorAll('.onboard-pick[data-pick].selected').length > 1;
+        if(!otherSelected) return; // mindst én skal altid være valgt
+      }
+      el.classList.toggle('selected');
+    };
+  });
+  ['confirmationPickRow','rhythmPickRow','accessPickRow'].forEach(id=>{
+    document.querySelectorAll(`#${id} .onboard-pick`).forEach(el=>{
+      el.onclick = ()=>{
+        document.querySelectorAll(`#${id} .onboard-pick`).forEach(o=>o.classList.remove('selected'));
+        el.classList.add('selected');
+      };
+    });
+  });
+  document.getElementById('createBtn').onclick = async ()=>{
+    const btn = document.getElementById('createBtn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    try{
+      const kasseEnabled = document.querySelector('#gamePickRow [data-pick="kasse"]').classList.contains('selected');
+      const gameEnabled = document.querySelector('#gamePickRow [data-pick="spil"]').classList.contains('selected');
+      const mrbrokEnabled = document.querySelector('#gamePickRow [data-pick="mrbrok"]').classList.contains('selected');
+      const complainerEnabled = document.querySelector('#gamePickRow [data-pick="complainer"]').classList.contains('selected');
+      const selectedConfirmationEl = document.querySelector('#confirmationPickRow .onboard-pick.selected');
+      const confirmationModel = (selectedConfirmationEl && selectedConfirmationEl.dataset.confirmationModel) || skin.confirmationModel;
+      const selectedRhythmEl = document.querySelector('#rhythmPickRow .onboard-pick.selected');
+      const dailyRhythm = selectedRhythmEl ? selectedRhythmEl.dataset.dailyRhythm === '1' : skin.dailyRhythm;
+      const selectedAccessEl = document.querySelector('#accessPickRow .onboard-pick.selected');
+      const accessModel = (selectedAccessEl && selectedAccessEl.dataset.accessModel) || 'open';
+      const r = await api('room', {
+        kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
+        themeId: skin.id, themeName: skin.name, ruleTagline: skin.ruleTagline,
+        unit: skin.unit, poolPolarity: skin.poolPolarity,
+        confirmationModel, dailyRhythm, accessModel,
+      });
+      roomId = r.roomId;
+      const u = new URL(location.href); u.search = '?r=' + roomId;
+      history.replaceState(null,'',u.toString());
+      localStorage.setItem('bk_lastRoom', roomId);
+      state = r.state;
+      renderWhoAmI(true);
+    }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret nyt rum'; }
+  };
+}
+
 function renderCreateOrJoin(errorMsg){
   const myRooms = getMyRooms();
   const roomIds = Object.keys(myRooms).filter(rid => rid !== roomId).sort((a,b)=>myRooms[b].ts - myRooms[a].ts);
@@ -1166,86 +1316,13 @@ function renderCreateOrJoin(errorMsg){
       `).join('')}
     </div>
   ` : '';
-  const gp = id => (name)=>{
-    const skin = SKIN_PRESETS.find(s=>s.id===id) || SKIN_PRESETS[0];
-    return skin.gameNames[name];
-  };
   app.innerHTML = `
     <div class="onboard">
       <div class="emoji">🍯</div>
       <h1>…Kassen</h1>
-      <p>Peer-bekræftet regnskab + mini-spil, delt med jeres gruppe. Opret jeres egen kasse nedenfor, eller gå med i en I har fået et link til.</p>
+      <p>Peer-bekræftet regnskab + mini-spil, delt med jeres gruppe.</p>
       ${errorMsg ? `<p style="color:var(--coral); font-weight:600; margin-top:-14px;">${errorMsg}</p>` : ''}
-      <div class="onboard-card">
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
-        <div class="app-pick-scroll-wrap" style="margin:10px 0 12px;">
-          <div class="app-pick-row" id="skinPickRow">
-            ${SKIN_PRESETS.map((skin, i) => `
-              <div class="onboard-pick app-pick${i===0?' selected':''}" data-skin-id="${skin.id}" style="background:var(--sea); color:#fff;">
-                <div class="app-pick-icon">${skin.emoji}</div>
-                <div class="app-pick-label">${escapeHtml(skin.name)}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.55); text-align:center;">${escapeHtml(SKIN_PRESETS[0].smaatText)}</p>
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
-        <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 16px;">
-          <div class="onboard-pick app-pick selected" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
-            <div class="app-pick-label">Alle bekræfter sammen</div>
-          </div>
-          <div class="onboard-pick app-pick" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
-            <div class="app-pick-label">Én bestemmer</div>
-          </div>
-        </div>
-      </div>
-      <div class="onboard-card">
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller flere)</label>
-        <div class="app-pick-scroll-wrap" style="margin:10px 0 16px;">
-          <div class="app-pick-row" id="gamePickRow">
-            <div class="onboard-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
-              <div class="app-pick-icon">🫙</div>
-              <div class="app-pick-label" data-gamename-label="kasse">${escapeHtml(SKIN_PRESETS[0].name)}</div>
-            </div>
-            <div class="onboard-pick app-pick selected" data-pick="spil" style="background:var(--sea); color:#fff;">
-              <div class="app-pick-icon">👉</div>
-              <div class="app-pick-label" data-gamename-label="spil">${escapeHtml(gp('brok')('spil'))}</div>
-            </div>
-            <div class="onboard-pick app-pick selected" data-pick="mrbrok" style="background:var(--sea); color:#fff;">
-              <div class="app-pick-icon">🕵️</div>
-              <div class="app-pick-label" data-gamename-label="mrbrok">${escapeHtml(gp('brok')('mrbrok'))}</div>
-            </div>
-            <div class="onboard-pick app-pick selected" data-pick="complainer" style="background:var(--sea); color:#fff;">
-              <div class="app-pick-icon">🪤</div>
-              <div class="app-pick-label" data-gamename-label="complainer">${escapeHtml(gp('brok')('complainer'))}</div>
-            </div>
-          </div>
-          <div class="app-pick-scroll-hint left">‹</div>
-          <div class="app-pick-scroll-hint right">›</div>
-        </div>
-      </div>
-      <div class="onboard-card">
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Lukketid</label>
-        <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 16px;">
-          <div class="onboard-pick app-pick selected" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
-            <div class="app-pick-label">Nulstiller hver dag</div>
-          </div>
-          <div class="onboard-pick app-pick" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
-            <div class="app-pick-label">Kører til I lukker den</div>
-          </div>
-        </div>
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Adgang</label>
-        <div class="app-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
-          <div class="onboard-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
-            <div class="app-pick-label">Alle med linket kan joine</div>
-          </div>
-          <div class="onboard-pick app-pick" data-access-model="approval" style="background:var(--sea); color:#fff;">
-            <div class="app-pick-label">Nye skal godkendes</div>
-          </div>
-        </div>
-        <p class="hint" style="margin:0 0 14px; font-size:11.5px; color:rgba(255,247,232,0.45);">Medvært kan tilføjes efter oprettelse, under ⚙️-menuen, så snart de er kommet med i rummet.</p>
-        <button class="sheet-btn primary" id="createBtn" style="margin-top:0;">Opret nyt rum</button>
-      </div>
+      <div id="createFlowWrap"></div>
       <div class="divider">eller</div>
       <div class="onboard-card">
         <label class="field-label" style="color:rgba(255,247,232,0.6);">Har du fået et link?</label>
@@ -1257,71 +1334,10 @@ function renderCreateOrJoin(errorMsg){
       ${homeScreenTip(false)}
     </div>
   `;
-  markAppPickScrollable();
   document.querySelectorAll('[data-goto-room]').forEach(el=>{
     el.onclick = ()=>switchToRoom(el.dataset.gotoRoom);
   });
-  // Multi-select spil-vælger (kasse/spil/mrbrok/complainer) — uændret adfærd,
-  // scopet til [data-pick] så den ikke rammer de nye enkelt-valg-rækker
-  // nedenfor (Kasse-motor-generalisering, Fase 4).
-  document.querySelectorAll('.onboard-pick[data-pick]').forEach(el=>{
-    el.onclick = ()=>{
-      const willSelect = !el.classList.contains('selected');
-      if(!willSelect){
-        const otherSelected = document.querySelectorAll('.onboard-pick[data-pick].selected').length > 1;
-        if(!otherSelected) return; // mindst én skal altid være valgt
-      }
-      el.classList.toggle('selected');
-    };
-  });
-  // Kasse-motor-generalisering, Fase 4: enkelt-valg skabelon-vælger — kun
-  // ét skin ad gangen, aldrig nul. Opdaterer "med småt"-teksten og
-  // forvalgt autoritets-svar ud fra det valgte skin (universel regel:
-  // forvalget vises altid, men aldrig ubekræftet — se planen).
-  document.querySelectorAll('#skinPickRow .onboard-pick').forEach(el=>{
-    el.onclick = ()=>{
-      document.querySelectorAll('#skinPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
-      el.classList.add('selected');
-      const skin = SKIN_PRESETS.find(s => s.id === el.dataset.skinId);
-      if(skin){
-        document.getElementById('skinSmaatText').textContent = skin.smaatText;
-        document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>{
-          o.classList.toggle('selected', o.dataset.confirmationModel === skin.confirmationModel);
-        });
-        document.querySelectorAll('#rhythmPickRow .onboard-pick').forEach(o=>{
-          o.classList.toggle('selected', o.dataset.dailyRhythm === (skin.dailyRhythm ? '1' : '0'));
-        });
-        // Kasse-motor-generalisering, Fase 4-bug rettet: spilnavnene i
-        // "hvad vil I have med"-vælgeren fulgte IKKE det valgte tema (stod
-        // altid som "MrBrok"/"Det Store Brokkeri" uanset skin) — opdateres
-        // her, samme kilde (skin.gameNames) som createBtn-payloaden bruger.
-        const kasseLabel = document.querySelector('[data-gamename-label="kasse"]');
-        if(kasseLabel) kasseLabel.textContent = skin.name;
-        ['spil','mrbrok','complainer'].forEach(key=>{
-          const label = document.querySelector(`[data-gamename-label="${key}"]`);
-          if(label) label.textContent = skin.gameNames[key];
-        });
-      }
-    };
-  });
-  document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(el=>{
-    el.onclick = ()=>{
-      document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
-      el.classList.add('selected');
-    };
-  });
-  document.querySelectorAll('#rhythmPickRow .onboard-pick').forEach(el=>{
-    el.onclick = ()=>{
-      document.querySelectorAll('#rhythmPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
-      el.classList.add('selected');
-    };
-  });
-  document.querySelectorAll('#accessPickRow .onboard-pick').forEach(el=>{
-    el.onclick = ()=>{
-      document.querySelectorAll('#accessPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
-      el.classList.add('selected');
-    };
-  });
+  renderCreateFlowStep1();
   const joinInput = document.getElementById('joinInput');
   const goJoin = async ()=>{
     const rid = extractRoomId(joinInput.value);
@@ -1343,43 +1359,6 @@ function renderCreateOrJoin(errorMsg){
   };
   document.getElementById('joinRoomBtn').onclick = goJoin;
   joinInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); goJoin(); }});
-  document.getElementById('createBtn').onclick = async ()=>{
-    const btn = document.getElementById('createBtn');
-    btn.innerHTML = '<span class="spinner"></span>';
-    try{
-      const kasseEnabled = document.querySelector('#gamePickRow [data-pick="kasse"]').classList.contains('selected');
-      const gameEnabled = document.querySelector('#gamePickRow [data-pick="spil"]').classList.contains('selected');
-      const mrbrokEnabled = document.querySelector('#gamePickRow [data-pick="mrbrok"]').classList.contains('selected');
-      const complainerEnabled = document.querySelector('#gamePickRow [data-pick="complainer"]').classList.contains('selected');
-      // Kasse-motor-generalisering, Fase 4: skabelon + autoritets-valg sendes
-      // med. Falder tilbage til Brokkekassens egne defaults hvis noget mod
-      // forventning ikke er valgt i UI'en (kan ikke ske i praksis — enkelt-
-      // valg-rækkerne har altid præcis ét selected element — men holder
-      // opret-kaldet robust frem for at fejle stille).
-      const selectedSkinEl = document.querySelector('#skinPickRow .onboard-pick.selected');
-      const skin = SKIN_PRESETS.find(s => s.id === (selectedSkinEl && selectedSkinEl.dataset.skinId)) || SKIN_PRESETS[0];
-      const selectedConfirmationEl = document.querySelector('#confirmationPickRow .onboard-pick.selected');
-      const confirmationModel = (selectedConfirmationEl && selectedConfirmationEl.dataset.confirmationModel) || skin.confirmationModel;
-      // Operationelle valg (Fase 4-punkt 2, se KASSEMOTORPLAN.md's "To
-      // lag"-afsnit): uafhængige af skabelon-valget, spørges altid ens.
-      const selectedRhythmEl = document.querySelector('#rhythmPickRow .onboard-pick.selected');
-      const dailyRhythm = selectedRhythmEl ? selectedRhythmEl.dataset.dailyRhythm === '1' : skin.dailyRhythm;
-      const selectedAccessEl = document.querySelector('#accessPickRow .onboard-pick.selected');
-      const accessModel = (selectedAccessEl && selectedAccessEl.dataset.accessModel) || 'open';
-      const r = await api('room', {
-        kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
-        themeId: skin.id, themeName: skin.name, ruleTagline: skin.ruleTagline,
-        unit: skin.unit, poolPolarity: skin.poolPolarity,
-        confirmationModel, dailyRhythm, accessModel,
-      });
-      roomId = r.roomId;
-      const u = new URL(location.href); u.search = '?r=' + roomId;
-      history.replaceState(null,'',u.toString());
-      localStorage.setItem('bk_lastRoom', roomId);
-      state = r.state;
-      renderWhoAmI(true);
-    }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret nyt rum'; }
-  };
 }
 
 function renderWhoAmI(justCreated){
