@@ -62,6 +62,19 @@ function emptyState() {
     mrbrokEnabled: true,
     complainerEnabled: true,
     gameContentBank: { truefalse: [] }, // sandt/falsk-udsagn folk har skrevet — genbruges nogle gange i senere spil
+
+    // --- Kasse-motor-generalisering (se god-finding-men-du-lovely-zephyr.md) ---
+    // Alle defaults herunder reproducerer nuværende Brokkekassen-adfærd 1:1 —
+    // dette er Fase 0, ingen synlig ændring, kun nye felter klar til at blive brugt.
+    themeId: 'brok',           // nøgle ind i CONTENT_BY_THEME/QUESTION_TEMPLATES_BY_THEME
+    themeName: 'Brokkekassen', // fri tekst, brugervendt, erstatter hardcoded "Brokkekassen" i UI
+    ruleTagline: 'Brokker du dig, koster det 1€.', // kort regel-forklaring, erstatter hardcoded "Ferie-reglen"
+    unit: '€',
+    poolPolarity: 'punishment', // 'punishment' | 'reward' — styrer wager-retning (taber betaler vs. vinder optjener)
+    confirmationModel: 'quorum', // 'quorum' | 'host-approval' — styrer KUN krukke-hændelser, aldrig selve spillet
+    dailyRhythm: true,          // slukker/tænder streaks+lodtrækning+SILENCE_LINES samlet, når false
+    cohostIds: [],               // sekundær rolle ud over isAdmin() — se api/admin.js
+    accessModel: 'open',         // 'open' | 'approval' — join-godkendelse (ikke brugt endnu, Fase 4+)
   };
 }
 
@@ -270,6 +283,17 @@ function applyMigrations(state) {
   if (state.complainer.active && !state.complainer.players) state.complainer = { active: false };
   if (!state.complainerStats) state.complainerStats = {};
   if (!state.gameContentBank) state.gameContentBank = { truefalse: [] };
+  // Kasse-motor-generalisering (Fase 0) — defaults reproducerer nuværende
+  // Brokkekassen-adfærd 1:1 for alle rum oprettet før disse felter fandtes.
+  if (!state.themeId) state.themeId = 'brok';
+  if (!state.themeName) state.themeName = 'Brokkekassen';
+  if (state.ruleTagline === undefined) state.ruleTagline = 'Brokker du dig, koster det 1€.';
+  if (!state.unit) state.unit = '€';
+  if (!state.poolPolarity) state.poolPolarity = 'punishment';
+  if (!state.confirmationModel) state.confirmationModel = 'quorum';
+  if (state.dailyRhythm === undefined) state.dailyRhythm = true;
+  if (!state.cohostIds) state.cohostIds = [];
+  if (!state.accessModel) state.accessModel = 'open';
   if (!state.pendingList) {
     // migrering fra det gamle enkelt-pending-felt til en liste
     state.pendingList = state.pending ? [state.pending] : [];
@@ -356,6 +380,16 @@ async function createRoom(roomId, opts) {
   if (opts && opts.gameEnabled === false) state.gameEnabled = false;
   if (opts && opts.mrbrokEnabled === false) state.mrbrokEnabled = false;
   if (opts && opts.complainerEnabled === false) state.complainerEnabled = false;
+  // Kasse-motor-generalisering (Fase 0) — alle valgfrie, udelades betyder
+  // Brokkekassens egne defaults fra emptyState() (uændret adfærd).
+  if (opts && opts.themeId) state.themeId = opts.themeId;
+  if (opts && opts.themeName) state.themeName = opts.themeName;
+  if (opts && opts.ruleTagline !== undefined) state.ruleTagline = opts.ruleTagline;
+  if (opts && opts.unit) state.unit = opts.unit;
+  if (opts && opts.poolPolarity) state.poolPolarity = opts.poolPolarity;
+  if (opts && opts.confirmationModel) state.confirmationModel = opts.confirmationModel;
+  if (opts && opts.dailyRhythm === false) state.dailyRhythm = false;
+  if (opts && opts.accessModel) state.accessModel = opts.accessModel;
   await setState(roomId, state);
   return state;
 }
