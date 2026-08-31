@@ -23,7 +23,13 @@ module.exports = async (req, res) => {
       // at komme direkte ind — allerede kendte navne (fundet ovenfor) er
       // altid velkomne tilbage uden ny godkendelse. Bots (test-spil) er
       // undtaget — de bruges kun internt af en allerede-godkendt admin.
-      if (state.accessModel === 'approval' && !isBot) {
+      // KRITISK undtagelse (fanget af en ægte browser-gennemkørsel, ikke
+      // gættet på forhånd): rummets FØRSTE medlem (den der lige har oprettet
+      // rummet, members[0]/isAdmin) skal ALDRIG selv gates bag godkendelse —
+      // der findes per definition ingen til at godkende dem endnu, hvilket
+      // ellers ville låse rummet fast i en dødlås (ingen kan nogensinde komme
+      // ind, heller ikke opretteren selv).
+      if (state.accessModel === 'approval' && !isBot && state.members.length > 0) {
         if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
         let pending = state.pendingMembers.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
         if (!pending) {
