@@ -17,6 +17,7 @@ const path = require('path');
 const mrbrok = require(path.join(__dirname, '..', 'api', '_lib', 'mrbrok'));
 const complainer = require(path.join(__dirname, '..', 'api', '_lib', 'complainer'));
 const game = require(path.join(__dirname, '..', 'api', '_lib', 'game'));
+const { SKIN_REGISTRY } = require(path.join(__dirname, '..', 'api', '_lib', 'themeRegistry'));
 
 // Minimum-pulje-størrelser — konkrete tærskler, jf. planens løfte om at
 // dette IKKE må forblive et princip uden tal. Baseret på brok-originalens
@@ -142,6 +143,37 @@ function checkThemeIdentityNotLeaked(themeId, errors) {
   });
 }
 
+// --- Skabelon-registrering (mechanicTags/allowedGames, se _lib/themeRegistry.js) ---
+// Kun for TEMAER der er registreret som kuraterede skins — "opret din
+// egen" har ikke sit eget registry-indslag (arver et eksisterende, se
+// index.html), så den tjekkes ikke her.
+function checkRegistry(themeId, errors) {
+  const entry = SKIN_REGISTRY[themeId];
+  if (!entry) return; // ikke et kurateret skin — intet registry-krav
+  ['confirmationModel', 'poolPolarity', 'mechanic', 'toneRegister'].forEach(key => {
+    if (!entry[key]) fail(errors, `[registry] SKIN_REGISTRY.${themeId}.${key} mangler`);
+  });
+  if (!Array.isArray(entry.allowedGames) || !entry.allowedGames.length) {
+    fail(errors, `[registry] SKIN_REGISTRY.${themeId}.allowedGames mangler eller er tom`);
+    return;
+  }
+  // "Kan den ikke, er den ikke available"-princippet: hvert spil i
+  // allowedGames skal reelt have indhold for temaet (ellers ville UI'en
+  // tilbyde et spil der falder tilbage til 'brok's indhold i stilhed).
+  const contentByGame = { spil: game.CONTENT_BY_THEME, mrbrok: mrbrok.CONTENT_BY_THEME, complainer: complainer.CONTENT_BY_THEME };
+  entry.allowedGames.forEach(g => {
+    if (!contentByGame[g]) { fail(errors, `[registry] allowedGames indeholder ukendt spil-nøgle '${g}'`); return; }
+    if (!contentByGame[g][themeId]) fail(errors, `[registry] allowedGames tillader '${g}' for '${themeId}', men CONTENT_BY_THEME.${themeId} mangler i den spilfil`);
+  });
+  // Løgnerkassen-type-reglen (planens "confirmationModel styrer KUN
+  // krukke-hændelser"-rettelse, men MrBrok-udelukkelsen under
+  // værts-godkendelse ER en generel dommer-regel, se planens
+  // "Bekræftet"-afsnit): host-approval-skins må ikke tillade MrBrok.
+  if (entry.confirmationModel === 'host-approval' && entry.allowedGames.includes('mrbrok')) {
+    fail(errors, `[registry] '${themeId}' har confirmationModel:'host-approval' men tillader alligevel MrBrok — brud på den generelle regel (se planens 'Bekræftet'-afsnit)`);
+  }
+}
+
 function validateTheme(themeId) {
   const errors = [];
   const warnings = [];
@@ -149,6 +181,7 @@ function validateTheme(themeId) {
   checkComplainer(themeId, errors, warnings);
   checkGame(themeId, errors, warnings);
   checkThemeIdentityNotLeaked(themeId, errors);
+  checkRegistry(themeId, errors);
   return { themeId, errors, warnings };
 }
 
