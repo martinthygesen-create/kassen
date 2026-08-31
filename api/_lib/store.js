@@ -120,6 +120,11 @@ function copenhagenLocalHour(ts) {
 // processPendingExpiry, det gør api/state.js. Sendes aldrig i nattetimerne;
 // falder bare tilbage og prøver igen ved næste poll efter kl. 08.
 function checkSilenceNudge(state) {
+  // Kasse-motor-generalisering (Fase 2): dailyRhythm:false slukker
+  // stilhed-påmindelsen helt — den antager en daglig cyklus (24t stilhed),
+  // meningsløs for en session-baseret skabelon. Se planens "Simulering:
+  // bevarer skabelon-modellen 'det sjove'"-afsnit.
+  if (state.dailyRhythm === false) return false;
   if (state.closed || state.members.length < 2) return false;
   const lastEventTs = state.events.reduce((max, e) => Math.max(max, e.ts), 0);
   const lastActivity = Math.max(lastEventTs, state.dayBoundary, state.createdAt);
@@ -218,6 +223,10 @@ function redrawFreeBrok(state) {
 // opdateres, men puljen (events) er urørt — den tømmes kun ved en bevidst
 // "Gør op". Så det ikke kræver at nogen husker noget manuelt hver dag.
 function autoSettleIfDue(state) {
+  // Kasse-motor-generalisering (Fase 2): dailyRhythm:false slukker den
+  // automatiske dags-cyklus (streaks/lodtrækning) helt — kun meningsfuldt
+  // hvis noget rent faktisk sker næsten hver dag i denne skabelon.
+  if (state.dailyRhythm === false) return false;
   if (state.closed) return false;
   if (Date.now() < nextDailyReset(state.dayBoundary)) return false;
   updateStreaksAndDrawLottery(state);

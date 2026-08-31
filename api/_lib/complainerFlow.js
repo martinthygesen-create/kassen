@@ -326,11 +326,16 @@ function resolveJudge(state) {
 function endComplainerGame(state, guiltyWon) {
   const c = state.complainer;
   if (c.wager === 'euro') {
-    // Kasse-motor-generalisering (Fase 1): spilnavn nu tema-afhængigt.
+    // Kasse-motor-generalisering (Fase 2): poolPolarity afgør hvem der
+    // krediteres et event — taberen (straf) eller vinderen (belønning).
     const gameName = getThemeContent(state.themeId).gameName;
-    const payerIds = guiltyWon ? c.players.filter(id => id !== c.guiltyId) : [c.guiltyId];
-    payerIds.forEach(id => {
-      state.events.push({ id: uid(), memberId: id, message: `Tabte ${gameName}`, ts: Date.now(), votes: [], free: false, gameLoss: true });
+    const isReward = state.poolPolarity === 'reward';
+    const loserIds = guiltyWon ? c.players.filter(id => id !== c.guiltyId) : [c.guiltyId];
+    const winnerIds = guiltyWon ? [c.guiltyId] : c.players.filter(id => id !== c.guiltyId);
+    const creditedIds = isReward ? winnerIds : loserIds;
+    const message = isReward ? `Vandt ${gameName}` : `Tabte ${gameName}`;
+    creditedIds.forEach(id => {
+      state.events.push({ id: uid(), memberId: id, message, ts: Date.now(), votes: [], free: false, gameLoss: true });
     });
   }
   if (!state.complainerStats) state.complainerStats = {};

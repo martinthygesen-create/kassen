@@ -73,11 +73,16 @@ function resolveSteal(state) {
 function endMrbrokGame(state, mrBrokWon) {
   const m = state.mrbrok;
   if (m.wager === 'euro') {
-    // Kasse-motor-generalisering (Fase 1): spilnavn nu tema-afhængigt.
+    // Kasse-motor-generalisering (Fase 2): poolPolarity afgør hvem der
+    // krediteres et event — taberen (straf) eller vinderen (belønning).
     const gameName = getThemeContent(state.themeId).gameName;
-    const payerIds = mrBrokWon ? m.players.filter(id => id !== m.mrBrokId) : [m.mrBrokId];
-    payerIds.forEach(id => {
-      state.events.push({ id: uid(), memberId: id, message: `Tabte ${gameName}`, ts: Date.now(), votes: [], free: false, gameLoss: true });
+    const isReward = state.poolPolarity === 'reward';
+    const loserIds = mrBrokWon ? m.players.filter(id => id !== m.mrBrokId) : [m.mrBrokId];
+    const winnerIds = mrBrokWon ? [m.mrBrokId] : m.players.filter(id => id !== m.mrBrokId);
+    const creditedIds = isReward ? winnerIds : loserIds;
+    const message = isReward ? `Vandt ${gameName}` : `Tabte ${gameName}`;
+    creditedIds.forEach(id => {
+      state.events.push({ id: uid(), memberId: id, message, ts: Date.now(), votes: [], free: false, gameLoss: true });
     });
   }
   // Bot-testspillere tælles aldrig med i highscoren.

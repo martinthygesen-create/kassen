@@ -264,13 +264,15 @@ function endGame(state) {
   const loserIds = memberIds.filter(id => (scores[id] || 0) === minScore);
   const winnerIds = memberIds.filter(id => (scores[id] || 0) === maxScore);
   if (state.game.wager === 'euro') {
-    // Kasse-motor-generalisering (Fase 1): spilnavnet er nu tema-afhængigt,
-    // ikke hardcoded — se god-finding-men-du-lovely-zephyr.md. Selve
-    // "taber betaler"-retningen er uændret her (poolPolarity-routing er
-    // Fase 2, ikke rørt i denne fase).
+    // Kasse-motor-generalisering (Fase 2): poolPolarity afgør hvem der
+    // krediteres et event — taberen (straf, uændret nuværende adfærd) eller
+    // vinderen (belønning). Se "Ny variabel fundet: poolPolarity" i planen.
     const gameName = getThemeContent(state.themeId).gameName;
-    loserIds.forEach(id => {
-      state.events.push({ id: uid(), memberId: id, message: `Tabte ${gameName}`, ts: Date.now(), votes: [], free: false, gameLoss: true });
+    const isReward = state.poolPolarity === 'reward';
+    const creditedIds = isReward ? winnerIds : loserIds;
+    const message = isReward ? `Vandt ${gameName}` : `Tabte ${gameName}`;
+    creditedIds.forEach(id => {
+      state.events.push({ id: uid(), memberId: id, message, ts: Date.now(), votes: [], free: false, gameLoss: true });
     });
   }
 
