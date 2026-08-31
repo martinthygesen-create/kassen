@@ -28,6 +28,19 @@ function isAdmin(state, memberId) {
   return !!(state && state.members[0] && state.members[0].id === memberId);
 }
 
+// Kasse-motor-generalisering (Fase 3, se god-finding-men-du-lovely-zephyr.md):
+// sekundær rolle ud over isAdmin(), for indholds-tunge skabeloner (fx en
+// quiz-tung skin) hvor for meget opsætning ellers ligger på én person.
+// isAdmin ALENE afgør fortsat de mest destruktive handlinger (slet rum,
+// nulstil alt) — cohost får adgang til den daglige drift, ikke til at
+// fjerne/udpege andre cohosts eller ødelægge rummet.
+function isCohost(state, memberId) {
+  return !!(state && Array.isArray(state.cohostIds) && memberId && state.cohostIds.includes(memberId));
+}
+function hasAdminAccess(state, memberId) {
+  return isAdmin(state, memberId) || isCohost(state, memberId);
+}
+
 const RESET_HOUR = 4; // ny runde starter kl 04 lokal tid
 const RESET_TZ = 'Europe/Copenhagen';
 
@@ -480,4 +493,4 @@ function redactStateFor(state, viewerId) {
   return redactComplainerFor(withMrbrok, viewerId);
 }
 
-module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor };
+module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor };
