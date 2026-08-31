@@ -5,7 +5,14 @@ const { redis } = require('./redis');
 // fra _lib/complainer.js (INDHOLD, ingen afhængighed af store.js), for at
 // undgå en cirkulær require med _lib/complainerFlow.js (som selv bruger
 // store.js's uid()).
-const { redactComplainerFor } = require('./complainer');
+const { redactComplainerFor, CONTENT_BY_THEME: COMPLAINER_CONTENT_BY_THEME } = require('./complainer');
+// Kasse-motor-generalisering, Fase 4 (se god-finding-men-du-lovely-zephyr.md):
+// kun for at læse hver spils tema-afhængige gameName ind i redactStateFor
+// nedenfor — INGEN cirkulær require-risiko, da mrbrok.js/game.js ikke
+// selv kræver store.js (kun complainerFlow.js/mrbrokFlow.js gør, og de er
+// separate filer fra selve indholds-filerne).
+const { CONTENT_BY_THEME: MRBROK_CONTENT_BY_THEME } = require('./mrbrok');
+const { CONTENT_BY_THEME: GAME_CONTENT_BY_THEME } = require('./game');
 
 // Fejl med en HTTP-statuskode knyttet til sig — kastes inde fra en
 // mutateState-mutator for at afbryde MED DET SAMME (ingen retry, en
@@ -458,12 +465,36 @@ function healPendingVotes(state) {
   return confirmedIds;
 }
 
+// Kasse-motor-generalisering, Fase 4: spilnavne er tema-afhængige (fx
+// "Bødedetektiven" i stedet for "MrBrok"), se planens punkt om at
+// spilnavne er brok-brandede og skal reskinnes pr. tema — klienten skal
+// aldrig selv duplikere denne opslags-logik (index.html:1688-fundet fra
+// UI-audit-bilaget). Ukendt/manglende tema falder tilbage til 'brok's
+// navne, samme fallback-princip som resten af CONTENT_BY_THEME.
+function getGameNames(themeId) {
+  return {
+    spil: (GAME_CONTENT_BY_THEME[themeId] || GAME_CONTENT_BY_THEME.brok).gameName,
+    mrbrok: (MRBROK_CONTENT_BY_THEME[themeId] || MRBROK_CONTENT_BY_THEME.brok).gameName,
+    complainer: (COMPLAINER_CONTENT_BY_THEME[themeId] || COMPLAINER_CONTENT_BY_THEME.brok).gameName,
+  };
+}
+
 // MrBrok gemmer en hemmelighed i state.mrbrok (hvem der er MrBrok, og selve
 // emnet) — men hele state sendes som én samlet JSON-blob til klienten ved
 // hver poll/handling, så vi er nødt til at maskere de hemmelige felter ud
 // fra HVEM der kigger, hver gang state skal serialiseres til et svar. Brugt
 // af alle api/-filer der returnerer `state` i deres svar.
+//
+// Kasse-motor-generalisering, Fase 4: ydre funktion tilføjet KUN for at
+// hægte `gameNames` på uanset hvilken af de to interne exit-veje
+// (mrbrok-inaktiv-tidligt-retur vs. den fulde sti) der rammes — selve
+// redaktions-logikken herunder (nu `redactStateForInner`) er UÆNDRET.
 function redactStateFor(state, viewerId) {
+  const redacted = redactStateForInner(state, viewerId);
+  return { ...redacted, gameNames: getGameNames(state.themeId) };
+}
+
+function redactStateForInner(state, viewerId) {
   const m = state.mrbrok;
   // VIGTIGT: dette tidlige return dækker KUN mrbrok-redaktionen — det må
   // ALDRIG kortslutte hele funktionen, for så springes Det Store Brokkeris
@@ -493,4 +524,4 @@ function redactStateFor(state, viewerId) {
   return redactComplainerFor(withMrbrok, viewerId);
 }
 
-module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor };
+module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor, getGameNames };

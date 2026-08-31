@@ -33,7 +33,15 @@ module.exports = async (req, res) => {
     const mrbrokEnabled = !(req.body && req.body.mrbrokEnabled === false);
     const complainerEnabled = !(req.body && req.body.complainerEnabled === false);
     if (!kasseEnabled && !gameEnabled && !mrbrokEnabled && !complainerEnabled) return res.status(400).json({ error: 'vælg mindst én' });
-    const state = await createRoom(roomId, { kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled });
+    // Kasse-motor-generalisering, Fase 4: skabelon-felter fra oprettelses-UI
+    // videresendes til createRoom (som allerede accepterer dem, Fase 0) —
+    // alle valgfrie, udeladt betyder Brokkekassens egne defaults fra
+    // emptyState() (uændret adfærd for eksisterende/ældre klienter).
+    const { themeId, themeName, ruleTagline, unit, poolPolarity, confirmationModel, dailyRhythm } = req.body || {};
+    const state = await createRoom(roomId, {
+      kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
+      themeId, themeName, ruleTagline, unit, poolPolarity, confirmationModel, dailyRhythm,
+    });
     res.status(200).json({ roomId, state });
   } catch (e) {
     res.status(500).json({ error: e.message });

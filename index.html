@@ -1107,6 +1107,41 @@ function markAppPickScrollable(){
   });
 }
 
+// Kasse-motor-generalisering, Fase 4 (se god-finding-men-du-lovely-zephyr.md):
+// klient-side UI-liste, IKKE en kilde til sandhed — serveren validerer
+// stadig selv via createRoom's opts (Fase 0, api/_lib/store.js). Kun de to
+// skabeloner der rent faktisk har indhold (Fase 5) er med her; flere kan
+// tilføjes billigt (ren tekst) når de får eget indhold i mrbrok.js/
+// complainer.js/game.js's CONTENT_BY_THEME.
+const SKIN_PRESETS = [
+  {
+    id: 'brok', name: 'Brokkekassen', emoji: '🫙',
+    ruleTagline: 'Brokker du dig, koster det 1€.', unit: '€',
+    poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
+    smaatText: 'Brok, bekræftet af alle',
+  },
+  {
+    id: 'bode', name: 'Bødekassen', emoji: '💸',
+    ruleTagline: 'Kom for sent, eller bryd en aftalt regel, og det koster en bøde.', unit: 'kr',
+    poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: false,
+    smaatText: 'Regelbrud, bekræftet af alle',
+  },
+];
+
+// Kasse-motor-generalisering, Fase 4: erstatter den tidligere hardcodede
+// activeApp==='spil'?'Brokspillet':...-ternary (fundet i UI-audit-bilaget,
+// index.html:1688 dengang) — læser tema-afhængige spilnavne fra
+// state.gameNames (sat server-side af redactStateFor, se _lib/store.js's
+// getGameNames). Faldback til de oprindelige brok-navne hvis en ældre,
+// cachet state-version (fra før dette felt fandtes) skulle mangle det.
+function activeAppDisplayName(){
+  const names = (state && state.gameNames) || {};
+  if(activeApp==='spil') return names.spil || 'Brokspillet';
+  if(activeApp==='mrbrok') return names.mrbrok || 'MrBrok';
+  if(activeApp==='complainer') return names.complainer || 'Det Store Brokkeri';
+  return (state && state.themeName) || 'Brokkekassen';
+}
+
 function renderCreateOrJoin(errorMsg){
   const myRooms = getMyRooms();
   const roomIds = Object.keys(myRooms).filter(rid => rid !== roomId).sort((a,b)=>myRooms[b].ts - myRooms[a].ts);
@@ -1134,6 +1169,29 @@ function renderCreateOrJoin(errorMsg){
         <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
       </div>
       <div class="divider">eller</div>
+      <div class="onboard-card">
+        <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
+        <div class="app-pick-scroll-wrap" style="margin:10px 0 12px;">
+          <div class="app-pick-row" id="skinPickRow">
+            ${SKIN_PRESETS.map((skin, i) => `
+              <div class="onboard-pick app-pick${i===0?' selected':''}" data-skin-id="${skin.id}" style="background:var(--sea); color:#fff;">
+                <div class="app-pick-icon">${skin.emoji}</div>
+                <div class="app-pick-label">${escapeHtml(skin.name)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.55); text-align:center;">${escapeHtml(SKIN_PRESETS[0].smaatText)}</p>
+        <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
+        <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 16px;">
+          <div class="onboard-pick app-pick selected" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-label">Alle bekræfter sammen</div>
+          </div>
+          <div class="onboard-pick app-pick" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-label">Én bestemmer</div>
+          </div>
+        </div>
+      </div>
       <div class="onboard-card">
         <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller begge)</label>
         <div class="app-pick-scroll-wrap" style="margin:10px 0 16px;">
@@ -1168,14 +1226,40 @@ function renderCreateOrJoin(errorMsg){
   document.querySelectorAll('[data-goto-room]').forEach(el=>{
     el.onclick = ()=>switchToRoom(el.dataset.gotoRoom);
   });
-  document.querySelectorAll('.onboard-pick').forEach(el=>{
+  // Multi-select spil-vælger (kasse/spil/mrbrok/complainer) — uændret adfærd,
+  // scopet til [data-pick] så den ikke rammer de nye enkelt-valg-rækker
+  // nedenfor (Kasse-motor-generalisering, Fase 4).
+  document.querySelectorAll('.onboard-pick[data-pick]').forEach(el=>{
     el.onclick = ()=>{
       const willSelect = !el.classList.contains('selected');
       if(!willSelect){
-        const otherSelected = document.querySelectorAll('.onboard-pick.selected').length > 1;
+        const otherSelected = document.querySelectorAll('.onboard-pick[data-pick].selected').length > 1;
         if(!otherSelected) return; // mindst én skal altid være valgt
       }
       el.classList.toggle('selected');
+    };
+  });
+  // Kasse-motor-generalisering, Fase 4: enkelt-valg skabelon-vælger — kun
+  // ét skin ad gangen, aldrig nul. Opdaterer "med småt"-teksten og
+  // forvalgt autoritets-svar ud fra det valgte skin (universel regel:
+  // forvalget vises altid, men aldrig ubekræftet — se planen).
+  document.querySelectorAll('#skinPickRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll('#skinPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+      const skin = SKIN_PRESETS.find(s => s.id === el.dataset.skinId);
+      if(skin){
+        document.getElementById('skinSmaatText').textContent = skin.smaatText;
+        document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>{
+          o.classList.toggle('selected', o.dataset.confirmationModel === skin.confirmationModel);
+        });
+      }
+    };
+  });
+  document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
     };
   });
   const joinInput = document.getElementById('joinInput');
@@ -1207,7 +1291,21 @@ function renderCreateOrJoin(errorMsg){
       const gameEnabled = document.querySelector('[data-pick="spil"]').classList.contains('selected');
       const mrbrokEnabled = document.querySelector('[data-pick="mrbrok"]').classList.contains('selected');
       const complainerEnabled = document.querySelector('[data-pick="complainer"]').classList.contains('selected');
-      const r = await api('room', { kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled });
+      // Kasse-motor-generalisering, Fase 4: skabelon + autoritets-valg sendes
+      // med. Falder tilbage til Brokkekassens egne defaults hvis noget mod
+      // forventning ikke er valgt i UI'en (kan ikke ske i praksis — enkelt-
+      // valg-rækkerne har altid præcis ét selected element — men holder
+      // opret-kaldet robust frem for at fejle stille).
+      const selectedSkinEl = document.querySelector('#skinPickRow .onboard-pick.selected');
+      const skin = SKIN_PRESETS.find(s => s.id === (selectedSkinEl && selectedSkinEl.dataset.skinId)) || SKIN_PRESETS[0];
+      const selectedConfirmationEl = document.querySelector('#confirmationPickRow .onboard-pick.selected');
+      const confirmationModel = (selectedConfirmationEl && selectedConfirmationEl.dataset.confirmationModel) || skin.confirmationModel;
+      const r = await api('room', {
+        kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
+        themeId: skin.id, themeName: skin.name, ruleTagline: skin.ruleTagline,
+        unit: skin.unit, poolPolarity: skin.poolPolarity,
+        confirmationModel, dailyRhythm: skin.dailyRhythm,
+      });
       roomId = r.roomId;
       const u = new URL(location.href); u.search = '?r=' + roomId;
       history.replaceState(null,'',u.toString());
@@ -1685,7 +1783,7 @@ function openAppMenuSheet(){
     ${isAdmin() ? `
       <div class="divider">admin</div>
       <div class="menu-row-list">
-        <div class="menu-row" id="menuAdminBtn"><div class="menu-row-icon">⚙️</div><div class="menu-row-label">Admin for ${activeApp==='spil'?'Brokspillet':(activeApp==='mrbrok'?'MrBrok':(activeApp==='complainer'?'Det Store Brokkeri':'Brokkekassen'))}</div><span class="menu-row-chevron">›</span></div>
+        <div class="menu-row" id="menuAdminBtn"><div class="menu-row-icon">⚙️</div><div class="menu-row-label">Admin for ${activeAppDisplayName()}</div><span class="menu-row-chevron">›</span></div>
       </div>
     ` : ''}
   `, ()=>{
