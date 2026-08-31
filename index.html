@@ -1333,7 +1333,7 @@ function renderCreateFlowStep2(skinOrId){
       el.classList.toggle('selected');
     };
   });
-  ['confirmationPickRow','rhythmPickRow','accessPickRow'].forEach(id=>{
+  ['rhythmPickRow','accessPickRow'].forEach(id=>{
     document.querySelectorAll(`#${id} .onboard-pick`).forEach(el=>{
       el.onclick = ()=>{
         document.querySelectorAll(`#${id} .onboard-pick`).forEach(o=>o.classList.remove('selected'));
@@ -1341,6 +1341,28 @@ function renderCreateFlowStep2(skinOrId){
       };
     });
   });
+  // Kasse-motor-generalisering, Dommer-reglen "host-approval udelukker
+  // MrBrok" (se _lib/themeRegistry.js's checkRegistry — samme regel gjaldt
+  // kun de KURATEREDE skins før dette, men brugeren kan her frit vælge "Én
+  // bestemmer" uanset base, så reglen skal håndhæves HER også, ikke kun i
+  // Dommeren). "Kan den ikke, er den ikke available" — MrBrok-flisen
+  // skjules og fravælges, den vises ikke bare deaktiveret.
+  function applyHostApprovalGameRestriction(){
+    const isHostApproval = document.querySelector('#confirmationPickRow [data-confirmation-model="host-approval"]').classList.contains('selected');
+    const mrbrokTile = document.querySelector('#gamePickRow [data-pick="mrbrok"]');
+    if(!mrbrokTile) return;
+    mrbrokTile.style.display = isHostApproval ? 'none' : '';
+    if(isHostApproval) mrbrokTile.classList.remove('selected');
+    else mrbrokTile.classList.add('selected');
+  }
+  document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll('#confirmationPickRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+      applyHostApprovalGameRestriction();
+    };
+  });
+  applyHostApprovalGameRestriction();
   document.getElementById('createBtn').onclick = async ()=>{
     const btn = document.getElementById('createBtn');
     btn.innerHTML = '<span class="spinner"></span>';

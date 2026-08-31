@@ -53,14 +53,19 @@ module.exports = async (req, res) => {
     let roomId = genRoomId();
     const kasseEnabled = !(req.body && req.body.kasseEnabled === false);
     const gameEnabled = !(req.body && req.body.gameEnabled === false);
-    const mrbrokEnabled = !(req.body && req.body.mrbrokEnabled === false);
+    const { themeId, themeName, ruleTagline, unit, poolPolarity, confirmationModel, dailyRhythm, accessModel } = req.body || {};
+    // Dommer-reglen "host-approval udelukker MrBrok" (se
+    // KASSEMOTORPLAN.md/_lib/themeRegistry.js's checkRegistry): håndhæves
+    // også her server-side, ikke kun i klientens UI — en klient der
+    // (fejlagtigt eller bevidst) alligevel sender mrbrokEnabled:true sammen
+    // med confirmationModel:'host-approval' skal ikke kunne omgå reglen.
+    const mrbrokEnabled = confirmationModel === 'host-approval' ? false : !(req.body && req.body.mrbrokEnabled === false);
     const complainerEnabled = !(req.body && req.body.complainerEnabled === false);
     if (!kasseEnabled && !gameEnabled && !mrbrokEnabled && !complainerEnabled) return res.status(400).json({ error: 'vælg mindst én' });
     // Kasse-motor-generalisering, Fase 4: skabelon-felter fra oprettelses-UI
     // videresendes til createRoom (som allerede accepterer dem, Fase 0) —
     // alle valgfrie, udeladt betyder Brokkekassens egne defaults fra
     // emptyState() (uændret adfærd for eksisterende/ældre klienter).
-    const { themeId, themeName, ruleTagline, unit, poolPolarity, confirmationModel, dailyRhythm, accessModel } = req.body || {};
     const state = await createRoom(roomId, {
       kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
       themeId, themeName, ruleTagline, unit, poolPolarity, confirmationModel, dailyRhythm, accessModel,
