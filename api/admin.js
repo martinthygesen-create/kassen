@@ -1,4 +1,4 @@
-const { getState, setState, deleteRoom, emptyState, isAdmin, hasAdminAccess, settleRound, redrawFreeBrok, redactStateFor } = require('./_lib/store');
+const { getState, setState, mutateState, deleteRoom, emptyState, isAdmin, hasAdminAccess, settleRound, redrawFreeBrok, redactStateFor, ApiError } = require('./_lib/store');
 const { pushToMembers } = require('./_lib/push');
 
 // Samler admin-handlingerne (gør op, luk, nulstil, besked, mål) i én
@@ -157,15 +157,24 @@ module.exports = async (req, res) => {
       return res.status(200).json({ state: redactStateFor(state, actorId) });
     }
 
+    // Kasse-motor-generalisering, teknisk hærdning (fundet under et
+    // autonomt teknisk rette-loop, ikke gættet på forhånd): disse tre
+    // handlinger bruger mutateState (CAS-beskyttet), IKKE den delte
+    // top-af-funktionen `state`-variabel resten af filen bruger — et
+    // dobbeltklik på "Godkend"/"Pause" (eller to admin-faner) kunne
+    // ellers race og miste en samtidig ændring, samme klasse fejl som
+    // api/room.js's join-handler havde (se dens commit-historik).
     if (action === 'togglePause') {
       // "Tilgængelighedsvindue" (se KASSEMOTORPLAN.md's "Motor-variabler"-
       // afsnit): admin/cohost kan slå ny-anklage-oprettelse fra midlertidigt
       // (fx "ikke under møder"/"ikke under undervisning") uden at røre
       // allerede ventende afstemninger eller lukke rummet.
-      if (!hasAdminAccess(state, actorId)) return res.status(403).json({ error: 'kun den der oprettede brokkekassen (eller en medvært) kan sætte på pause' });
-      state.pausedByHost = !state.pausedByHost;
-      await setState(roomId, state);
-      return res.status(200).json({ state: redactStateFor(state, actorId) });
+      const mutated = await mutateState(roomId, async (fresh) => {
+        if (!hasAdminAccess(fresh, actorId)) throw new ApiError(403, 'kun den der oprettede brokkekassen (eller en medvært) kan sætte på pause');
+        fresh.pausedByHost = !fresh.pausedByHost;
+      });
+      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
+      return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
     }
 
     if (action === 'approveMember') {
@@ -175,29 +184,36 @@ module.exports = async (req, res) => {
       // memberId (fra join-svaret) bliver gyldigt uden at brugeren skal
       // gøre noget selv, den finder det bare ved næste poll.
       const { pendingId } = req.body || {};
-      if (!hasAdminAccess(state, actorId)) return res.status(403).json({ error: 'kun den der oprettede brokkekassen (eller en medvært) kan godkende medlemmer' });
-      if (!pendingId) return res.status(400).json({ error: 'mangler data' });
-      if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
-      const idx = state.pendingMembers.findIndex(p => p.id === pendingId);
-      if (idx === -1) return res.status(404).json({ error: 'anmodningen findes ikke længere' });
-      const [pending] = state.pendingMembers.splice(idx, 1);
-      state.members.push({ id: pending.id, name: pending.name, email: pending.email || null });
-      await setState(roomId, state);
-      return res.status(200).json({ state: redactStateFor(state, actorId) });
+      const mutated = await mutateState(roomId, async (fresh) => {
+        if (!hasAdminAccess(fresh, actorId)) throw new ApiError(403, 'kun den der oprettede brokkekassen (eller en medvært) kan godkende medlemmer');
+        if (!pendingId) throw new ApiError(400, 'mangler data');
+        if (!Array.isArray(fresh.pendingMembers)) fresh.pendingMembers = [];
+        const idx = fresh.pendingMembers.findIndex(p => p.id === pendingId);
+        if (idx === -1) throw new ApiError(404, 'anmodningen findes ikke længere');
+        const [pending] = fresh.pendingMembers.splice(idx, 1);
+        fresh.members.push({ id: pending.id, name: pending.name, email: pending.email || null });
+      });
+      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
+      return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
     }
 
     if (action === 'rejectMember') {
       const { pendingId } = req.body || {};
-      if (!hasAdminAccess(state, actorId)) return res.status(403).json({ error: 'kun den der oprettede brokkekassen (eller en medvært) kan afvise medlemmer' });
-      if (!pendingId) return res.status(400).json({ error: 'mangler data' });
-      if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
-      state.pendingMembers = state.pendingMembers.filter(p => p.id !== pendingId);
-      await setState(roomId, state);
-      return res.status(200).json({ state: redactStateFor(state, actorId) });
+      const mutated = await mutateState(roomId, async (fresh) => {
+        if (!hasAdminAccess(fresh, actorId)) throw new ApiError(403, 'kun den der oprettede brokkekassen (eller en medvært) kan afvise medlemmer');
+        if (!pendingId) throw new ApiError(400, 'mangler data');
+        if (!Array.isArray(fresh.pendingMembers)) fresh.pendingMembers = [];
+        fresh.pendingMembers = fresh.pendingMembers.filter(p => p.id !== pendingId);
+      });
+      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
+      return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
     }
 
     return res.status(400).json({ error: 'ukendt handling' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    // e.status kommer fra ApiError (kastet inde i mutateState-mutatorer
+    // ovenfor, se togglePause/approveMember/rejectMember) — uden dette
+    // ville en 403/404-valideringsfejl fejlagtigt returneres som 500.
+    res.status(e.status || 500).json({ error: e.message });
   }
 };

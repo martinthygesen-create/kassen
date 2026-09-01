@@ -1,4 +1,7 @@
-const CACHE = 'brokkekassen-v83';
+// Kasse-motor-generalisering: generisk cache-navn/asset-navngivning i
+// stedet for "brokkekassen"-specifikt, jf. samme princip som manifest.json —
+// PWA-installationen er ÉN identitet der dækker alle temaer/kasse-typer.
+const CACHE = 'kassen-v1';
 const FILES = ['./', './index.html', './manifest.json', './icon.svg', './gsap.min.js'];
 
 self.addEventListener('install', e => {
@@ -41,9 +44,9 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', e => {
   let data = {};
   try { data = e.data ? e.data.json() : {}; } catch (err) { /* ignore malformed payload */ }
-  const title = data.title || 'Brokkekassen';
+  const title = data.title || 'Kassen';
   const options = {
-    body: data.body || 'Nogen brokker sig!',
+    body: data.body || 'Der er sket noget nyt!',
     icon: 'icon.svg',
     badge: 'icon.svg',
     data: { url: data.url || './' },

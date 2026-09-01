@@ -1,7 +1,7 @@
 {
-  "name": "Brokkekassen",
-  "short_name": "Brokkekassen",
-  "description": "Familiens ferie-brokkekasse — 1€ hver gang nogen brokker sig.",
+  "name": "Kassen",
+  "short_name": "Kassen",
+  "description": "Peer-bekræftet fælles regnskab + mini-spil, delt med jeres gruppe.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#12666b" />
-<title>Brokkekassen</title>
+<title>Kassen</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icon.svg" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Brokkekassen" />
+<meta name="apple-mobile-web-app-title" content="Kassen" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -807,9 +807,9 @@ function shareAppUrl(){
 }
 async function doShareApp(){
   const url = shareAppUrl();
-  const text = 'Vi bruger en app der hedder Brokkekassen — fælles regnskab + indbyggede spil. Dette er IKKE en invitation til vores eget rum — tryk for at oprette jeres helt eget:';
+  const text = 'Vi bruger en app der hedder Kassen — fælles regnskab + indbyggede spil, i mange temaer. Dette er IKKE en invitation til vores eget rum — tryk for at oprette jeres helt eget:';
   if(navigator.share){
-    try{ await navigator.share({ title:'Prøv Brokkekassen', text, url }); return; }
+    try{ await navigator.share({ title:'Prøv Kassen', text, url }); return; }
     catch(e){ if(e && e.name === 'AbortError') return; }
   }
   try{ await navigator.clipboard.writeText(text + '\n' + url); toast('Anbefalings-tekst kopieret — send den videre.'); }
@@ -1077,7 +1077,7 @@ function homeScreenTip(strong){
   return `
     <div class="onboard-card" style="margin:14px 0; background:rgba(255,247,232,0.05); border-style:dashed;">
       <p style="margin:0; font-size:12.5px; color:rgba(255,247,232,0.6); text-align:center; line-height:1.5;">
-        📲 <b style="color:rgba(255,247,232,0.8);">Tip:</b> ${strong ? 'Føj til hjemmeskærmen <u>før</u> du skriver dit navn herunder' : 'Føj Brokkekassen til hjemmeskærmen for hurtig adgang'} —
+        📲 <b style="color:rgba(255,247,232,0.8);">Tip:</b> ${strong ? 'Føj til hjemmeskærmen <u>før</u> du skriver dit navn herunder' : 'Føj Kassen til hjemmeskærmen for hurtig adgang'} —
         ${how}${strong ? '. Ellers skal du skrive navnet igen, næste gang du åbner appen fra hjemmeskærmen' : ''}.
       </p>
     </div>
@@ -1413,6 +1413,12 @@ function renderCreateFlowStep2(skinOrId){
   applyHostApprovalGameRestriction();
   document.getElementById('createBtn').onclick = async ()=>{
     const btn = document.getElementById('createBtn');
+    // Kaos-bruger-hærdning: uden disabled her kan et hurtigt dobbeltklik
+    // sende TO 'room'-kald før det første svar når tilbage, og oprette to
+    // separate rum — kun det sidste vundne race ville stå tilbage i
+    // klientens state, mens det andet rum ligger forældreløst i Redis.
+    if(btn.disabled) return;
+    btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
     try{
       // Kasse-motor-generalisering: et spil der ikke er i skin.allowedGames
@@ -1441,7 +1447,7 @@ function renderCreateFlowStep2(skinOrId){
       localStorage.setItem('bk_lastRoom', roomId);
       state = r.state;
       renderWhoAmI(true);
-    }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret nyt rum'; }
+    }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret nyt rum'; btn.disabled = false; }
   };
 }
 
@@ -1486,6 +1492,8 @@ function renderCreateOrJoin(errorMsg){
     const rid = extractRoomId(joinInput.value);
     if(!rid){ toast('Indsæt link eller kode'); return; }
     const btn = document.getElementById('joinRoomBtn');
+    if(btn.disabled) return;
+    btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
     try{
       const { state: s } = await api('state?room=' + encodeURIComponent(rid));
@@ -1498,6 +1506,7 @@ function renderCreateOrJoin(errorMsg){
     }catch(e){
       toast('Ukendt brokkekasse — tjek linket');
       btn.textContent = 'Gå til kassen';
+      btn.disabled = false;
     }
   };
   document.getElementById('joinRoomBtn').onclick = goJoin;
@@ -1536,7 +1545,10 @@ function renderWhoAmI(justCreated){
     const name = nameInput.value.trim();
     if(!name) return;
     const email = document.getElementById('emailInput').value.trim();
-    document.getElementById('joinBtn').innerHTML = '<span class="spinner"></span>';
+    const joinBtnEl = document.getElementById('joinBtn');
+    if(joinBtnEl.disabled) return;
+    joinBtnEl.disabled = true;
+    joinBtnEl.innerHTML = '<span class="spinner"></span>';
     try{
       const r = await api('room', { action: 'join', roomId, name, email });
       if(r.pending){
@@ -1557,7 +1569,7 @@ function renderWhoAmI(justCreated){
       render();
       startPolling();
       if(justCreated) setTimeout(showRoomIntroSplash, 300);
-    }catch(e){ toast('Kunne ikke fortsætte: ' + e.message); document.getElementById('joinBtn').textContent = 'Fortsæt'; }
+    }catch(e){ toast('Kunne ikke fortsætte: ' + e.message); joinBtnEl.textContent = 'Fortsæt'; joinBtnEl.disabled = false; }
   };
   document.getElementById('joinBtn').onclick = go;
   nameInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); }});
@@ -6127,7 +6139,7 @@ function openAdminMenuSheet(){
     <p class="hint" style="${hintStyle}">Arkiverer og tømmer puljen. Kan fortrydes bagefter.</p>
 
     <div class="divider">anbefal appen</div>
-    <button class="sheet-btn primary" id="adminShareAppBtn">🚀 Anbefal Brokkekassen til andre</button>
+    <button class="sheet-btn primary" id="adminShareAppBtn">🚀 Anbefal Kassen til andre</button>
     <p class="hint" style="${hintStyle}">Deler et link til APPEN — ikke jeres rum. Modtageren opretter sit eget, helt separate rum og kommer ikke ind hos jer.</p>
 
     <div class="divider">test &amp; mindre ændringer</div>

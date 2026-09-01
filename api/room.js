@@ -1,4 +1,4 @@
-const { createRoom, genRoomId, getState, setState, uid, redactStateFor } = require('./_lib/store');
+const { createRoom, genRoomId, mutateState, uid, redactStateFor } = require('./_lib/store');
 
 // Samler "opret rum" og "join rum" i én serverless function i stedet for to —
 // Vercels Hobby-plan tillader kun 12 functions i alt.
@@ -10,43 +10,55 @@ module.exports = async (req, res) => {
     if (action === 'join') {
       const { roomId, name, email, isBot } = req.body || {};
       if (!roomId || !name || !name.trim()) return res.status(400).json({ error: 'mangler navn' });
-      const state = await getState(roomId);
-      if (!state) return res.status(404).json({ error: 'ukendt brokkekasse' });
-
       const cleanName = name.trim().slice(0, 24);
-      let member = state.members.find(m => m.name.toLowerCase() === cleanName.toLowerCase());
-      if (member) return res.status(200).json({ memberId: member.id, state: redactStateFor(state, member.id) });
 
-      // Kasse-motor-generalisering, operationelt valg "adgang" (se
-      // KASSEMOTORPLAN.md's "To lag"-afsnit): accessModel:'approval' betyder
-      // NYE medlemmer venter på værtens/medværtens godkendelse i stedet for
-      // at komme direkte ind — allerede kendte navne (fundet ovenfor) er
-      // altid velkomne tilbage uden ny godkendelse. Bots (test-spil) er
-      // undtaget — de bruges kun internt af en allerede-godkendt admin.
-      // KRITISK undtagelse (fanget af en ægte browser-gennemkørsel, ikke
-      // gættet på forhånd): rummets FØRSTE medlem (den der lige har oprettet
-      // rummet, members[0]/isAdmin) skal ALDRIG selv gates bag godkendelse —
-      // der findes per definition ingen til at godkende dem endnu, hvilket
-      // ellers ville låse rummet fast i en dødlås (ingen kan nogensinde komme
-      // ind, heller ikke opretteren selv).
-      if (state.accessModel === 'approval' && !isBot && state.members.length > 0) {
-        if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
-        let pending = state.pendingMembers.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
-        if (!pending) {
-          pending = { id: uid(), name: cleanName, email: email ? email.trim().slice(0, 80) : null, requestedAt: Date.now() };
-          state.pendingMembers.push(pending);
-          await setState(roomId, state);
+      // Kasse-motor-generalisering, teknisk hærdning (fangede en reel race
+      // condition under et rette-loop, ikke bare gættet på forhånd): denne
+      // handler brugte tidligere almindelig getState+setState, IKKE den
+      // CAS-beskyttede mutateState alle andre steder der muterer state
+      // bruger — to samtidige join-kald med samme navn (fx et
+      // dobbeltklik, eller to browserfaner) kunne begge nå at læse "navn
+      // findes ikke" FØR nogen af dem skrev, og skabe to duplikerede
+      // medlemmer med samme navn men forskellige id'er. mutateState's
+      // CAS-retry lukker dette hul på samme måde som brok.js/admin.js.
+      let outcome = null;
+      const mutated = await mutateState(roomId, async (state) => {
+        let member = state.members.find(m => m.name.toLowerCase() === cleanName.toLowerCase());
+        if (member) { outcome = { type: 'member', memberId: member.id }; return; }
+
+        // Kasse-motor-generalisering, operationelt valg "adgang" (se
+        // KASSEMOTORPLAN.md's "To lag"-afsnit): accessModel:'approval'
+        // betyder NYE medlemmer venter på værtens/medværtens godkendelse i
+        // stedet for at komme direkte ind — allerede kendte navne (fundet
+        // ovenfor) er altid velkomne tilbage uden ny godkendelse. Bots
+        // (test-spil) er undtaget. KRITISK undtagelse (fanget af en ægte
+        // browser-gennemkørsel): rummets FØRSTE medlem (opretteren) skal
+        // ALDRIG selv gates bag godkendelse — der findes per definition
+        // ingen til at godkende dem endnu, hvilket ellers ville låse
+        // rummet fast i en dødlås.
+        if (state.accessModel === 'approval' && !isBot && state.members.length > 0) {
+          if (!Array.isArray(state.pendingMembers)) state.pendingMembers = [];
+          let pending = state.pendingMembers.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
+          if (!pending) {
+            pending = { id: uid(), name: cleanName, email: email ? email.trim().slice(0, 80) : null, requestedAt: Date.now() };
+            state.pendingMembers.push(pending);
+          }
+          outcome = { type: 'pending', pendingId: pending.id };
+          return;
         }
-        return res.status(200).json({ pending: true, pendingId: pending.id, state: redactStateFor(state, null) });
-      }
 
-      // isBot markerer et rent test-medlem (se admin-menuernes "Test-spil
-      // med bots") — spilles automatisk af klienten der satte det i gang,
-      // aldrig af en rigtig person. Ingen andre server-side forskelle.
-      member = { id: uid(), name: cleanName, email: email ? email.trim().slice(0, 80) : null, isBot: !!isBot };
-      state.members.push(member);
-      await setState(roomId, state);
-      return res.status(200).json({ memberId: member.id, state: redactStateFor(state, member.id) });
+        // isBot markerer et rent test-medlem (se admin-menuernes "Test-spil
+        // med bots") — spilles automatisk af klienten der satte det i
+        // gang, aldrig af en rigtig person. Ingen andre server-side
+        // forskelle.
+        member = { id: uid(), name: cleanName, email: email ? email.trim().slice(0, 80) : null, isBot: !!isBot };
+        state.members.push(member);
+        outcome = { type: 'member', memberId: member.id };
+      });
+      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
+      const { state } = mutated;
+      if (outcome.type === 'pending') return res.status(200).json({ pending: true, pendingId: outcome.pendingId, state: redactStateFor(state, null) });
+      return res.status(200).json({ memberId: outcome.memberId, state: redactStateFor(state, outcome.memberId) });
     }
 
     // default: opret et nyt rum
