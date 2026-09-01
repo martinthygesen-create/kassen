@@ -96,6 +96,13 @@ function emptyState() {
     cohostIds: [],               // sekundær rolle ud over isAdmin() — se api/admin.js
     accessModel: 'open',         // 'open' | 'approval' — join-godkendelse
     pendingMembers: [],          // {id, name, email, requestedAt} — kun brugt når accessModel==='approval'
+    // Kasse-motor-generalisering ("Tilgængelighedsvindue"-variabel, se
+    // KASSEMOTORPLAN.md's "Motor-variabler"-afsnit): manuel værts-toggle der
+    // blokerer NYE anklager mens den er slået til — dækker "ikke under
+    // undervisning"/"ikke under møder"/"ikke under programpunkter" med
+    // samme ene knap, ikke poker-specifik. Rører aldrig eksisterende
+    // ventende afstemninger, kun oprettelse af NYE.
+    pausedByHost: false,
   };
 }
 
@@ -325,6 +332,7 @@ function applyMigrations(state) {
   if (!state.cohostIds) state.cohostIds = [];
   if (!state.accessModel) state.accessModel = 'open';
   if (!state.pendingMembers) state.pendingMembers = [];
+  if (state.pausedByHost === undefined) state.pausedByHost = false;
   if (!state.pendingList) {
     // migrering fra det gamle enkelt-pending-felt til en liste
     state.pendingList = state.pending ? [state.pending] : [];

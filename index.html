@@ -1915,11 +1915,13 @@ function renderInner(){
     <div class="bottombar">
       ${state.closed
         ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">🔒 ${escapeHtml(state.themeName || 'Brokkekassen')} er lukket</button>`
+        : state.pausedByHost
+        ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">⏸️ På pause lige nu</button>`
         : `<button class="btn-brok" id="btnBrok">📢 Nogen brokker sig…</button>`}
     </div>
   `;
   document.querySelectorAll('.tab').forEach(t=>{ t.onclick = ()=>{ activeTab = t.dataset.tab; renderMain(); document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active', x===t)); }; });
-  if(!state.closed) document.getElementById('btnBrok').onclick = openBrokSheet;
+  if(!state.closed && !state.pausedByHost) document.getElementById('btnBrok').onclick = openBrokSheet;
   document.getElementById('btnAppMenu').onclick = openAppMenuSheet;
   const jarWrap = document.getElementById('jarWrap');
   if(jarWrap) jarWrap.onclick = bounceJar;
@@ -6069,6 +6071,8 @@ function openAdminMenuSheet(){
     ` : ''}
 
     <div class="divider">admin</div>
+    <button class="sheet-btn primary" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
+    <p class="hint" style="${hintStyle}">Blokerer kun NYE anklager mens den er slået til — rører ikke allerede ventende afstemninger.</p>
     <button class="sheet-btn primary" id="adminGoalBtn">🎯 Sæt mål for potten</button>
     <button class="sheet-btn primary" id="adminBroadcastBtn">📣 Send besked til alle</button>
     <button class="sheet-btn primary" id="adminSettleBtn">💶 Gør op (tøm puljen)</button>
@@ -6097,6 +6101,15 @@ function openAdminMenuSheet(){
     <button class="sheet-btn ghost" id="adminMenuCloseBtn">Luk menu</button>
     <p class="hint" style="text-align:center; font-size:10.5px; opacity:.4; margin-top:6px;">🔧 ${pushDebugInfo()} · ${BUILD_TAG}</p>
   `, ()=>{
+    document.getElementById('adminTogglePauseBtn').onclick = async ()=>{
+      try{
+        const r = await api('admin', { action: 'togglePause', roomId, actorId: profile.memberId });
+        state = r.state;
+        closeSheet();
+        toast(state.pausedByHost ? '⏸️ Sat på pause' : '▶️ Pause slået fra');
+        render();
+      }catch(e){ toast(e.message); }
+    };
     document.getElementById('adminGoalBtn').onclick = ()=>{ closeSheet(); setTimeout(openGoalSheet, 230); };
     document.getElementById('adminBroadcastBtn').onclick = ()=>{ closeSheet(); setTimeout(openBroadcastSheet, 230); };
     document.getElementById('adminSettleBtn').onclick = ()=>{ closeSheet(); setTimeout(openSettleSheet, 230); };

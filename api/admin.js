@@ -157,6 +157,17 @@ module.exports = async (req, res) => {
       return res.status(200).json({ state: redactStateFor(state, actorId) });
     }
 
+    if (action === 'togglePause') {
+      // "Tilgængelighedsvindue" (se KASSEMOTORPLAN.md's "Motor-variabler"-
+      // afsnit): admin/cohost kan slå ny-anklage-oprettelse fra midlertidigt
+      // (fx "ikke under møder"/"ikke under undervisning") uden at røre
+      // allerede ventende afstemninger eller lukke rummet.
+      if (!hasAdminAccess(state, actorId)) return res.status(403).json({ error: 'kun den der oprettede brokkekassen (eller en medvært) kan sætte på pause' });
+      state.pausedByHost = !state.pausedByHost;
+      await setState(roomId, state);
+      return res.status(200).json({ state: redactStateFor(state, actorId) });
+    }
+
     if (action === 'approveMember') {
       // Kasse-motor-generalisering, operationelt "adgang"-valg: flytter en
       // ventende medlemsanmodning (se api/room.js's join-handler) ind i
