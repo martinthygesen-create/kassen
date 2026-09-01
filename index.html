@@ -565,6 +565,15 @@
   .app-pick-row{ display:flex; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .app-pick-row::-webkit-scrollbar{ display:none; }
   .app-pick-row .app-pick{ flex:0 0 auto; min-width:104px; }
+  /* To-valgs-rækker (rytme/adgang/bekræftelse — altid præcis 2 valg, aldrig
+     flere at scrolle til) skal ALDRIG kunne klippes af skærmkanten som
+     skin/spil-rækkernes bevidste "peek og scroll"-mønster — fundet ved
+     rigtig skærmtest på en fysisk telefon, hvor "Nye skal godkendes" og
+     "Løbende Kasse ..." blev skåret halvt af i kanten uden synlig
+     scroll-affordance. Ombryder i stedet til to linjer hvis pladsen er
+     for smal, i stedet for at overflow'e usynligt ud af viewportet. */
+  .app-pick-row.wrap-pick-row{ flex-wrap:wrap; overflow-x:visible; }
+  .app-pick-row.wrap-pick-row .app-pick{ flex:1 1 130px; min-width:0; }
   .app-pick-scroll-hint{
     position:absolute; top:50%; transform:translateY(-50%);
     width:18px; height:18px; border-radius:50%;
@@ -641,6 +650,10 @@ let profile = JSON.parse(localStorage.getItem('bk_profile_' + roomId) || 'null')
 let state = null;
 let activeTab = 'feed';
 let activeApp = 'kasse'; // 'kasse' | 'spil' | 'mrbrok' — hvilken af de tre "apps" i samme rum der vises
+// Opret-flowets trin 1↔2-navne-tab: uden dette blev et allerede indtastet
+// gruppenavn stille smidt væk hvis man trykkede "← Tilbage" fra trin 2 for
+// at skifte kasse-type — fanget ved en rigtig gennemklikning, ikke gættet.
+let createFlowDraftName = null;
 let gameWager = 'fun'; // 'fun' | 'euro' — valgt i Brokspillets lobby, før spillet startes
 let gameRounds = 8; // 5 | 8 | 12 — valgt i lobbyen, før spillet startes
 let gameSelectedPlayers = null; // memberId[] valgt i lobbyen — sættes til alle medlemmer første gang lobbyen vises
@@ -1420,16 +1433,23 @@ function activeAppDisplayName(){
 
 // Kasse-motor-generalisering, UX-redesign (svar på "vi har meget her på
 // forsiden" — se samtalens designfeedback): opret-flowet er nu et rigtigt
-// TRIN-flow i stedet for 4 kort stablet oven på hinanden. Trin 1 viser KUN
-// kasse-type-valget (det største, mest visuelle valg) — så snart man
-// trykker ét, foldes trin 2 (autoritet/spil/lukketid/adgang/opret) ud
-// nedenunder, med en lille "skift kasse-type"-linje tilbage til trin 1.
-// Join-kortet og "dine kasser" ligger UDENFOR denne wrap og påvirkes ikke.
+// TRIN-flow (skin → navn → resten) i stedet for alt stablet på én skærm.
+// "Har du fået et link?"/"dine kasser" ligger UDENFOR selve #createFlowWrap
+// (de er ikke en del af noget trin), men skal alligevel kun vises på TRIN 1
+// — en rigtig telefon-gennemkørsel viste at de ellers "lækker" igennem og
+// vises under HVERT trin (fordi de blot ligger lige efter #createFlowWrap i
+// markup'et, uanset hvilket trin der aktuelt vises deri) — se
+// setBelowCreateFlowVisible().
+function setBelowCreateFlowVisible(visible){
+  const el = document.getElementById('belowCreateFlow');
+  if(el) el.style.display = visible ? '' : 'none';
+}
 function renderCreateFlowStep1(){
+  setBelowCreateFlowVisible(true);
   const wrap = document.getElementById('createFlowWrap');
   wrap.innerHTML = `
     <div class="onboard-card">
-      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvilken slags kasse skal I lave?</label>
       <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
         <div class="app-pick-row" id="skinPickRow">
           ${SKIN_PRESETS.map(skin => `
@@ -1451,7 +1471,7 @@ function renderCreateFlowStep1(){
   document.querySelectorAll('#skinPickRow [data-skin-id]').forEach(el=>{
     el.onclick = ()=>renderCreateFlowStep2(el.dataset.skinId);
   });
-  document.querySelector('#skinPickRow [data-custom-skin]').onclick = renderCreateFlowCustom;
+  document.querySelector('#skinPickRow [data-custom-skin]').onclick = ()=>renderCreateFlowCustom();
 }
 
 // "Opret din egen" (se KASSEMOTORPLAN.md's "Oprettelses-UX: navngivne
@@ -1460,19 +1480,21 @@ function renderCreateFlowStep1(){
 // arves (indhold, spilnavne, allowedGames, enhed, polaritet), kun navn og
 // "med småt" er nye. Ingen ny CONTENT_BY_THEME nødvendig, matcher planens
 // "arver dens indstillinger under overfladen".
-function renderCreateFlowCustom(){
+function renderCreateFlowCustom(prefill){
+  setBelowCreateFlowVisible(false);
   const wrap = document.getElementById('createFlowWrap');
+  const preselectId = (prefill && prefill.baseId) || SKIN_PRESETS[0].id;
   wrap.innerHTML = `
     <div class="onboard-card">
       <button class="sheet-btn ghost" id="backToStep1Btn" style="width:auto; margin:0 0 12px; padding:6px 12px; font-size:12px;">← Tilbage</button>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
-      <input type="text" id="customNameInput" placeholder="Fx Vennekassen" maxlength="30" style="margin-bottom:14px;" />
+      <input type="text" id="customNameInput" value="${escapeHtml((prefill && prefill.name) || '')}" placeholder="Fx Vennekassen" maxlength="30" style="margin-bottom:14px;" />
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad handler jeres kasse om? (kort)</label>
-      <input type="text" id="customAboutInput" placeholder="Fx sene ankomster" maxlength="40" style="margin-bottom:14px;" />
+      <input type="text" id="customAboutInput" value="${escapeHtml((prefill && prefill.about) || '')}" placeholder="Fx sene ankomster" maxlength="40" style="margin-bottom:14px;" />
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Baseret på</label>
       <div class="app-pick-row" id="customBaseRow" style="margin:10px 0 4px;">
-        ${SKIN_PRESETS.map((skin, i) => `
-          <div class="onboard-pick toggle-pick app-pick${i===0?' selected':''}" data-base-id="${skin.id}" style="background:var(--sea); color:#fff;">
+        ${SKIN_PRESETS.map(skin => `
+          <div class="onboard-pick toggle-pick app-pick${skin.id===preselectId?' selected':''}" data-base-id="${skin.id}" style="background:var(--sea); color:#fff;">
             <div class="app-pick-icon">${skin.emoji}</div>
             <div class="app-pick-label">${escapeHtml(skin.name)}</div>
           </div>
@@ -1507,8 +1529,17 @@ function renderCreateFlowCustom(){
       poolPolarity: base.poolPolarity, confirmationModel: base.confirmationModel, dailyRhythm: base.dailyRhythm,
       smaatText: `${aboutCapitalized}, bekræftet af alle`,
       gameNames: base.gameNames, allowedGames: base.allowedGames,
+      // customAbout/customBaseId er IKKE en del af skin-formen resten af
+      // koden forventer (kun brugt til at kunne genskabe "Opret selv"-
+      // formularens felter hvis værten trykker "← Tilbage" fra trin 3).
+      customAbout: about, customBaseId: base.id,
     };
-    renderCreateFlowStep2(customSkin);
+    // Springer trin 2 helt over her — "Opret selv"-flowet har allerede
+    // spurgt om navnet (customNameInput ovenfor), så et trin 2 der
+    // spørger IGEN ville være samme "spørger den ikke bare om det samme
+    // igen?"-dødt-klik-problem som blev fundet og rettet for den normale
+    // skin-vælger-vej (se renderCreateFlowStep2's kommentar).
+    renderCreateFlowStep3(customSkin, name, true);
   };
 }
 
@@ -1520,26 +1551,41 @@ function renderCreateFlowCustom(){
 // invitationen sker derfor stadig naturligt EFTER indstillingerne er sat,
 // uden at det kræver noget "låst rum"-begreb server-side.
 function renderCreateFlowStep2(skinOrId, prevName){
+  setBelowCreateFlowVisible(false);
   const wrap = document.getElementById('createFlowWrap');
   const skin = typeof skinOrId === 'string' ? (SKIN_PRESETS.find(s => s.id === skinOrId) || SKIN_PRESETS[0]) : skinOrId;
-  const nameVal = prevName || skin.name;
+  // Bevidst TOM som standard (ikke forudfyldt med skin.name, kun antydet via
+  // placeholder) — en rigtig gennemklikning viste at et felt der allerede
+  // ser "udfyldt" ud (samme tekst som lige blev valgt i trin 1) gør trin 2
+  // til et tilsyneladende dødt klik: "spørger den ikke bare om det samme
+  // igen?". createFlowDraftName bevarer et allerede indtastet navn på tværs
+  // af "← Tilbage" (se den globale variabel og changeSkinBtn nedenfor).
+  const nameVal = prevName || createFlowDraftName || '';
   wrap.innerHTML = `
+    <p class="hint" style="text-align:center; margin:0 0 8px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:rgba(255,247,232,0.4);">Trin 2 af 3</p>
     <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
       <div style="font-size:22px;">${skin.emoji}</div>
-      <div style="flex:1; font-weight:700; color:#fff;">${escapeHtml(skin.name)}</div>
-      <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">Skift</button>
+      <div style="flex:1;">
+        <div style="font-weight:700; color:#fff;">${escapeHtml(skin.name)}</div>
+      </div>
+      <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">← Tilbage</button>
     </div>
     <div class="onboard-card">
-      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres gruppe hedde?</label>
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Giv jeres gruppe et navn</label>
       <input type="text" id="groupNameInput" maxlength="40" value="${escapeHtml(nameVal)}" placeholder="${escapeHtml(skin.name)}" style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;" />
-      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Bruges som navnet på jeres kasse — vælg med omtanke, det kan ikke ændres efter oprettelse.</p>
+      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Kaldes ellers bare "${escapeHtml(skin.name)}" — kan ikke ændres efter oprettelse.</p>
     </div>
     <button class="sheet-btn primary" id="nameNextBtn" style="margin-top:0;">Videre</button>
   `;
-  document.getElementById('changeSkinBtn').onclick = renderCreateFlowStep1;
+  document.getElementById('changeSkinBtn').onclick = ()=>{
+    const groupNameInput = document.getElementById('groupNameInput');
+    createFlowDraftName = (groupNameInput && groupNameInput.value.trim()) || createFlowDraftName;
+    renderCreateFlowStep1();
+  };
   document.getElementById('nameNextBtn').onclick = ()=>{
     const groupNameInput = document.getElementById('groupNameInput');
     const groupName = (groupNameInput && groupNameInput.value.trim()) || skin.name;
+    createFlowDraftName = groupName;
     renderCreateFlowStep3(skin, groupName);
   };
 }
@@ -1547,19 +1593,24 @@ function renderCreateFlowStep2(skinOrId, prevName){
 // Trin 3: resten af opsætningen (spil, varighed, adgang, bekræftelse) — nu
 // sin egen skærm, så den ikke længere skal dele plads/vægt med selve
 // navne-valget. Opretter rummet for enden.
-function renderCreateFlowStep3(skin, groupName){
+function renderCreateFlowStep3(skin, groupName, isCustom){
+  setBelowCreateFlowVisible(false);
   const wrap = document.getElementById('createFlowWrap');
   wrap.innerHTML = `
+    <p class="hint" style="text-align:center; margin:0 0 8px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:rgba(255,247,232,0.4);">Trin 3 af 3</p>
     <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
       <div style="font-size:22px;">${skin.emoji}</div>
-      <div style="flex:1; font-weight:700; color:#fff;">${escapeHtml(groupName)}</div>
-      <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">← Navn</button>
+      <div style="flex:1;">
+        <div style="font-weight:700; color:#fff;">${escapeHtml(groupName)}</div>
+        ${groupName !== skin.name ? `<div style="font-size:11px; color:rgba(255,247,232,0.5);">${escapeHtml(skin.name)}</div>` : ''}
+      </div>
+      <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">← Tilbage</button>
     </div>
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
       ${skin.id === 'hjaelper' ? `
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
-      <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
+      <div class="app-pick-row wrap-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Alle stemmer — flertallet bestemmer</div>
         </div>
@@ -1569,7 +1620,7 @@ function renderCreateFlowStep3(skin, groupName){
       </div>
       ` : FIRST_TO_VOTE_SKINS.includes(skin.id) ? `
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen, eller afgør den første der reagerer?</label>
-      <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
+      <div class="app-pick-row wrap-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel!=='first-to-vote'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Alle stemmer — flertallet bestemmer</div>
         </div>
@@ -1615,7 +1666,7 @@ function renderCreateFlowStep3(skin, groupName){
     </div>
     <div class="onboard-card">
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvor længe skal jeres kasse køre?</label>
-      <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 6px;">
+      <div class="app-pick-row wrap-pick-row" id="rhythmPickRow" style="margin:10px 0 6px;">
         <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? '' : ' selected'}" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Enkelt Event (Fest, Tur, Aften)</div>
         </div>
@@ -1625,7 +1676,7 @@ function renderCreateFlowStep3(skin, groupName){
       </div>
       <p class="hint" id="rhythmSubtext" style="margin:0 0 14px; font-size:11.5px; color:rgba(255,247,232,0.45);">${skin.dailyRhythm ? 'Kører fast i hverdagen. Nulstiller automatisk hver nat kl. 03:00.' : 'Til I er færdige. Ingen daglig nulstilling — slutter med en samlet kåring.'}</p>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Adgang</label>
-      <div class="app-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
+      <div class="app-pick-row wrap-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
         <div class="onboard-pick toggle-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Alle med linket kan joine</div>
         </div>
@@ -1638,7 +1689,13 @@ function renderCreateFlowStep3(skin, groupName){
     </div>
   `;
   markAppPickScrollable();
-  document.getElementById('backToNameBtn').onclick = ()=>renderCreateFlowStep2(skin, groupName);
+  document.getElementById('backToNameBtn').onclick = ()=>{
+    if(isCustom){
+      renderCreateFlowCustom({ name: groupName, about: skin.customAbout, baseId: skin.customBaseId });
+    } else {
+      renderCreateFlowStep2(skin, groupName);
+    }
+  };
   document.querySelectorAll('.onboard-pick[data-pick]').forEach(el=>{
     el.onclick = ()=>{
       const willSelect = !el.classList.contains('selected');
@@ -1750,15 +1807,17 @@ function renderCreateOrJoin(errorMsg){
       <p>Peer-bekræftet regnskab + mini-spil, delt med jeres gruppe.</p>
       ${errorMsg ? `<p style="color:var(--coral); font-weight:600; margin-top:-14px;">${errorMsg}</p>` : ''}
       <div id="createFlowWrap"></div>
-      <div class="divider">eller</div>
-      <div class="onboard-card">
-        <label class="field-label" style="color:rgba(255,247,232,0.6);">Har du fået et link?</label>
-        <input type="text" id="joinInput" placeholder="Indsæt link eller kode her" autocapitalize="off" autocorrect="off" spellcheck="false" />
-        <button class="sheet-btn ghost" id="joinRoomBtn" style="margin-top:0;">Gå til kassen</button>
-        <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
+      <div id="belowCreateFlow">
+        <div class="divider">eller</div>
+        <div class="onboard-card">
+          <label class="field-label" style="color:rgba(255,247,232,0.6);">Har du fået et link?</label>
+          <input type="text" id="joinInput" placeholder="Indsæt link eller kode her" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          <button class="sheet-btn ghost" id="joinRoomBtn" style="margin-top:0;">Gå til kassen</button>
+          <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
+        </div>
+        ${myRoomsList}
+        ${homeScreenTip(false)}
       </div>
-      ${myRoomsList}
-      ${homeScreenTip(false)}
     </div>
   `;
   document.querySelectorAll('[data-goto-room]').forEach(el=>{
