@@ -459,13 +459,27 @@ function neededVotes(totalMembers) {
 // selv-helbreder uden at nogen behøver stemme igen.
 function healPendingVotes(state) {
   if (!state.pendingList || !state.pendingList.length) return [];
+  // Fundet ved logik-verifikation (E2E-gennemspilning på tværs af skins):
+  // state.confirmationModel er sat og valgt i opret-flowet ("Alle bekræfter
+  // sammen" vs. "Én bestemmer"), men blev ALDRIG rent faktisk læst her —
+  // kvorum-tærsklen (neededVotes) gjaldt uændret for host-approval-rum, så
+  // fx Hjælperkassen ("bedømt af holdlederen" ifølge sin egen beskrivelse)
+  // krævede i praksis stadig kvorum-stemmer fra ALLE medlemmer, præcis som
+  // Brokkekassen. host-approval betyder nu reelt at kun én stemme fra en
+  // admin/cohost tæller, uanset hvor mange medlemmer der ellers er.
+  const isHostApproval = state.confirmationModel === 'host-approval';
   const realMemberCount = state.members.filter(m => !m.isBot).length;
-  const correctNeed = neededVotes(realMemberCount);
+  const correctNeed = isHostApproval ? 1 : neededVotes(realMemberCount);
   state.pendingList.forEach(p => { if (p.need > correctNeed) p.need = correctNeed; });
 
   const confirmedIds = [];
   state.pendingList = state.pendingList.filter(p => {
-    if (p.votes.length < p.need) return true;
+    if (isHostApproval) {
+      const hasAdminVote = p.votes.some(id => hasAdminAccess(state, id));
+      if (!hasAdminVote) return true;
+    } else if (p.votes.length < p.need) {
+      return true;
+    }
     const free = !!(state.freeBrokMemberId && state.freeBrokMemberId === p.memberId);
     state.events.push({ id: p.id, memberId: p.memberId, message: p.message, ts: Date.now(), votes: p.votes, free });
     if (free) state.freeBrokMemberId = null;

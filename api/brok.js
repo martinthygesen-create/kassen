@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
       if (milestone) {
         try {
           const line = MILESTONE_LINES[Math.floor(Math.random() * MILESTONE_LINES.length)](milestone);
-          await pushToMembers(state, [], { title: '🏖️ Brokkekassen', body: line, url: '/?r=' + roomId });
+          await pushToMembers(state, [], { title: `🏖️ ${state.themeName || 'Brokkekassen'}`, body: line, url: '/?r=' + roomId });
         } catch (e) { /* push-fejl må ikke vælte selve stemmen */ }
       }
 
@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
     const accused = state.members.find(m => m.id === memberId);
     try {
       await pushToMembers(state, [memberId, actorId].filter(Boolean), {
-        title: '🙄 Nogen brokker sig!',
+        title: `🙄 Ny sag i ${state.themeName || 'Brokkekassen'}!`,
         body: `${accused ? accused.name : 'Nogen'} er anklaget${cleanMessage ? ` — "${cleanMessage}"` : ''}. Kom og stem!`,
         url: '/?r=' + roomId,
       });

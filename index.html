@@ -845,7 +845,7 @@ async function enablePush(){
     if(!sub){ sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(publicKey) }); }
     await api('push', { roomId, memberId: profile.memberId, subscription: sub.toJSON() });
     localStorage.setItem('bk_push_enabled_' + roomId, '1');
-    toast('🔔 Du får nu besked når nogen brokker sig');
+    toast('🔔 Du får nu besked når der sker noget nyt');
     return true;
   }catch(e){ toast('Fejl: ' + e.message); return false; }
 }
@@ -1192,6 +1192,105 @@ const SKIN_PRESETS = [
     allowedGames: ['complainer'],
   },
 ];
+
+// Logik-, tema- og spilmekanik-protokol (Opgave 1): DEN CENTRALE
+// kasse/krukke-mekanik (hovedknappen, anklage-sheetet, faneblad-label og
+// tomme-tilstande på jar-skærmen) var IKKE dækket af den tidligere
+// gameNames/themeName-generalisering — al den tekst var hardcodet til
+// brok-sproget uanset valgt skin ("📢 Nogen brokker sig…", "Broklisten",
+// "Hvem brokker sig?" osv. — fundet ved gennemspilning af hvert skin, ikke
+// gæt). THEME_COPY dækker specifikt disse strenge, ét sæt pr. kuraterede
+// skin, opslået via state.themeId (samme mønster som GAME_CONTENT_BY_THEME
+// server-side) — IKKE en generisk find/erstat af ordet "brok", da fx
+// Rosekassen har modsat polaritet (ros, ikke anklage) og derfor har brug
+// for en reelt anderledes formulering, ikke bare et synonym.
+const THEME_COPY = {
+  brok: {
+    feedLabel: 'Brok-feed',
+    pendingVerb: 'anklaget',
+    mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
+    sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "over prisen på jetski..." (påkrævet)', listLabel: 'Broklisten',
+    emptyTitle: 'Ingen brok endnu', emptyTitleList: 'Ingen brok registreret endnu',
+    emptyBodyList: 'Så snart nogen brokker sig, vises regnskabet her.',
+  },
+  bode: {
+    feedLabel: 'Bøde-feed',
+    pendingVerb: 'meldt',
+    mainBtnText: '💸 Der er sket en bøde…', sheetTitle: 'Hvem brød en regel? 💸',
+    sheetHint: 'Peg på synderen, og skriv præcis hvilken regel der blev brudt — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "kom 20 minutter for sent..." (påkrævet)', listLabel: 'Bødelisten',
+    emptyTitle: 'Ingen bøder endnu', emptyTitleList: 'Ingen bøder registreret endnu',
+    emptyBodyList: 'Så snart nogen bryder en regel, vises regnskabet her.',
+  },
+  sladre: {
+    feedLabel: 'Sladre-feed',
+    pendingVerb: 'hængt ud',
+    mainBtnText: '🗣️ Der går et rygte…', sheetTitle: 'Hvem sladrede? 🗣️',
+    sheetHint: 'Peg på sladrehanken, og skriv præcis hvad de sladrede om — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "hvem der spiste den sidste kage..." (påkrævet)', listLabel: 'Sladrelisten',
+    emptyTitle: 'Ingen sladder endnu', emptyTitleList: 'Ingen sladder registreret endnu',
+    emptyBodyList: 'Så snart nogen sladrer, vises regnskabet her.',
+  },
+  venne: {
+    feedLabel: 'Brok-feed',
+    pendingVerb: 'anklaget',
+    mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
+    sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "over hvem der bestemmer planerne..." (påkrævet)', listLabel: 'Broklisten',
+    emptyTitle: 'Ingen brok endnu', emptyTitleList: 'Ingen brok registreret endnu',
+    emptyBodyList: 'Så snart nogen brokker sig, vises regnskabet her.',
+  },
+  rose: {
+    feedLabel: 'Rose-feed',
+    pendingVerb: 'indstillet',
+    // Modsat polaritet (reward, ikke punishment) — sheetet skal IKKE lyde
+    // anklagende, "synderen" ville være direkte forkert her.
+    mainBtnText: '🌹 Ros nogen…', sheetTitle: 'Hvem skal roses? 🌹',
+    sheetHint: 'Peg på personen, og skriv præcis hvad de gjorde godt — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "for at bære al bagagen..." (påkrævet)', listLabel: 'Roselisten',
+    emptyTitle: 'Ingen roser endnu', emptyTitleList: 'Ingen roser registreret endnu',
+    emptyBodyList: 'Så snart nogen roses, vises regnskabet her.',
+  },
+  drik: {
+    feedLabel: 'Runde-feed',
+    pendingVerb: 'meldt',
+    mainBtnText: '🍻 Nogen glemte en runde…', sheetTitle: 'Hvem glemte runden? 🍻',
+    sheetHint: 'Peg på synderen, og skriv præcis hvad der gik galt — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "glemte at det var min tur..." (påkrævet)', listLabel: 'Rundelisten',
+    emptyTitle: 'Ingen rundefejl endnu', emptyTitleList: 'Ingen rundefejl registreret endnu',
+    emptyBodyList: 'Så snart nogen glemmer en runde, vises regnskabet her.',
+  },
+  konkurrence: {
+    feedLabel: 'Sejrs-feed',
+    pendingVerb: 'indstillet',
+    // Modsat polaritet (reward) — samme princip som Rosekassen.
+    mainBtnText: '🏆 Registrer en sejr…', sheetTitle: 'Hvem vandt? 🏆',
+    sheetHint: 'Peg på vinderen, og skriv præcis hvad de vandt — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "vandt kortspillet..." (påkrævet)', listLabel: 'Sejrslisten',
+    emptyTitle: 'Ingen sejre endnu', emptyTitleList: 'Ingen sejre registreret endnu',
+    emptyBodyList: 'Så snart nogen vinder, vises regnskabet her.',
+  },
+  logn: {
+    feedLabel: 'Løgne-feed',
+    pendingVerb: 'anklaget',
+    mainBtnText: '🎭 Afslør en løgn…', sheetTitle: 'Hvem løj? 🎭',
+    sheetHint: 'Peg på løgneren, og skriv præcis hvad løgnen gik ud på — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "påstod at have mødt en kendis..." (påkrævet)', listLabel: 'Løgnelisten',
+    emptyTitle: 'Ingen løgne endnu', emptyTitleList: 'Ingen løgne registreret endnu',
+    emptyBodyList: 'Så snart en løgn afsløres, vises regnskabet her.',
+  },
+  hjaelper: {
+    feedLabel: 'Note-feed',
+    pendingVerb: 'noteret',
+    mainBtnText: '🤝 Noter en fejl…', sheetTitle: 'Hvem lavede fejlen? 🤝',
+    sheetHint: 'Peg på personen, og skriv præcis hvad fejlen bestod i — ellers giver noten ingen mening.',
+    sheetPlaceholder: 'F.eks. "glemte sikkerhedstjek på udstyret..." (påkrævet)', listLabel: 'Noteliste',
+    emptyTitle: 'Ingen noter endnu', emptyTitleList: 'Ingen noter registreret endnu',
+    emptyBodyList: 'Så snart der noteres en fejl, vises listen her.',
+  },
+};
+function themeCopy(){ return THEME_COPY[(state && state.themeId) || 'brok'] || THEME_COPY.brok; }
 
 // Kasse-motor-generalisering, Fase 4: erstatter den tidligere hardcodede
 // activeApp==='spil'?'Brokspillet':...-ternary (fundet i UI-audit-bilaget,
@@ -2046,8 +2145,8 @@ function renderInner(){
     </div>
     ${state.goal && state.goal.trim() ? `<div style="text-align:center; font-size:12.5px; color:rgba(255,247,232,0.5); padding:2px 24px 0;">🎯 Potten går til: <span style="color:rgba(255,247,232,0.8); font-weight:600;">${escapeHtml(state.goal)}</span></div>` : ''}
     <div class="tabs">
-      <div class="tab ${activeTab==='feed'?'active':''}" data-tab="feed">Brok-feed</div>
-      <div class="tab ${activeTab==='broklisten'?'active':''}" data-tab="broklisten">Broklisten</div>
+      <div class="tab ${activeTab==='feed'?'active':''}" data-tab="feed">${escapeHtml(themeCopy().feedLabel)}</div>
+      <div class="tab ${activeTab==='broklisten'?'active':''}" data-tab="broklisten">${escapeHtml(themeCopy().listLabel)}</div>
     </div>
     <main id="main"></main>
     <div class="bottombar">
@@ -2055,7 +2154,7 @@ function renderInner(){
         ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">🔒 ${escapeHtml(state.themeName || 'Brokkekassen')} er lukket</button>`
         : state.pausedByHost
         ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">⏸️ På pause lige nu</button>`
-        : `<button class="btn-brok" id="btnBrok">📢 Nogen brokker sig…</button>`}
+        : `<button class="btn-brok" id="btnBrok">${escapeHtml(themeCopy().mainBtnText)}</button>`}
     </div>
   `;
   document.querySelectorAll('.tab').forEach(t=>{ t.onclick = ()=>{ activeTab = t.dataset.tab; renderMain(); document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active', x===t)); }; });
@@ -5632,15 +5731,25 @@ function renderMain(){
 }
 function renderPendingCard(p){
   const complainer = state.members.find(m=>m.id===p.memberId);
+  // Logik-verifikation: "Én bestemmer"-rum (fx Hjælperkassen) kræver nu
+  // reelt kun holdlederens egen bekræftelse (se healPendingVotes i
+  // api/_lib/store.js) — resten af medlemmerne kan derfor ikke selv
+  // afgøre sagen ved at trykke deres eget navn, og skal ikke fejlagtigt
+  // tro at deres tryk tæller med (heller ikke visuelt).
+  const isHostApproval = state.confirmationModel === 'host-approval';
   const chips = state.members.filter(m=>!m.isBot).map(m=>{
     const voted = p.votes.includes(m.id);
     const mine = profile && m.id === profile.memberId;
-    return `<div class="name-pill ${voted?'voted':''}" data-pending="${p.id}" data-voter="${m.id}" style="${mine?'':'opacity:.45; pointer-events:none;'} padding:6px 12px; font-size:13px;">${escapeHtml(m.name)}${voted?' ✓':''}</div>`;
+    const canTap = mine && (!isHostApproval || isAdmin());
+    return `<div class="name-pill ${voted?'voted':''}" data-pending="${p.id}" data-voter="${m.id}" style="${canTap?'':'opacity:.45; pointer-events:none;'} padding:6px 12px; font-size:13px;">${escapeHtml(m.name)}${voted?' ✓':''}</div>`;
   }).join('');
+  const statusLabel = isHostApproval
+    ? (p.votes.some(id => id === state.members[0].id) ? '1/1' : `venter på ${escapeHtml(state.members[0].name)}`)
+    : `${p.votes.length}/${p.need}`;
   return `<div class="feed-item" style="border-style:dashed; border-color:rgba(255,201,60,0.4); background:rgba(255,201,60,0.06);">
     <div class="avatar" style="background:linear-gradient(160deg,#ffc93c,#e8a317); color:var(--ink);">⏳</div>
     <div class="feed-body">
-      <div class="feed-name">${escapeHtml(complainer?complainer.name:'?')} anklaget <span class="amt">${p.votes.length}/${p.need}</span></div>
+      <div class="feed-name">${escapeHtml(complainer?complainer.name:'?')} ${escapeHtml(themeCopy().pendingVerb)} <span class="amt">${statusLabel}</span></div>
       ${p.message ? `<div class="feed-msg">"${escapeHtml(p.message)}"</div>` : ''}
       <div class="name-grid" style="margin:8px 0 2px;">${chips}</div>
       ${isAdmin() ? `<button style="margin-top:6px; padding:6px 12px; border-radius:100px; border:1px solid rgba(255,247,232,0.25); background:rgba(255,247,232,0.08); color:rgba(255,247,232,0.85); font-weight:600; font-size:11.5px; cursor:pointer;" data-cancel-pending="${p.id}">Fortryd (afblæs)</button>` : ''}
@@ -5730,7 +5839,7 @@ function renderFeed(main){
   const acquittalEvents = (state.acquittals||[]).map(a => ({ ...a, ts: a.expiredAt, acquitted: true }));
   const allEvents = [...historyEvents, ...state.events, ...acquittalEvents];
   if(!allEvents.length && !state.pendingList.length){
-    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>Ingen brok endnu</b>${escapeHtml(state.ruleTagline || `Første gang nogen brokker sig, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
+    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>${escapeHtml(themeCopy().emptyTitle)}</b>${escapeHtml(state.ruleTagline || `Første gang nogen brokker sig, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
     return;
   }
   const sorted = allEvents.slice().sort((a,b)=>b.ts-a.ts);
@@ -5841,7 +5950,7 @@ function renderAllTimeHistory(main){
     // endnu" lige nedenunder. Med data foroven er en lille fodnote nok.
     main.innerHTML = anyTotal
       ? chart + `<p class="hint" style="text-align:center; margin-top:14px;">📜 Det er den aktive pulje ovenfor — der kommer en "dag for dag"-historik her, når I trykker 💶 "Gør op" første gang.</p>`
-      : chart + `<div class="empty-state"><span class="emoji">📜</span><b>Ingen brok registreret endnu</b>Så snart nogen brokker sig, vises regnskabet her.</div>`;
+      : chart + `<div class="empty-state"><span class="emoji">📜</span><b>${escapeHtml(themeCopy().emptyTitleList)}</b>${escapeHtml(themeCopy().emptyBodyList)}</div>`;
     return;
   }
   const days = `<div class="section-label" style="margin-top:${anyTotal?22:0}px;">🗓️ Dag for dag</div>` + [...state.history].reverse().map(r=>{
@@ -5933,13 +6042,14 @@ function openShareSheet(){
 
 let draftMessage = '';
 function openBrokSheet(){
+  const copy = themeCopy();
   const chips = state.members.filter(m=>!m.isBot).map(m=>`<div class="name-pill" data-id="${m.id}">${escapeHtml(m.name)}</div>`).join('');
   let selectedId = null;
   openSheet(`
-    <h2>Hvem brokker sig? 🙄</h2>
-    <p class="hint">Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.</p>
+    <h2>${escapeHtml(copy.sheetTitle)}</h2>
+    <p class="hint">${escapeHtml(copy.sheetHint)}</p>
     <div class="name-grid" id="whoGrid">${chips}</div>
-    <textarea id="msgInput" rows="2" maxlength="80" placeholder='F.eks. "over prisen på jetski..." (påkrævet)'></textarea>
+    <textarea id="msgInput" rows="2" maxlength="80" placeholder='${escapeHtml(copy.sheetPlaceholder)}'></textarea>
     <button class="sheet-btn primary" id="nextBtn" disabled>Start afstemning</button>
     <button class="sheet-btn ghost" id="cancelBtn">Annuller</button>
   `, ()=>{
@@ -5957,7 +6067,7 @@ function openBrokSheet(){
     document.getElementById('cancelBtn').onclick = closeSheet;
     nextBtn.onclick = async ()=>{
       const message = msgInput.value.trim();
-      if(!message){ toast('Skriv hvad de brokkede sig over først'); return; }
+      if(!message){ toast('Skriv en besked først'); return; }
       nextBtn.innerHTML = '<span class="spinner"></span>';
       try{
         const r = await api('brok', { action: 'accuse', roomId, memberId: selectedId, message, actorId: profile.memberId });
@@ -5975,11 +6085,14 @@ function openBrokSheet(){
 }
 
 /* ============ DAGENS LODTRÆKNING ============ */
+// Genericeret (ikke skin-specifik) — 3 ud af 4 linjer nævnte "brok"
+// eksplicit, hvilket lækkede ind i alle andre skins. Enten fuldt
+// tematiseret eller fuldt generisk, ikke en imellem-tilstand.
 const NEW_DAY_LINES = [
-  'Mere brok at udrydde i dag! 🧹',
-  'Frisk dag, frisk chance for at holde kæft. 😇',
-  'Nulstillet håb om et brokfrit døgn. Sandsynligvis forgæves.',
-  'Endnu 24 timer hvor alt kan gå galt (det gør det nok).',
+  'Ny dag, nyt kapitel! 🧹',
+  'Frisk dag, frisk start. 😇',
+  'Nulstillet håb om et roligt døgn. Sandsynligvis forgæves.',
+  'Endnu 24 timer hvor alt kan ske (det gør det nok).',
 ];
 
 function checkFreeBrokReveal(){

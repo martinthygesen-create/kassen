@@ -46,13 +46,17 @@ function complainerExpiryMightBeDue(state) {
   return (now - cur.phaseStartedAt) >= BROKSPILLET_AUTO_MS;
 }
 
+// Genericeret (ikke skin-specifik, samme princip som NEW_DAY_LINES i
+// index.html) — alle 6 linjer nævnte tidligere "brok"/"Brokkekassen"
+// eksplicit og lækkede dermed ind i enhver anden skin, da denne besked
+// sendes uafhængigt af tema.
 const SILENCE_LINES = [
-  'Er alt for perfekt i dag? 🤔 Ingen har brokket sig i 24 timer... det virker mistænkeligt.',
-  '24 timers stilhed i Brokkekassen. Enten er alt fantastisk, eller også holder nogen igen. 👀',
-  'Boksen keder sig. Der må da være ét eneste lille brok i jer? 🫙',
-  'Officiel påmindelse: at undertrykke sit brok er skadeligt for folkesundheden. Registrér det — for menneskehedens skyld. 🧑‍⚕️',
-  'Videnskaben er enig: udiagnosticeret irritation vokser sig større i mørket. Bring det frem i lyset. 🔬',
-  'Denne besked er en tjeneste fra Brokkekassen: husk at registrere jeres brok, som samfundsansvarlige borgere. 🫡',
+  'Er alt for perfekt i dag? 🤔 Ingen har registreret noget i 24 timer... det virker mistænkeligt.',
+  '24 timers stilhed. Enten er alt fantastisk, eller også holder nogen igen. 👀',
+  'Boksen keder sig. Der må da være noget at registrere? 🫙',
+  'Officiel påmindelse: at holde det for sig selv er skadeligt for fællesskabet. Registrér det. 🧑‍⚕️',
+  'Videnskaben er enig: udiagnosticerede ting vokser sig større i mørket. Bring det frem i lyset. 🔬',
+  'Denne besked er en tjeneste: husk at registrere det I plejer, som samfundsansvarlige borgere. 🫡',
 ];
 
 module.exports = async (req, res) => {
@@ -116,7 +120,7 @@ module.exports = async (req, res) => {
     if (nudgeSilence) {
       try {
         await pushToMembers(state, [], {
-          title: '🏖️ Brokkekassen',
+          title: `🏖️ ${state.themeName || 'Brokkekassen'}`,
           body: SILENCE_LINES[Math.floor(Math.random() * SILENCE_LINES.length)],
           url: '/?r=' + roomId,
         });
