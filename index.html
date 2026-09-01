@@ -584,6 +584,23 @@
      for smal, i stedet for at overflow'e usynligt ud af viewportet. */
   .app-pick-row.wrap-pick-row{ flex-wrap:wrap; overflow-x:visible; }
   .app-pick-row.wrap-pick-row .app-pick{ flex:1 1 130px; min-width:0; }
+  /* Kasse-vælgeren (opret-flowets trin 1) — designet med Claude Design
+     (se samtalens mockup-runde: "closer to full screen and more modern",
+     rettet til ca. 2 kort synlige efter feedback). Bredere, liggende kort
+     med en linjes reel beskrivelse (ruleTagline) i stedet for de gamle
+     104px kvadrat-fliser der kun havde plads til emoji+navn. */
+  .skin-carousel-wrap{ margin:10px -18px 0; padding:0 18px; }
+  .skin-carousel{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:4px 0 10px; }
+  .skin-carousel::-webkit-scrollbar{ display:none; }
+  .skin-card{ flex:0 0 46%; scroll-snap-align:center; text-align:center; border-radius:20px; background:var(--sea); border:2px solid transparent; padding:16px 10px; cursor:pointer; transition:border-color .15s, transform .08s; box-shadow:0 8px 20px rgba(0,0,0,0.2); }
+  .skin-card:active{ transform:scale(.97); }
+  .skin-card.centered{ border-color:var(--coin); }
+  .skin-card .ic{ font-size:32px; line-height:1; }
+  .skin-card .nm{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:15px; color:#fff; margin-top:8px; line-height:1.2; }
+  .skin-card .ds{ font-size:10.5px; color:rgba(255,247,232,0.6); margin-top:5px; line-height:1.3; }
+  .skin-dots{ display:flex; gap:6px; justify-content:center; margin:2px 0 0; }
+  .skin-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,247,232,0.25); transition:all .15s; }
+  .skin-dot.active{ width:16px; border-radius:4px; background:var(--coin); }
   .app-pick-scroll-hint{
     position:absolute; top:50%; transform:translateY(-50%);
     width:18px; height:18px; border-radius:50%;
@@ -1457,31 +1474,55 @@ function setBelowCreateFlowVisible(visible){
 function renderCreateFlowStep1(){
   setBelowCreateFlowVisible(true);
   const wrap = document.getElementById('createFlowWrap');
-  wrap.innerHTML = `
-    <div class="onboard-card">
-      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvilken slags kasse skal I lave?</label>
-      <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
-        <div class="app-pick-row" id="skinPickRow">
-          ${SKIN_PRESETS.map(skin => `
-            <div class="onboard-pick app-pick" data-skin-id="${skin.id}" style="background:var(--sea); color:#fff;">
-              <div class="app-pick-icon">${skin.emoji}</div>
-              <div class="app-pick-label">${escapeHtml(skin.name)}</div>
-            </div>
-          `).join('')}
-          <div class="onboard-pick app-pick" data-custom-skin="1" style="background:rgba(5,32,36,0.35); color:#fff;">
-            <div class="app-pick-icon">✏️</div>
-            <div class="app-pick-label">Opret selv</div>
-          </div>
-        </div>
-      </div>
-      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Vælg én — resten af opsætningen tager kun et par sekunder.</p>
+  const cardHtml = (id, emoji, name, tagline)=>`
+    <div class="skin-card" data-skin-id="${id}">
+      <div class="ic">${emoji}</div>
+      <div class="nm">${escapeHtml(name)}</div>
+      <div class="ds">${escapeHtml(tagline)}</div>
     </div>
   `;
-  markAppPickScrollable();
-  document.querySelectorAll('#skinPickRow [data-skin-id]').forEach(el=>{
-    el.onclick = ()=>renderCreateFlowStep2(el.dataset.skinId);
+  wrap.innerHTML = `
+    <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6); text-align:center;">Hvilken slags kasse skal I lave?</label>
+      <div class="skin-carousel-wrap">
+        <div class="skin-carousel" id="skinCarousel">
+          ${SKIN_PRESETS.map(skin => cardHtml(skin.id, skin.emoji, skin.name, skin.ruleTagline)).join('')}
+          ${cardHtml('custom', '✏️', 'Opret selv', 'Byg jeres helt egen kasse')}
+        </div>
+      </div>
+      <div class="skin-dots" id="skinDots">
+        ${SKIN_PRESETS.map(()=>`<div class="skin-dot"></div>`).join('')}
+        <div class="skin-dot"></div>
+      </div>
+      <p class="hint" style="margin:8px 0 0; font-size:11px; color:rgba(255,247,232,0.4); text-align:center;">Swipe for at se flere — vælg én for at gå videre.</p>
+    </div>
+  `;
+  document.querySelectorAll('#skinCarousel [data-skin-id]').forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.dataset.skinId;
+      if(id === 'custom') renderCreateFlowCustom();
+      else renderCreateFlowStep2(id);
+    };
   });
-  document.querySelector('#skinPickRow [data-custom-skin]').onclick = ()=>renderCreateFlowCustom();
+  // Prikkerne følger med hvilket kort der aktuelt er centreret under
+  // scroll — samme "hvor er jeg i listen"-signal som pil-badgen gav i den
+  // gamle version, men uden at kræve et separat "Videre"-tryk (tap på et
+  // kort går stadig direkte videre, matcher appens "5 sekunder"-tempo).
+  const carousel = document.getElementById('skinCarousel');
+  const cards = [...carousel.children];
+  const dots = [...document.getElementById('skinDots').children];
+  const updateCentered = ()=>{
+    const center = carousel.scrollLeft + carousel.clientWidth / 2;
+    let closest = 0, closestDist = Infinity;
+    cards.forEach((card, i)=>{
+      const dist = Math.abs((card.offsetLeft + card.clientWidth / 2) - center);
+      if(dist < closestDist){ closestDist = dist; closest = i; }
+    });
+    cards.forEach((card, i)=>card.classList.toggle('centered', i === closest));
+    dots.forEach((dot, i)=>dot.classList.toggle('active', i === closest));
+  };
+  carousel.addEventListener('scroll', updateCentered, { passive:true });
+  updateCentered();
 }
 
 // Genererer spilnavne til et "Opret selv"-rum ud fra selve gruppenavnet, i
@@ -6717,7 +6758,17 @@ function openAdminMenuSheet(){
       closeSheet();
       setTimeout(()=>playFreeBrokDraw(previewWinner.id, true), 230);
     };
-    document.getElementById('adminRedrawFreeBrokBtn').onclick = async ()=>{
+    // Rum-dynamik-fejl (fundet ved rigtig telefonrapport: "luk denne kasse
+    // virker ikke"): adminRedrawFreeBrokBtn/adminBackdateBtn findes KUN i
+    // markup'et når state.dailyRhythm er sandt (se skabelonen ovenfor) —
+    // uden disse to null-guards kastede et ubetinget .onclick= på et
+    // ikke-eksisterende element en synkron fejl, som stoppede HELE resten
+    // af denne callback fra at køre for ethvert enkelt-event-rum (Bøde-
+    // kassen/Drikkekassen som standard, eller ethvert rum sat til "Enkelt
+    // Event") — dermed fik hverken Nulstil, Luk for altid, Slet rum ELLER
+    // "Luk menu" nogensinde deres onclick tilknyttet i de rum.
+    const redrawBtn = document.getElementById('adminRedrawFreeBrokBtn');
+    if(redrawBtn) redrawBtn.onclick = async ()=>{
       try{
         const r = await api('admin', { action: 'redrawFreeBrok', roomId, actorId: profile.memberId });
         state = r.state;
@@ -6728,7 +6779,8 @@ function openAdminMenuSheet(){
     };
     const undoBtn = document.getElementById('adminUndoBtn');
     if(undoBtn) undoBtn.onclick = ()=>{ closeSheet(); setTimeout(openUndoArchiveSheet, 230); };
-    document.getElementById('adminBackdateBtn').onclick = async ()=>{
+    const backdateBtn = document.getElementById('adminBackdateBtn');
+    if(backdateBtn) backdateBtn.onclick = async ()=>{
       try{
         const r = await api('admin', { action: 'backdate', roomId, actorId: profile.memberId });
         state = r.state;
