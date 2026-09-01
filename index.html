@@ -1964,7 +1964,7 @@ function renderInner(){
     </header>
     <div class="jar-wrap" id="jarWrap" style="cursor:pointer;">
       ${jarSVG(fillPct)}
-      <div class="jar-total"><div class="amt">${total}€</div><div class="lbl">i puljen</div>${whatToBuy(total) ? `<div style="margin-top:4px; font-size:13.5px; font-weight:700; color:var(--ink); text-transform:none; letter-spacing:normal;">${whatToBuy(total)}</div>` : ''}</div>
+      <div class="jar-total"><div class="amt">${total}${escapeHtml(state.unit || '€')}</div><div class="lbl">i puljen</div>${whatToBuy(total) ? `<div style="margin-top:4px; font-size:13.5px; font-weight:700; color:var(--ink); text-transform:none; letter-spacing:normal;">${whatToBuy(total)}</div>` : ''}</div>
     </div>
     ${state.goal && state.goal.trim() ? `<div style="text-align:center; font-size:12.5px; color:rgba(255,247,232,0.5); padding:2px 24px 0;">🎯 Potten går til: <span style="color:rgba(255,247,232,0.8); font-weight:600;">${escapeHtml(state.goal)}</span></div>` : ''}
     <div class="tabs">
@@ -4446,7 +4446,7 @@ function mrbrokOverHtml(m, cur){
       <p class="hint" style="color:rgba(255,247,232,0.6);">Emnet var: <b style="color:rgba(255,247,232,0.85);">${escapeHtml(cur.topic||'?')}</b></p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.mrBrokWon?'var(--coin)':'var(--coral)'};">${cur.mrBrokWon ? '👑 MrBrok vandt!' : '👑 De andre afslørede MrBrok!'}</p>
       ${stealLine}
-      ${m.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.mrBrokWon ? 'De andre lægger 1€ hver i puljen.' : 'MrBrok lægger 1€ i puljen.'}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
+      ${m.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.mrBrokWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `MrBrok lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
     </div>
     <div class="section-label">🎯 Gætte-regnskab</div>
     ${scoreRows}
@@ -5349,7 +5349,7 @@ function complainerOverHtml(c, cur){
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">Den Store Brokker var... ${escapeHtml(guiltyMember?guiltyMember.name:'?')}!</p>
       <p class="hint" style="color:rgba(255,247,232,0.6);">Gættede om <b style="color:rgba(255,247,232,0.85);">${escapeHtml(targetMember?targetMember.name:'?')}</b>: "${escapeHtml(cur.detail||'?')}"</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.guiltyWon?'var(--coin)':'var(--coral)'};">${cur.guiltyWon ? '👑 Den Store Brokker vandt!' : '👑 De andre gennemskuede gættet!'}</p>
-      ${c.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.guiltyWon ? 'De andre lægger 1€ hver i puljen.' : 'Den Store Brokker lægger 1€ i puljen.'}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
+      ${c.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.guiltyWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `Den Store Brokker lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
     </div>
     <div class="section-label">🎯 Mistanke-regnskab</div>
     ${scoreRows}
@@ -5585,7 +5585,7 @@ function bindPendingCardHandlers(){
             if(r.free){
               toast(`🎫 ${complainer ? complainer.name : 'Nogen'} brugte sit gratis brok — denne var på husets regning!`);
             }else{
-              toast(`💰 ${complainer ? complainer.name : 'Nogen'} skylder nu 1€ mere — ${randomBanter()}`);
+              toast(`💰 ${complainer ? complainer.name : 'Nogen'} skylder nu 1${state.unit || '€'} mere — ${randomBanter()}`);
             }
             render();
           });
@@ -5628,7 +5628,7 @@ function feedItemHtml(e, old){
   return `<div class="feed-item" style="opacity:${opacity};">
     <div class="avatar" style="${e.voided?'filter:grayscale(1);':''}">${initials(name)}</div>
     <div class="feed-body">
-    <div class="feed-name">${escapeHtml(name)} <span class="amt">${e.voided ? '🫤 talt fra' : (e.gameLoss ? '👉 +1€' : (e.free ? '🎫 gratis' : '+1€'))}</span></div>
+    <div class="feed-name">${escapeHtml(name)} <span class="amt">${e.voided ? '🫤 talt fra' : (e.gameLoss ? `👉 +1${escapeHtml(state.unit || '€')}` : (e.free ? '🎫 gratis' : `+1${escapeHtml(state.unit || '€')}`))}</span></div>
     ${e.message ? `<div class="feed-msg" style="${e.voided?'text-decoration:line-through;':''}">${complaintPrefix}"${escapeHtml(e.message)}"</div>` : ''}
     ${e.voided ? `<div class="feed-msg" style="color:rgba(255,201,60,0.85); font-weight:600;">🫤 Mistanke om snyd — tæller ikke med</div>` : ''}
     <div class="feed-time">${fmtTime(e.ts)}</div></div></div>`;
@@ -5652,7 +5652,7 @@ function renderFeed(main){
   const acquittalEvents = (state.acquittals||[]).map(a => ({ ...a, ts: a.expiredAt, acquitted: true }));
   const allEvents = [...historyEvents, ...state.events, ...acquittalEvents];
   if(!allEvents.length && !state.pendingList.length){
-    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>Ingen brok endnu</b>Første gang nogen brokker sig, koster det 1€. Hold øje!</div>`;
+    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>Ingen brok endnu</b>${escapeHtml(state.ruleTagline || `Første gang nogen brokker sig, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
     return;
   }
   const sorted = allEvents.slice().sort((a,b)=>b.ts-a.ts);
@@ -5690,7 +5690,7 @@ function spotlightCards(vals){
     <div style="flex:1; background:${accent ? 'rgba(255,107,74,0.14)' : 'rgba(255,247,232,0.07)'}; border:1px solid ${accent ? 'rgba(255,107,74,0.35)' : 'rgba(255,247,232,0.15)'}; border-radius:16px; padding:12px; text-align:center;">
       <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,247,232,0.68);">${emoji} ${title}</div>
       <div style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:${names.length>14?'12.5':'15'}px; color:var(--cream); margin-top:4px; line-height:1.2;">${escapeHtml(names)}</div>
-      <div style="font-size:12px; color:var(--coin);">${amt}€</div>
+      <div style="font-size:12px; color:var(--coin);">${amt}${escapeHtml(state.unit || '€')}</div>
     </div>`;
   return `<div style="display:flex; gap:10px; margin-bottom:18px;">
     ${card('TopBrokker', '🏆', topNames, maxV, true)}
@@ -5732,7 +5732,7 @@ function renderBalanceToday(main){
     else if(isLeast) sub = 'Helgenen i dag 😇';
     else if(streak > 0) sub = `🔥 ${streak} dag${streak===1?'':'e'} uden brok`;
     else sub = titleFor(amt);
-    return `<div class="bal-row"><div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(m.name)}</div><div class="feed-body"><div class="bal-name ${profile && m.id===profile.memberId?'me':''}">${escapeHtml(m.name)}${crown}${freeTag}</div><div style="font-size:12px; color:rgba(255,247,232,0.68);">${sub}</div></div><div class="bal-amt ${amt===0?'zero':''}">${amt}€</div></div>`;
+    return `<div class="bal-row"><div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(m.name)}</div><div class="feed-body"><div class="bal-name ${profile && m.id===profile.memberId?'me':''}">${escapeHtml(m.name)}${crown}${freeTag}</div><div style="font-size:12px; color:rgba(255,247,232,0.68);">${sub}</div></div><div class="bal-amt ${amt===0?'zero':''}">${amt}${escapeHtml(state.unit || '€')}</div></div>`;
   }).join('');
 
   main.innerHTML = spotlightCards(bal) + `<div class="section-label">💸 Dagens regnskab</div>` + rows;
@@ -5752,7 +5752,7 @@ function renderAllTimeHistory(main){
       const isLeast = maxTotal > minTotal && amt === minTotal;
       const pct = amt > 0 ? Math.max(6, Math.round(amt/maxTotal*100)) : 0;
       const badge = isTop ? ' 🏆' : (isLeast ? ' 😇' : '');
-      return `<div class="bar-row"><div class="avatar" style="width:30px;height:30px;font-size:11px;">${initials(m.name)}</div><div class="bar-track"><div class="bar-fill ${isTop?'top':''}" style="width:${pct}%;"></div></div><div class="bar-amt">${amt}€${badge}</div></div>`;
+      return `<div class="bar-row"><div class="avatar" style="width:30px;height:30px;font-size:11px;">${initials(m.name)}</div><div class="bar-track"><div class="bar-fill ${isTop?'top':''}" style="width:${pct}%;"></div></div><div class="bar-amt">${amt}${escapeHtml(state.unit || '€')}${badge}</div></div>`;
     }).join('')
   ) : '';
 
@@ -5774,11 +5774,11 @@ function renderAllTimeHistory(main){
       return !m || !m.isBot;
     }).sort((a,b)=>b[1]-a[1]).map(([id,amt])=>{
       const m = state.members.find(x=>x.id===id);
-      return `<div class="hr-line"><span>${escapeHtml(m?m.name:'?')}</span><span>${amt}€</span></div>`;
+      return `<div class="hr-line"><span>${escapeHtml(m?m.name:'?')}</span><span>${amt}${escapeHtml(state.unit || '€')}</span></div>`;
     }).join('');
     const start = new Date(r.startedAt).toLocaleDateString('da-DK',{day:'2-digit',month:'short'});
     const end = new Date(r.closedAt).toLocaleDateString('da-DK',{day:'2-digit',month:'short'});
-    return `<div class="history-round"><div class="hr-title">${r.total}€ i alt</div><div class="hr-sub">${start} – ${end} · ${r.events.length} brok</div>${lines}</div>`;
+    return `<div class="history-round"><div class="hr-title">${r.total}${escapeHtml(state.unit || '€')} i alt</div><div class="hr-sub">${start} – ${end} · ${r.events.length} brok</div>${lines}</div>`;
   }).join('');
   main.innerHTML = chart + days;
 }
@@ -6268,7 +6268,7 @@ function openUndoArchiveSheet(){
   if(!last) return;
   openSheet(`
     <h2>Fortryd seneste opgørelse ↩️</h2>
-    <p class="hint">Lægger de seneste ${last.total}€ (fra ${new Date(last.startedAt).toLocaleDateString('da-DK',{day:'2-digit',month:'short'})}–${new Date(last.closedAt).toLocaleDateString('da-DK',{day:'2-digit',month:'short'})}) tilbage i den aktive pulje, som om opgørelsen aldrig skete. Kun til at rette fejl — brug det ikke bare fordi nogen fortrød en betaling.</p>
+    <p class="hint">Lægger de seneste ${last.total}${escapeHtml(state.unit || '€')} (fra ${new Date(last.startedAt).toLocaleDateString('da-DK',{day:'2-digit',month:'short'})}–${new Date(last.closedAt).toLocaleDateString('da-DK',{day:'2-digit',month:'short'})}) tilbage i den aktive pulje, som om opgørelsen aldrig skete. Kun til at rette fejl — brug det ikke bare fordi nogen fortrød en betaling.</p>
     <button class="sheet-btn danger" id="doUndo">Ja, læg det tilbage</button>
     <button class="sheet-btn ghost" id="cancelUndo">Annuller</button>
   `, ()=>{
@@ -6329,10 +6329,10 @@ function openBroadcastSheet(){
 function openSettleSheet(){
   if(!state.events.length){ toast('Puljen er tom — intet at gøre op endnu 🙂'); return; }
   const bal = balances();
-  const rows = state.members.filter(m=>!m.isBot).sort((a,b)=>(bal[b.id]||0)-(bal[a.id]||0)).map(m=>`<div class="hr-line"><span>${escapeHtml(m.name)}</span><span>${bal[m.id]||0}€</span></div>`).join('');
+  const rows = state.members.filter(m=>!m.isBot).sort((a,b)=>(bal[b.id]||0)-(bal[a.id]||0)).map(m=>`<div class="hr-line"><span>${escapeHtml(m.name)}</span><span>${bal[m.id]||0}${escapeHtml(state.unit || '€')}</span></div>`).join('');
   openSheet(`
     <h2>Gør op 💶</h2>
-    <p class="hint">Total i puljen: <b>${totalPool()}€</b>. Dette arkiverer hele puljen i historikken og starter helt forfra. Streaks og gratis brok opdateres som normalt.</p>
+    <p class="hint">Total i puljen: <b>${totalPool()}${escapeHtml(state.unit || '€')}</b>. Dette arkiverer hele puljen i historikken og starter helt forfra. Streaks og gratis brok opdateres som normalt.</p>
     ${rows}
     <button class="sheet-btn danger" id="doSettle">Bekræft og gør op</button>
     <button class="sheet-btn ghost" id="cancelSettle">Annuller</button>
@@ -6375,9 +6375,12 @@ function openFinalCloseSheet(){
     <button class="sheet-btn ghost" id="cancelFinalClose">Annuller</button>
   `, ()=>{
     document.getElementById('cancelFinalClose').onclick = closeSheet;
-    document.getElementById('doFinalClose').onclick = async ()=>{
+    document.getElementById('doFinalClose').onclick = async (e)=>{
+      const btn = e.currentTarget;
+      if(btn.disabled) return;
+      btn.disabled = true;
       try{ const r = await api('admin', { action: 'close', roomId, actorId: profile.memberId }); state = r.state; closeSheet(); toast(`🔒 ${state.themeName || 'Brokkekassen'} er lukket — tak for turen!`); activeTab='broklisten'; brokListSubTab='alltime'; render(); }
-      catch(e){ toast(e.message); }
+      catch(e){ toast(e.message); btn.disabled = false; }
     };
   });
 }
@@ -6390,7 +6393,10 @@ function openDeleteRoomSheet(){
     <button class="sheet-btn ghost" id="cancelDeleteRoom">Annuller</button>
   `, ()=>{
     document.getElementById('cancelDeleteRoom').onclick = closeSheet;
-    document.getElementById('doDeleteRoom').onclick = async ()=>{
+    document.getElementById('doDeleteRoom').onclick = async (e)=>{
+      const btn = e.currentTarget;
+      if(btn.disabled) return;
+      btn.disabled = true;
       try{
         await api('admin', { action: 'deleteRoom', roomId, actorId: profile.memberId });
         const rooms = getMyRooms();
@@ -6400,7 +6406,7 @@ function openDeleteRoomSheet(){
         closeSheet();
         leaveRoom();
         toast('🗑️ Rummet er slettet');
-      }catch(e){ toast(e.message); }
+      }catch(e){ toast(e.message); btn.disabled = false; }
     };
   });
 }
