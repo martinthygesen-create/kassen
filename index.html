@@ -1596,7 +1596,7 @@ function renderWhoAmI(justCreated){
       else if(state.kasseEnabled) activeApp = 'kasse';
       render();
       startPolling();
-      if(justCreated) setTimeout(showRoomIntroSplash, 300);
+      if(justCreated) setTimeout(()=>showInviteSplash(showRoomIntroSplash), 300);
     }catch(e){ toast('Kunne ikke fortsætte: ' + e.message); joinBtnEl.textContent = 'Fortsæt'; joinBtnEl.disabled = false; }
   };
   document.getElementById('joinBtn').onclick = go;
@@ -1642,6 +1642,56 @@ function renderAwaitingApproval(pendingId, name){
       }
     }catch(e){ /* stille — prøver bare igen ved næste poll */ }
   }, 4000);
+}
+
+// Vises PRÆCIS én gang pr. rum, med det samme opretteren lander i rummet
+// (kaldes fra go()-handleren FØR showRoomIntroSplash) — selve invitations-
+// modulet: kode + link klar til at kopiere og sende videre med det samme,
+// i stedet for at opretteren selv skal huske at åbne ☰-menuen for at finde
+// koden igen. Der findes IKKE noget deltager-loft nogen steder i kodebasen
+// (hverken klient- eller serverside — se api/_lib/store.js), så teksten her
+// er bevidst IKKE sat til et opdigtet tal ("op til 8 personer") — det ville
+// se ud som en reel systembegrænsning, men være ren fiktion. Kald
+// `onClose` når modulet lukkes (uanset hvordan), så den kædede
+// showRoomIntroSplash stadig vises bagefter som hidtil.
+function showInviteSplash(onClose){
+  if(!roomId){ if(onClose) onClose(); return; }
+  const seenKey = 'bk_seen_invite_' + roomId;
+  if(localStorage.getItem(seenKey)){ if(onClose) onClose(); return; }
+  localStorage.setItem(seenKey, '1');
+
+  const backdropHtml = `<div class="room-splash-backdrop" id="inviteSplashBackdrop"><div class="room-splash" id="inviteSplashInner"></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', backdropHtml);
+  const backdrop = document.getElementById('inviteSplashBackdrop');
+  const inner = document.getElementById('inviteSplashInner');
+  requestAnimationFrame(()=>backdrop.classList.add('show'));
+  let closed = false;
+  const close = ()=>{
+    if(closed) return;
+    closed = true;
+    backdrop.classList.remove('show');
+    setTimeout(()=>{ backdrop.remove(); if(onClose) onClose(); }, 250);
+  };
+  backdrop.addEventListener('click', e=>{ if(e.target === backdrop) close(); });
+
+  const roomName = state.themeName || 'Brokkekassen';
+  inner.innerHTML = `
+    <div style="font-size:52px;">📨</div>
+    <h3>Inviter resten af flokken</h3>
+    <p>${escapeHtml(roomName)} er klar — del koden eller linket, så andre kan joine med det samme. Ingen grænse for hvor mange, der kan være med.</p>
+    <div class="onboard-card" style="text-align:center; margin-bottom:18px;">
+      <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(5,32,36,0.4);">Jeres kode</p>
+      <div id="inviteSplashCodeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--sea); padding:6px 0 2px;">${roomId}</div>
+      <p style="margin:0 0 14px; font-size:12.5px; color:rgba(5,32,36,0.5);">Tryk for at kopiere koden</p>
+      <button class="sheet-btn primary" id="inviteSplashCopyLinkBtn" style="margin-top:0;">📤 Kopier invitationslink</button>
+    </div>
+    <button class="sheet-btn ghost" id="inviteSplashCloseBtn" style="margin-top:0;">Senere, gå videre til rummet</button>
+  `;
+  document.getElementById('inviteSplashCodeBox').onclick = ()=>{
+    navigator.clipboard.writeText(roomId).then(()=>{ toast('Kode kopieret! 🔢'); close(); }).catch(()=>prompt('Kopiér koden manuelt:', roomId));
+  };
+  document.getElementById('inviteSplashCopyLinkBtn').onclick = async ()=>{ await doShare(); close(); };
+  document.getElementById('inviteSplashCloseBtn').onclick = close;
 }
 
 // Vises PRÆCIS én gang pr. rum, lige efter rummets opretter selv er kommet
