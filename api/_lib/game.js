@@ -417,18 +417,275 @@ const DECOY_DRIK = [
   'Kom uden gave til den fælles fest',
 ];
 
+// Dynamisk Trivia & Dilemma-bank (IMPLEMENTATION PROTOCOL, min. 20 pr. tema):
+// ÉN central, TAGGET pulje i stedet for et separat WORLD_TRIVIA_X-array pr.
+// skin — hvert element bærer sine egne `tags` (hvilke(t) skin(s) det må vises
+// i), og getTriviaForSkin(skinId) samler alt der matcher. Genbrug på tværs af
+// skins er KUN tilladt hvor der er naturligt tematisk overlap (præcis de
+// grupper protokollen selv definerer):
+//   - Socialt/sjovt overlap: drik + venne + sladre
+//   - Afgift/regel-overlap:  bode + brok
+//   - Sandhed/afsløring:     sladre + logn
+// STRICT BOUNDARY: rose og konkurrence (rene reward-polaritet-skins) får
+// ALDRIG negativt/straf-vinklet indhold fra brok/bode — de har hver deres
+// egen, isolerede pulje. hjaelper (professionel/holdleder-tone, ikke
+// uformel "brok") er også bevidst isoleret — intet naturligt tematisk
+// overlap med de øvrige er nævnt i protokollen.
+// De ÆLDRE WORLD_TRIVIA_BODE/SLADRE/VENNE/ROSE/DRIK-arrays ovenfor holdes
+// UÆNDREDE (bruges stadig direkte af CONTENT_BY_THEME.bode/sladre/venne/
+// rose/drik's `worldTrueFalse`-felt), men deres `worldTrivia`-felt erstattes
+// nedenfor af getTriviaForSkin(id) — selve spørgsmålsbanken er nu HER.
+const THEME_TRIVIA = [
+  // --- BROK (egen pulje, delt med BODE — afgift/regel-overlap) ---
+  // Genbruger den eksisterende, allerede dobbelttjekkede WORLD_TRIVIA
+  // ordret (30 stk, langt over minimum) — kun tags tilføjet, ingen
+  // indholds-ændring.
+  ...WORLD_TRIVIA.map(item => ({ ...item, tags: ['brok', 'bode'] })),
+  // BODE's egne 3 (fra WORLD_TRIVIA_BODE) hører naturligt hjemme i samme
+  // delte pulje — tilgængelige for begge, samme overlap-regel.
+  ...WORLD_TRIVIA_BODE.map(item => ({ ...item, tags: ['bode', 'brok'] })),
+
+  // --- SOCIALT/SJOVT (drik + venne + sladre) ---
+  { question: 'Ifølge antropologen Robin Dunbar er der en øvre grænse for hvor mange stabile venskaber en person typisk kan opretholde. Cirka hvor mange?', correct: 'Omkring 150', distractors: ['Omkring 15', 'Omkring 1.500', 'Omkring 5'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Den skandinaviske skåltradition med at sige "skål" stammer sprogligt fra hvilket ord?', correct: 'Det gamle ord for drikkekar/bæger', distractors: ['Et gammelt krigsråb', 'Et ord for held', 'Navnet på en vikingekonge'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Hvilken dansk skik går ud på at banke i bordet, når nogen fortæller noget usandsynligt, for at "mane det i jorden"?', correct: 'At banke under bordet', distractors: ['At spytte tre gange', 'At klinke glas to gange', 'At rejse sig op'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Ifølge en kendt britisk undersøgelse tilbringer den gennemsnitlige voksne hvor meget af sin fritid sammen med venner om ugen (ca.)?', correct: 'Under 5 timer', distractors: ['Over 20 timer', 'Over 40 timer', 'Under 30 minutter'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Ordet "kammerat" stammer oprindeligt fra et tysk ord der betød hvad?', correct: 'En der deler kammer/værelse med en', distractors: ['En der drikker øl med en', 'En soldat af samme rang', 'En handelspartner'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Det klassiske drikkespil "Ring of Fire"/"Kongespillet" bruger typisk hvilket redskab?', correct: 'Et almindeligt spil kort', distractors: ['En terning', 'En spinning-flaske', 'Et dominosæt'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Hvad kaldes fænomenet, hvor man som gruppe tager mere risikable beslutninger sammen, end man ville gøre hver for sig?', correct: 'Gruppepolarisering', distractors: ['Flokinstinkt-bias', 'Social dovenskab', 'Konformitetspres'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Ifølge en kendt Harvard-undersøgelse er hvad den enkeltstående stærkeste faktor for et langt, lykkeligt liv?', correct: 'Gode nære relationer', distractors: ['Høj indkomst', 'Regelmæssig motion', 'Kort arbejdsuge'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Det gamle udtryk "at få sig en gang bagtalelse" hentyder til hvilken form for snak?', correct: 'At tale dårligt om nogen bag deres ryg', distractors: ['At synge en gammel folkesang', 'At fortælle en vittighed forkert', 'At spille et brætspil'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Hvor mange venner har den gennemsnitlige voksne dansker ifølge flere trivselsundersøgelser typisk som "nære" (ikke bare bekendte)?', correct: '3-5 stykker', distractors: ['15-20 stykker', '30-40 stykker', 'Under 1'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Det danske ord "gilde" (som i "drikkegilde") stammer fra et gammelt ord der betød hvad?', correct: 'Et lag/en sammenslutning der betalte fælles bidrag', distractors: ['En kongelig fest', 'Et sted man solgte øl', 'Et redskab til brygning'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Ifølge en kendt teori kræver det i gennemsnit hvor mange timers samvær, før en bekendt bliver til en "god ven"?', correct: 'Omkring 200 timer', distractors: ['Omkring 20 timer', 'Omkring 2.000 timer', 'Omkring 2 timer'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Hvad hedder det psykologiske fænomen, hvor man tror andre lægger langt mere mærke til ens fejltrin (fx en pinlig kommentar til en fest), end de faktisk gør?', correct: 'Spotlight-effekten', distractors: ['Halo-effekten', 'Bekræftelsesbias', 'Dunning-Kruger-effekten'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Traditionen med at "cheers"/skåle ved at røre glassene sammen menes historisk at stamme fra et ønske om at gøre hvad?', correct: 'Lade lidt drik sprøjte over i hinandens glas som tillidstegn (ingen gift)', distractors: ['Vække guderne med lyden', 'Teste om glasset var ægte krystal', 'Markere hvem der betalte runden'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Det klassiske selskabsspil "Tornado"/"Twister" blev oprindeligt markedsført med hvilket kontroversielt skjulte formål ifølge senere historieskrivning?', correct: 'Som et flirtent "kontakt-spil" for voksne', distractors: ['Som et rent træningsredskab', 'Som et undervisningsspil for skoler', 'Som en reklame for et tæppefirma'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Hvad kaldes det, når en historie eller et rygte vokser og ændrer sig for hver gang det genfortælles fra person til person?', correct: 'Hviskeleg-effekten (seriel reproduktion)', distractors: ['Bekræftelsesbias', 'Mandela-effekten', 'Group-think'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Ifølge klassisk etikette-tradition bør man ved en skål altid gøre hvad, før man drikker?', correct: 'Se de andre i øjnene', distractors: ['Rejse sig helt op', 'Sige et digt', 'Tømme glasset helt'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Hvor mange procent af al menneskelig samtale anslår sprogforskere handler om andre mennesker, dvs. reelt er en form for "sladder" i bred forstand?', correct: 'Omkring 65%', distractors: ['Omkring 5%', 'Omkring 95%', 'Omkring 20%'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'Det danske brætspil-udtryk "at gå bankerot" i et festspil stammer oprindeligt fra italiensk og betød bogstaveligt hvad?', correct: 'At bryde sin bænk/bord i stykker (en fallit handelsmands straf)', distractors: ['At tabe alle sine kort', 'At blive udelukket fra lauget', 'At skylde en konge penge'], tags: ['drik', 'venne', 'sladre'] },
+  { question: 'En kendt undersøgelse fra Oxford peger på at latter i en gruppe primært tjener hvilket formål, mere end at signalere noget er sjovt?', correct: 'At styrke sociale bånd', distractors: ['At skræmme rivaler', 'At regulere kropstemperatur', 'At markere hierarki'], tags: ['drik', 'venne', 'sladre'] },
+
+  // --- SANDHED/AFSLØRING (sladre + logn) ---
+  { question: 'Det engelske ord "gossip" (sladder) stammer fra det angelsaksiske "godsibb". Hvad betegnede det oprindeligt?', correct: 'En gudforælder eller nær ven', distractors: ['En kongelig budbringer', 'En kirkelig embedsmand', 'En markedssælger'], tags: ['sladre', 'logn'] },
+  { question: 'Løgnedetektor-testen (polygraf) måler ikke løgn direkte — hvad måler den reelt?', correct: 'Fysiske stressreaktioner som puls og sved', distractors: ['Hjerneaktivitet direkte', 'Øjenbevægelser alene', 'Stemmens tonehøjde alene'], tags: ['sladre', 'logn'] },
+  { question: 'Ifølge flere adfærdsstudier lyver den gennemsnitlige voksne cirka hvor ofte om dagen?', correct: '1-2 gange', distractors: ['10-15 gange', 'Aldrig', 'Over 30 gange'], tags: ['sladre', 'logn'] },
+  { question: 'Historien om Pinocchios voksende næse, hver gang han lyver, stammer fra hvilket land?', correct: 'Italien', distractors: ['Tyskland', 'Frankrig', 'Danmark'], tags: ['sladre', 'logn'] },
+  { question: 'Hvad kaldes det, når man lyver overbevisende, fordi man selv er begyndt at tro på sin egen løgn?', correct: 'Selvbedrag', distractors: ['Konfabulation-syndrom', 'Falsk hukommelsesparadoks', 'Kognitiv dissonans-lammelse'], tags: ['sladre', 'logn'] },
+  { question: 'Ifølge forskning i kropssprog er en klassisk (men ofte overdrevet) "tegn på løgn" at undgå hvad?', correct: 'Øjenkontakt', distractors: ['At krydse benene', 'At smile', 'At tale hurtigt'], tags: ['sladre', 'logn'] },
+  { question: 'Det gamle udtryk "en hvid løgn" bruges om hvilken slags løgn?', correct: 'En uskyldig løgn ment til at skåne nogen', distractors: ['En løgn fortalt om vinteren', 'En officiel, dokumenteret løgn', 'En løgn ingen tror på'], tags: ['sladre', 'logn'] },
+  { question: 'Hvad kaldes fænomenet, hvor mange mennesker uafhængigt "husker" den samme forkerte version af en begivenhed?', correct: 'Mandela-effekten', distractors: ['Dunning-Kruger-effekten', 'Halo-effekten', 'Placebo-effekten'], tags: ['sladre', 'logn'] },
+  { question: 'I brætspillet/festlegen "Mafia"/"Werewolf" er selve kernemekanikken at nogle spillere skal gøre hvad over for resten?', correct: 'Lyve om deres skjulte rolle', distractors: ['Huske flest kort', 'Tegne hurtigst', 'Synge højest'], tags: ['sladre', 'logn'] },
+  { question: 'Ifølge kendt forskning i løgn opdages de fleste løgne i hverdagen ikke via kropssprog, men via hvad?', correct: 'Modsigelser i selve historien over tid', distractors: ['Håndens temperatur', 'Pupillernes størrelse', 'Håndskriftens hældning'], tags: ['sladre', 'logn'] },
+  { question: 'Det berømte "drengen der råbte ulv"-eventyr bruges typisk som advarsel mod hvad?', correct: 'At lyve så meget at ingen tror på en, når det gælder', distractors: ['At gå alene i skoven', 'At stole på fremmede', 'At holde får'], tags: ['sladre', 'logn'] },
+  { question: 'Hvor mange af en løgners egne detaljer i en historie ændrer sig typisk, hver gang de genfortæller den, ifølge kriminalpsykologer?', correct: 'Flere — sande historier er faktisk MERE konsistente ved genfortælling', distractors: ['Ingen — løgne huskes bedst', 'Præcis de samme, altid', 'Kun navnet på personerne'], tags: ['sladre', 'logn'] },
+  { question: 'Det engelske ord "fib" (en lille løgn) menes at stamme fra hvilket ældre udtryk?', correct: 'Et opdigtet "fable" (fabel/skrøne)', distractors: ['Et fiskeriudtryk for tomt net', 'Et gammelt bogholderiord', 'Navnet på en middelalderkonge'], tags: ['sladre', 'logn'] },
+  { question: 'I klassisk retorik kaldes den kunst at overbevise nogen om noget usandt for hvad?', correct: 'Sofisteri', distractors: ['Retorisk syllogisme', 'Dialektik', 'Eufemisme'], tags: ['sladre', 'logn'] },
+  { question: 'Ifølge en kendt Harvard-undersøgelse aktiverer det at holde en løgn hemmelig ofte de samme hjerneområder som hvad?', correct: 'Fysisk smerte/stress', distractors: ['Sult', 'Søvnighed', 'Kulde'], tags: ['sladre', 'logn'] },
+  { question: 'Det danske udtryk "at sælge en historie" bruges typisk om hvad?', correct: 'At overbevise nogen om noget der ikke er helt sandt', distractors: ['At skrive en bog om nogen', 'At give en avis et interview', 'At fortælle en vits godt'], tags: ['sladre', 'logn'] },
+  { question: 'Hvilken slags løgn kaldes "en skrøne" på dansk?', correct: 'En overdrevet, fantasifuld historie fortalt for sjov', distractors: ['En løgn fortalt i retten', 'En løgn om ens alder', 'En officiel undskyldning'], tags: ['sladre', 'logn'] },
+  { question: 'I gamle dage brugte man ordsprog som "løgn har korte ben" for at udtrykke hvad?', correct: 'At løgne hurtigt bliver afsløret', distractors: ['At løgnere er dårlige løbere', 'At løgn er en synd', 'At børn lyver mest'], tags: ['sladre', 'logn'] },
+  { question: 'Rygte-spredning i store grupper følger ofte samme matematiske mønster som hvad, ifølge netværksforskere?', correct: 'Spredning af en smitsom sygdom', distractors: ['Aktiekursers udsving', 'Vejrudsigter', 'Trafikpropper'], tags: ['sladre', 'logn'] },
+  { question: 'Det klassiske "hvide løgn"-dilemma bruges ofte i etik-undervisning til at diskutere balancen mellem sandhed og hvad?', correct: 'Hensyn/venlighed', distractors: ['Lovgivning', 'Religion', 'Økonomi'], tags: ['sladre', 'logn'] },
+
+  // --- ROSEKASSEN (isoleret, ren reward) ---
+  { question: 'Forskning i positiv psykologi (bl.a. af John Gottman) peger på et bestemt forhold mellem positive og negative kommentarer, der kendetegner stærke parforhold. Hvad kaldes det populært?', correct: 'Gottman-forholdet (ca. 5:1 positivt/negativt)', distractors: ['50/50-reglen', 'Guldne snit-reglen', '90/10-reglen'], tags: ['rose'] },
+  { question: 'Ifølge trivselsforskning har det at give ros og komplimenter en positiv effekt primært for hvem?', correct: 'Både giveren og modtageren', distractors: ['Kun modtageren', 'Kun giveren', 'Ingen af dem, målbart'], tags: ['rose'] },
+  { question: 'Hvad kaldes det psykologiske fænomen, hvor en enkelt positiv egenskab hos nogen får os til automatisk at antage flere gode ting om personen?', correct: 'Halo-effekten', distractors: ['Spotlight-effekten', 'Confirmation bias', 'Anker-effekten'], tags: ['rose'] },
+  { question: 'Ifølge en kendt undersøgelse husker folk oftest ikke ORDENE i en kompliment, men hvad?', correct: 'Følelsen af at blive set/værdsat', distractors: ['Hvem der stod ved siden af', 'Tidspunktet på dagen', 'Vejret den dag'], tags: ['rose'] },
+  { question: 'Taknemmeligheds-dagbøger (at skrive 3 gode ting ned hver dag) er en velkendt øvelse inden for hvilket forskningsfelt?', correct: 'Positiv psykologi', distractors: ['Adfærdsøkonomi', 'Neurokirurgi', 'Kriminologi'], tags: ['rose'] },
+  { question: 'Det gamle udtryk "at give nogen en guldstjerne" stammer fra hvilken oprindelige praksis?', correct: 'Lærere der belønnede elevers gode arbejde med et stjernemærke', distractors: ['Militærets rangmærker', 'Middelalderlige riddertitler', 'En gammel handelstradition'], tags: ['rose'] },
+  { question: 'Ifølge forskning i arbejdsglæde er anerkendelse fra kolleger ofte en STÆRKERE motivationsfaktor end hvad?', correct: 'En lille lønforhøjelse', distractors: ['Frokostpausens længde', 'Kontorets indretning', 'Antal møder om ugen'], tags: ['rose'] },
+  { question: 'Det japanske koncept "ikigai" handler grundlæggende om at finde hvad?', correct: 'Sin livsglæde/mening med tilværelsen', distractors: ['Den perfekte kop te', 'En livslang karriere ét sted', 'Fysisk balance gennem yoga'], tags: ['rose'] },
+  { question: 'Ifølge en kendt undersøgelse fra University of Pennsylvania øger det at skrive et taknemmeligheds-brev til nogen modtagerens lykkefølelse i hvor lang tid bagefter (målt)?', correct: 'I flere uger', distractors: ['Kun i få minutter', 'Slet ikke, målbart', 'I flere år'], tags: ['rose'] },
+  { question: 'Hvad kaldes det, når man aktivt fejrer en andens succes lige så meget som sin egen — en kendt nøgle til stærke venskaber?', correct: 'Capitalization (at "kapitalisere" på gode nyheder sammen)', distractors: ['Reciprocitet', 'Halo-effekt', 'Social facilitering'], tags: ['rose'] },
+  { question: 'Ifølge trivselsforskning er en oprigtig, KONKRET kompliment (fx om en handling) generelt mere virkningsfuld end hvad?', correct: 'En vag, generel kompliment (fx "du er sød")', distractors: ['En skriftlig kompliment', 'En kompliment fra en fremmed', 'En kompliment givet privat'], tags: ['rose'] },
+  { question: 'Traditionen med at give en "medalje" for en god præstation stammer historisk fra hvilken type begivenhed?', correct: 'Sportslige/olympiske konkurrencer i antikken', distractors: ['Kongelige kroninger', 'Religiøse højtider', 'Militære parader alene'], tags: ['rose'] },
+  { question: 'Det engelske udtryk "pat on the back" (et klap på skulderen) bruges billedligt om hvad?', correct: 'At anerkende nogens gode indsats', distractors: ['At trøste nogen i sorg', 'At sige farvel', 'At advare nogen'], tags: ['rose'] },
+  { question: 'Ifølge forskning smitter positive følelser mellem mennesker gennem et netværk ligesom hvad?', correct: 'En bølge — også via venners venner, ikke kun direkte kontakter', distractors: ['Kun mellem par', 'Slet ikke, målbart', 'Kun inden for familier'], tags: ['rose'] },
+  { question: 'Hvad kaldes det, når man bevidst lægger mærke til og udtaler noget positivt om en andens karakter (ikke bare en handling)?', correct: 'Karakterstyrke-anerkendelse', distractors: ['Reciprok altruisme', 'Social spejling', 'Positiv forstærkning alene'], tags: ['rose'] },
+  { question: 'Ifølge en kendt undersøgelse i skoleklasser øgede læreres brug af specifik, ægte ros elevernes indsats markant mere end hvad?', correct: 'Ros af intelligens ("du er så klog")', distractors: ['Ingen ros overhovedet', 'Materielle belønninger', 'Karakterer alene'], tags: ['rose'] },
+  { question: 'Det gamle ordsprog "et venligt ord koster intet, men er værd meget" understreger hvad?', correct: 'At anerkendelse har stor værdi uden at koste noget', distractors: ['At gaver bør være billige', 'At man skal spare på ordene', 'At tavshed er guld'], tags: ['rose'] },
+  { question: 'Ifølge positiv psykologi er "at fejre de små sejre" undervejs en kendt metode til at opnå hvad?', correct: 'Vedvarende motivation mod et større mål', distractors: ['Hurtigere resultater alene', 'Mindre konkurrence i gruppen', 'Lavere forventninger generelt'], tags: ['rose'] },
+  { question: 'Hvad kaldes det, når man modtager ros og automatisk afviser den ("det var ikke noget særligt") i stedet for at tage imod den?', correct: 'Kompliment-afbøjning', distractors: ['Social facilitering', 'Selvhandicapping', 'Impostor-projektion'], tags: ['rose'] },
+  { question: 'Ifølge en kendt undersøgelse husker folk generelt POSITIVE sociale interaktioner (som en god kompliment) i hvor lang tid, sammenlignet med neutrale hændelser?', correct: 'Markant længere', distractors: ['Kortere tid', 'Præcis lige så længe', 'De glemmes hurtigst af alle'], tags: ['rose'] },
+
+  // --- KONKURRENCEKASSEN (isoleret, ren reward) ---
+  { question: 'Ved de olympiske lege i antikkens Grækenland fik vinderen oprindeligt hvilken pris — IKKE en guldmedalje?', correct: 'En krans af oliegrene', distractors: ['En sæk guldmønter', 'Et sværd', 'En statue af sig selv'], tags: ['konkurrence'] },
+  { question: 'Hvad kaldes det, når en konkurrence ender helt lige, og man må bruge en ekstra afgørende runde?', correct: 'Omkamp/tie-break', distractors: ['Diskvalifikation', 'Walkover', 'Handicap-runde'], tags: ['konkurrence'] },
+  { question: 'Ifølge sportspsykologer er "at være i flow" en tilstand hvor man præsterer bedst, fordi opgaven er hvad?', correct: 'Passende udfordrende — hverken for let eller for svær', distractors: ['Helt uden pres', 'Fysisk let', 'Løst udelukkende alene'], tags: ['konkurrence'] },
+  { question: 'I brætspillet skak kaldes det træk, hvor man sætter modstanderens konge fast uden mulighed for at slippe væk, for hvad?', correct: 'Skakmat', distractors: ['Rokade', 'Remis', 'Gambit'], tags: ['konkurrence'] },
+  { question: 'Det engelske udtryk "underdog" bruges om en deltager, der forventes at hvad?', correct: 'Tabe, men alligevel overrasker', distractors: ['Vinde sikkert', 'Trække sig fra konkurrencen', 'Dømme konkurrencen'], tags: ['konkurrence'] },
+  { question: 'Ifølge konkurrenceforskning præsterer folk ofte bedre i en gruppe-konkurrence, når de kan se hvad undervejs?', correct: 'Deres egen fremgang/score i realtid', distractors: ['Kun slutresultatet til sidst', 'Modstanderens strategi på forhånd', 'Dommerens noter'], tags: ['konkurrence'] },
+  { question: 'Hvad kaldes en konkurrenceform, hvor alle møder alle mindst én gang, i modsætning til en udslagsturnering?', correct: 'Alle-mod-alle (round robin)', distractors: ['Knockout-format', 'Gruppefinale', 'Ligastige'], tags: ['konkurrence'] },
+  { question: 'I quizsammenhænge kaldes en fælles sidste, højt-vægtet afgørende runde ofte for hvad?', correct: 'Finalerunden/jackpot-runden', distractors: ['Startrunden', 'Straffe-runden', 'Bonusfeltet'], tags: ['konkurrence'] },
+  { question: 'Ifølge sportspsykologi kan det at "hepe" højlydt på et hold reelt måles til at give en fordel — hvad kaldes fænomenet?', correct: 'Hjemmebane-fordelen', distractors: ['Placebo-effekten', 'Halo-effekten', 'Spotlight-effekten'], tags: ['konkurrence'] },
+  { question: 'Det klassiske "sten, saks, papir"-spil bruges ofte til at afgøre hvad i uformelle konkurrencer?', correct: 'Hvem der starter/får første tur', distractors: ['Den endelige vinder alene', 'Point-fordelingen', 'Dommerens afgørelse'], tags: ['konkurrence'] },
+  { question: 'I mange brætspil kaldes den startspiller-fordel man kan få ved terningkast for hvad?', correct: 'Førsteret/startfordel', distractors: ['Handicap', 'Straffekast', 'Byttehandel'], tags: ['konkurrence'] },
+  { question: 'Ifølge konkurrenceteori kan "gamification" (at gøre almindelige opgaver til et spil med point) øge motivationen markant — hvad er en klassisk grund til det?', correct: 'Øjeblikkelig feedback og synlig fremgang', distractors: ['Det fjerner al konkurrence', 'Det kræver ingen indsats', 'Det er altid tilfældigt'], tags: ['konkurrence'] },
+  { question: 'Det engelske sportsudtryk "photo finish" beskriver en situation hvor hvad afgør sejren?', correct: 'Et fotografi, fordi løbet var for tæt til at se med det blotte øje', distractors: ['Et møntkast', 'Dommerens mavefornemmelse', 'Et ekstra omløb'], tags: ['konkurrence'] },
+  { question: 'I mange quizspil kaldes den regel, hvor et forkert svar koster point i stedet for blot intet at give, for hvad?', correct: 'Negativ point-scoring (straf for forkert svar)', distractors: ['Bonusregel', 'Joker-regel', 'Håndicap-regel'], tags: ['konkurrence'] },
+  { question: 'Ifølge sportshistorien opstod udtrykket "at gå efter guldet" fra hvilken konkurrenceform?', correct: 'De moderne olympiske lege og deres guldmedaljer', distractors: ['Middelalderlige riddertuneringer', 'Antikkens væddeløb alene', 'En gammel guldgraver-tradition'], tags: ['konkurrence'] },
+  { question: 'Hvad kaldes det, når to hold/spillere bytter roller undervejs i en konkurrence for at gøre den mere fair (fx i en quiz)?', correct: 'Rotation/skiftende rækkefølge', distractors: ['Diskvalifikation', 'Sudden death', 'Voldgift'], tags: ['konkurrence'] },
+  { question: 'I mange holdkonkurrencer bruges en "joker", der lader et hold gøre hvad én gang i løbet af spillet?', correct: 'Doble deres point på et valgt spørgsmål/runde', distractors: ['Springe en runde over helt', 'Diskvalificere modstanderen', 'Bytte hold midtvejs'], tags: ['konkurrence'] },
+  { question: 'Ifølge motivationsforskning er konkurrencer med SYNLIGE ranglister ofte mere motiverende, fordi de udnytter hvilket menneskeligt træk?', correct: 'Trangen til social sammenligning', distractors: ['Frygten for mørke', 'Behovet for stilhed', 'Ønsket om at være alene'], tags: ['konkurrence'] },
+  { question: 'Det gamle udtryk "at vinde med hestelængder" (stor sikker margin) stammer fra hvilken sportsgren?', correct: 'Hestevæddeløb', distractors: ['Sejlsport', 'Skak', 'Cykelløb'], tags: ['konkurrence'] },
+  { question: 'I mange familie-/venneturneringer bruges "bedst af tre" som afgørelsesform, fordi det gør hvad?', correct: 'Reducerer betydningen af ren tilfældighed i én enkelt runde', distractors: ['Gør spillet kortere generelt', 'Kræver færre deltagere', 'Fjerner behovet for dommer'], tags: ['konkurrence'] },
+
+  // --- KOLLEGAKASSEN (isoleret, professionel/holdleder-tone) ---
+  { question: 'Den kendte "Tjekliste"-metode til at reducere fejl på fx hospitaler og i luftfarten blev populariseret af hvilken forfatter/læge?', correct: 'Atul Gawande', distractors: ['Florence Nightingale', 'Ignaz Semmelweis', 'Alexander Fleming'], tags: ['hjaelper'] },
+  { question: 'I kvalitetsstyring kaldes princippet om løbende, små forbedringer for hvad (oprindeligt et japansk begreb)?', correct: 'Kaizen', distractors: ['Kanban', 'Lean startup', 'Six Sigma'], tags: ['hjaelper'] },
+  { question: 'Hvad kaldes den type fejl, hvor flere små uafhængige svigt tilfældigt sker samtidig og fører til en større hændelse?', correct: 'Schweizerost-modellen (flere "huller" der stemmer overens)', distractors: ['Domino-effekten alene', 'Peter-princippet', 'Parkinsons lov'], tags: ['hjaelper'] },
+  { question: 'I mange virksomheder bruges en "post-mortem"/evaluering efter en fejl primært til hvad?', correct: 'At lære af fejlen uden at placere personlig skyld', distractors: ['At finde en syndebuk', 'At dokumentere til en fyring', 'At undgå at rette fejlen'], tags: ['hjaelper'] },
+  { question: 'Det engelske begreb "near miss" (nærved-hændelse) bruges i arbejdsmiljøarbejde om hvad?', correct: 'En situation der kunne være gået galt, men ikke gjorde', distractors: ['En fejl der allerede er sket', 'En plan der blev aflyst', 'Et møde der blev udsat'], tags: ['hjaelper'] },
+  { question: 'Ifølge arbejdsmiljøforskning falder antallet af fejl markant, når medarbejdere trygt kan gøre hvad?', correct: 'Melde fejl uden frygt for konsekvenser', distractors: ['Arbejde helt alene', 'Undgå al feedback', 'Skifte opgave hver dag'], tags: ['hjaelper'] },
+  { question: 'Den velkendte "fire-øjne-princip" i kvalitetssikring betyder at vigtigt arbejde altid skal hvad?', correct: 'Tjekkes af mindst to personer', distractors: ['Udføres to gange af samme person', 'Godkendes af en leder alene', 'Dokumenteres i to eksemplarer'], tags: ['hjaelper'] },
+  { question: 'I Toyotas berømte produktionssystem kunne enhver medarbejder trække i en snor for at gøre hvad, hvis de så en fejl?', correct: 'Stoppe hele samlebåndet med det samme', distractors: ['Tilkalde en tolk', 'Bestille flere reservedele', 'Skifte til natskift'], tags: ['hjaelper'] },
+  { question: 'Det såkaldte "Peter-princip" beskriver en kendt arbejdspladstendens til at folk forfremmes indtil hvad?', correct: 'De når et niveau, hvor de ikke længere er kompetente', distractors: ['De går på pension', 'De skifter branche', 'De bliver chef for sig selv'], tags: ['hjaelper'] },
+  { question: 'Hvad kaldes det dokument, der beskriver præcis hvordan en opgave skal udføres hver gang, for at undgå variation og fejl?', correct: 'En standardprocedure (SOP)', distractors: ['En mødereferat', 'En stillingsbeskrivelse', 'En trivselsrapport'], tags: ['hjaelper'] },
+  { question: 'Ifølge klassisk ledelsesteori er konstruktiv feedback mest effektiv, når den gives hvornår efter en fejl?', correct: 'Så tæt på hændelsen som muligt', distractors: ['Ved den årlige medarbejdersamtale alene', 'Aldrig direkte, kun skriftligt', 'Foran hele afdelingen'], tags: ['hjaelper'] },
+  { question: 'Det japanske begreb "5S" i arbejdspladsorganisering handler grundlæggende om hvad?', correct: 'Orden, struktur og systematisk oprydning på arbejdspladsen', distractors: ['Fem årlige medarbejdersamtaler', 'Fem sikkerhedsniveauer', 'Fem-dages arbejdsuge'], tags: ['hjaelper'] },
+  { question: 'Hvad kaldes det, når man bevidst dobbelttjekker sit eget arbejde, før man afleverer det videre?', correct: 'Selvkontrol/egenkontrol', distractors: ['Delegering', 'Eskalering', 'Benchmarking'], tags: ['hjaelper'] },
+  { question: 'Ifølge arbejdsmiljøforskning er en "just culture" (retfærdig kultur) kendetegnet ved at skelne mellem hvad?', correct: 'Ærlige fejl og bevidst skødesløshed', distractors: ['Nye og gamle medarbejdere', 'Store og små virksomheder', 'Dag- og nattevagter'], tags: ['hjaelper'] },
+  { question: 'Den kendte "tjek-dobbelt-tjek"-praksis i flyluftfarten før take-off kaldes officielt hvad?', correct: 'Pre-flight tjekliste', distractors: ['Cockpit-briefing alene', 'Passagermanifest', 'Vejrudsigtsprotokol'], tags: ['hjaelper'] },
+  { question: 'Ifølge ledelsesforskning er anerkendelse af GOD kvalitet i arbejdet — ikke kun rettelse af fejl — afgørende for hvad?', correct: 'Fastholdt høj kvalitet og motivation over tid', distractors: ['Hurtigere arbejdstempo alene', 'Færre medarbejdere behøves', 'Kortere arbejdsdage'], tags: ['hjaelper'] },
+  { question: 'Det engelske ord "accountability" (ansvarlighed) på en arbejdsplads betyder primært hvad?', correct: 'At stå ved sine handlinger og deres konsekvenser', distractors: ['At have flest bogholderi-opgaver', 'At arbejde flest timer', 'At være øverste leder'], tags: ['hjaelper'] },
+  { question: 'Ifølge kvalitetsstyringsteori er det billigst at rette en fejl hvornår i en arbejdsproces?', correct: 'Så tidligt som muligt', distractors: ['Efter aflevering til kunden', 'Ved årsafslutningen', 'Det er lige dyrt uanset hvornår'], tags: ['hjaelper'] },
+  { question: 'Den kendte "brown paper"-øvelse i procesforbedring går ud på at gøre hvad?', correct: 'Tegne hele arbejdsprocessen fysisk op på papir for at finde flaskehalse', distractors: ['Pakke varer ind i brunt papir', 'Skrive en årsrapport i hånden', 'Male kontoret brunt'], tags: ['hjaelper'] },
+  { question: 'Ifølge trivselsundersøgelser på arbejdspladser er en tydelig, forudsigelig proces for at melde fejl med til at gøre hvad?', correct: 'Reducere stress og øge trygheden ved arbejdet', distractors: ['Gøre arbejdet langsommere', 'Øge antallet af fejl', 'Reducere behovet for kompetencer'], tags: ['hjaelper'] },
+];
+
+function getTriviaForSkin(skinId){
+  const items = THEME_TRIVIA.filter(item => item.tags.includes(skinId));
+  return shuffle(items.slice());
+}
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til konstanterne
 // ovenfor (ingen indholds-omskrivning, kun et lookup-lag) — DECOY_BROK
 // defineres længere nede i filen, tilføjes til CONTENT_BY_THEME.brok efter
 // sin egen definition (se modul-bund), ikke her, for ikke at bruge en
 // konstant før den er initialiseret.
+// Konkurrence/logn/hjaelper's egne, dedikerede quiplash-sæt — se STRICT
+// BOUNDARY-fundet nedenfor (Trivia-protokollen): Konkurrencekassen brugte
+// UÆNDRET at genbruge brok-indholdet (QUIPLASH_PROMPTS, "brokker sig"-
+// vinklet), hvilket reelt LAK straf-vinklet sprog ind i en ren reward-skin —
+// en levende, nåbar fejl (Konkurrencekassens 'spil' ER aktiveret), ikke kun
+// et teoretisk problem. Rettet med egne, sejrs-/konkurrence-vinklede sæt.
+const QUIPLASH_PROMPTS_KONKURRENCE = [
+  'Den mest sandsynlige grund til at {target} vinder næste runde er...',
+  'Skriv den bedste sejrs-kommentar til {target}',
+  '{target} ville helt sikkert vinde en konkurrence i...',
+  'Den mest overdrevne sejrsdans {target} kunne finde på er...',
+  'Hvis {target} havde sin egen mesterskabstitel, ville den hedde...',
+  '{target}s hemmelige konkurrence-supertalent er...',
+  'Det {target} altid vinder over de andre i er...',
+  'Om 10 år husker alle stadig {target} for at have vundet...',
+];
+const QUIPLASH_DECOYS_KONKURRENCE = [
+  'At vinde tre gange i træk og stadig kræve revanche',
+  'At have en helt urimeligt god held-stribe',
+  'At forberede sig alt for grundigt til en simpel leg',
+  'At fejre en sejr som om det var en VM-finale',
+  'At finde et smuthul i reglerne og udnytte det til fulde',
+  'At coache alle andre midt i egen kamp',
+  'At huske hver eneste sejr i mindste detalje',
+  'At påstå det var "ren strategi", når det var ren tilfældighed',
+];
+const WORLD_TRUEFALSE_KONKURRENCE = [
+  { statement: 'Ved de olympiske lege i antikkens Grækenland fik vinderen en krans af oliegrene i stedet for en medalje.', isTrue: true },
+];
+const DECOY_KONKURRENCE = [
+  'Vandt tre runder i træk og krævede revanche alligevel',
+  'Lavede en overdrevet sejrsdans midt i stuen',
+  'Fandt et smuthul i reglerne ingen havde set',
+  'Forberedte sig alt for seriøst til en afslappet leg',
+  'Coachede alle andre midt i sin egen tur',
+  'Huskede scoren fra en kamp for tre år siden',
+  'Påstod det var strategi, da det var rent held',
+  'Krævede en officiel "omkamp" over en bagatel',
+];
+
+// Løgnerkassens og Kollegakassens egne quiplash-sæt (defensivt/fremtids-
+// sikret: 'spil' er ikke slået til for disse to skins i SKIN_PRESETS'
+// allowedGames i dag, men getThemeContent faldt tidligere stille tilbage
+// til RÅ brok-indhold for begge, hvis noget nogensinde kaldte dem — samme
+// slags leak-mønster som Konkurrencekassens, blot ikke UI-nåbart endnu).
+const QUIPLASH_PROMPTS_LOGN = [
+  'Den mest sandsynlige løgn {target} fortalte for nylig er...',
+  'Skriv den mest overbevisende (opdigtede) undskyldning for {target}',
+  '{target} ville helt sikkert lyve om...',
+  'Den mest gennemskuelige løgn {target} nogensinde har fortalt er...',
+  'Hvis {target} havde sin egen løgnehistorie-titel, ville den hedde...',
+  '{target}s hemmelige talent er at bluffe om...',
+  'Det {target} altid overdriver en lille smule er...',
+  'Om 10 år afsløres {target} stadig for at have løjet om...',
+];
+const QUIPLASH_DECOYS_LOGN = [
+  'At sige "jeg var lige på vej" i en time',
+  'At påstå at have læst hele bogen på én aften',
+  'At love at det "kun tager to minutter"',
+  'At sige man ikke så beskeden, selvom den blev læst med det samme',
+  'At overdrive hvor travlt man har haft',
+  'At påstå en fejl var "med vilje"',
+  'At sige man "næsten" nåede det',
+  'At love at huske det denne gang',
+];
+const WORLD_TRUEFALSE_LOGN = [
+  { statement: 'En løgnedetektor (polygraf) måler ikke løgn direkte, men fysiske stressreaktioner som puls og sved.', isTrue: true },
+];
+const DECOY_LOGN = [
+  'Sagde "jeg var lige på vej" en time for tidligt',
+  'Påstod at have læst hele materialet grundigt',
+  'Lovede det kun ville tage to minutter',
+  'Overdrev hvor travlt dagen havde været',
+  'Sagde en fejl var med vilje, efter den blev opdaget',
+  'Påstod at "næsten" have nået deadline',
+  'Lovede at huske det denne gang, igen',
+  'Sagde beskeden ikke var set, selvom den var læst',
+];
+
+const QUIPLASH_PROMPTS_HJAELPER = [
+  'Den mest sandsynlige grund til at {target} laver samme fejl igen er...',
+  'Skriv den mest professionelle (men morsomme) tilbagemelding til {target}',
+  '{target} ville helt sikkert glemme tjeklisten hvis...',
+  'Den mest kreative undskyldning {target} kunne finde på for en fejl er...',
+  'Hvis {target} havde sin egen kvalitetsstandard, ville den hedde...',
+  '{target}s hemmelige talent er at overse detaljen om...',
+  'Det {target} altid glemmer at dobbelttjekke er...',
+  'Om 10 år husker teamet stadig {target} for...',
+];
+const QUIPLASH_DECOYS_HJAELPER = [
+  'Glemte at krydse af på tjeklisten alligevel',
+  'Sprang sidste kontroltrin over "for at spare tid"',
+  'Antog at en anden allerede havde tjekket det',
+  'Overså en detalje, der stod tydeligt i vejledningen',
+  'Lovede at rette det "med det samme" og glemte det',
+  'Genbrugte en gammel løsning uden at opdatere den',
+  'Meldte opgaven færdig en time for tidligt',
+  'Stolede på hukommelsen i stedet for tjeklisten',
+];
+const WORLD_TRUEFALSE_HJAELPER = [
+  { statement: 'Den kendte "tjekliste"-metode til at reducere fejl på hospitaler og i luftfarten blev populariseret af lægen og forfatteren Atul Gawande.', isTrue: true },
+];
+const DECOY_HJAELPER = [
+  'Glemte at krydse af på tjeklisten',
+  'Sprang sidste kontroltrin over for at spare tid',
+  'Antog en anden allerede havde tjekket det',
+  'Overså en detalje der stod i vejledningen',
+  'Lovede at rette det med det samme og glemte det',
+  'Genbrugte en gammel løsning uden at opdatere den',
+  'Meldte en opgave færdig for tidligt',
+  'Stolede på hukommelsen frem for tjeklisten',
+];
+
 const CONTENT_BY_THEME = {
   brok: {
     quiplashPrompts: QUIPLASH_PROMPTS,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
     quiplashDecoys: QUIPLASH_DECOYS,
-    worldTrivia: WORLD_TRIVIA,
+    worldTrivia: getTriviaForSkin('brok'),
     worldTrueFalse: WORLD_TRUEFALSE,
     gameName: 'Brokspillet',
   },
@@ -440,25 +697,18 @@ const CONTENT_BY_THEME = {
     quiplashPrompts: QUIPLASH_PROMPTS_BODE,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
     quiplashDecoys: QUIPLASH_DECOYS_BODE,
-    worldTrivia: WORLD_TRIVIA_BODE,
+    worldTrivia: getTriviaForSkin('bode'),
     worldTrueFalse: WORLD_TRUEFALSE_BODE,
     decoyBrok: DECOY_BODE,
     gameName: 'Bødespillet',
   },
   // Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
   // KASSEMOTORPLAN.md's klassifikations-tabel: kvorum, alle tre spil mulige).
-  // Konkurrencekassen — poolPolarity:'reward'-motoren (se KASSEMOTORPLAN.md:
-  // "Rettelse af tidligere konklusion: Konkurrencekassen... naturligt
-  // reward-polaritet"). Genbruger brok-indholdet UÆNDRET (ingen nyt domæne —
-  // det der adskiller Konkurrencekassen er ren MEKANIK/polaritet, ikke et
-  // andet emne, jf. planens "3 af de 6 er samme motor med forskelligt
-  // navn/indhold" — her er det bevidst SAMME indhold, kun navnet skifter),
-  // kun gameName er nyt, for ikke at bryde checkThemeIdentityNotLeaked.
   venne: {
     quiplashPrompts: QUIPLASH_PROMPTS_VENNE,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
     quiplashDecoys: QUIPLASH_DECOYS_VENNE,
-    worldTrivia: WORLD_TRIVIA_VENNE,
+    worldTrivia: getTriviaForSkin('venne'),
     worldTrueFalse: WORLD_TRUEFALSE_VENNE,
     decoyBrok: DECOY_VENNE,
     gameName: 'Vennespillet',
@@ -467,7 +717,7 @@ const CONTENT_BY_THEME = {
     quiplashPrompts: QUIPLASH_PROMPTS_ROSE,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
     quiplashDecoys: QUIPLASH_DECOYS_ROSE,
-    worldTrivia: WORLD_TRIVIA_ROSE,
+    worldTrivia: getTriviaForSkin('rose'),
     worldTrueFalse: WORLD_TRUEFALSE_ROSE,
     decoyBrok: DECOY_ROSE,
     gameName: 'Rosespillet',
@@ -476,27 +726,55 @@ const CONTENT_BY_THEME = {
     quiplashPrompts: QUIPLASH_PROMPTS_DRIK,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
     quiplashDecoys: QUIPLASH_DECOYS_DRIK,
-    worldTrivia: WORLD_TRIVIA_DRIK,
+    worldTrivia: getTriviaForSkin('drik'),
     worldTrueFalse: WORLD_TRUEFALSE_DRIK,
     decoyBrok: DECOY_DRIK,
     gameName: 'Rundespillet',
   },
+  // Konkurrencekassen — poolPolarity:'reward'-motoren. Genbrugte tidligere
+  // brok-indholdet UÆNDRET ("kun gameName er nyt") — RETTET her (Trivia-
+  // protokollens STRICT BOUNDARY): egne, sejrs-vinklede quiplash/decoy/
+  // trivia-sæt i stedet, se QUIPLASH_PROMPTS_KONKURRENCE ovenfor.
   konkurrence: {
-    quiplashPrompts: QUIPLASH_PROMPTS,
+    quiplashPrompts: QUIPLASH_PROMPTS_KONKURRENCE,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
-    quiplashDecoys: QUIPLASH_DECOYS,
-    worldTrivia: WORLD_TRIVIA,
-    worldTrueFalse: WORLD_TRUEFALSE,
+    quiplashDecoys: QUIPLASH_DECOYS_KONKURRENCE,
+    worldTrivia: getTriviaForSkin('konkurrence'),
+    worldTrueFalse: WORLD_TRUEFALSE_KONKURRENCE,
+    decoyBrok: DECOY_KONKURRENCE,
     gameName: 'Konkurrencespillet',
   },
   sladre: {
     quiplashPrompts: QUIPLASH_PROMPTS_SLADRE,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
     quiplashDecoys: QUIPLASH_DECOYS_SLADRE,
-    worldTrivia: WORLD_TRIVIA_SLADRE,
+    worldTrivia: getTriviaForSkin('sladre'),
     worldTrueFalse: WORLD_TRUEFALSE_SLADRE,
     decoyBrok: DECOY_SLADRE,
     gameName: 'Sladrespillet',
+  },
+  // logn/hjaelper: 'spil' er ikke aktiveret for disse to skins i
+  // SKIN_PRESETS.allowedGames i dag, MEN getThemeContent faldt tidligere
+  // stille tilbage til rå brok-indhold for begge, hvis noget nogensinde
+  // kaldte dem (defensivt hul, samme mønster som Konkurrencekassens
+  // bekræftede leak) — udfyldt fuldt ud her, ikke kun trivia-feltet.
+  logn: {
+    quiplashPrompts: QUIPLASH_PROMPTS_LOGN,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_LOGN,
+    worldTrivia: getTriviaForSkin('logn'),
+    worldTrueFalse: WORLD_TRUEFALSE_LOGN,
+    decoyBrok: DECOY_LOGN,
+    gameName: 'Løgnespillet',
+  },
+  hjaelper: {
+    quiplashPrompts: QUIPLASH_PROMPTS_HJAELPER,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_HJAELPER,
+    worldTrivia: getTriviaForSkin('hjaelper'),
+    worldTrueFalse: WORLD_TRUEFALSE_HJAELPER,
+    decoyBrok: DECOY_HJAELPER,
+    gameName: 'Kollegaspillet',
   },
 };
 function getThemeContent(themeId) {
@@ -610,6 +888,30 @@ const QUESTION_TEMPLATES_BY_THEME = {
     quoteWho: quote => `Ifølge Sladrekassen sladrede nogen om: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken sladderhistorie stod ${name} bag?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne sladrekasse?',
+  },
+  // logn/hjaelper: 'spil' er ikke aktiveret i SKIN_PRESETS.allowedGames i
+  // dag, men getQuestionTemplates faldt (ligesom CONTENT_BY_THEME) tidligere
+  // stille tilbage til brok's "brokkekasse"-grammatik hvis noget nogensinde
+  // kaldte den for disse to temaer — bekræftet som et REELT nåbart hul
+  // (ikke kun teoretisk), da et direkte API-kald til 'start' IKKE tjekker
+  // gameEnabled server-side (kun klientens UI skjuler fanen).
+  logn: {
+    mostCount: 'Hvem er blevet afsløret i flest løgne i denne løgnekasse?',
+    fewestCount: 'Hvem er blevet afsløret i færrest løgne i denne løgnekasse?',
+    totalCount: 'Hvor mange løgne er der registreret i alt i denne løgnekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden en afsløret løgn?',
+    quoteWho: quote => `Ifølge Løgnekassen blev nogen afsløret i en løgn om: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilken løgn blev ${name} afsløret i?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne løgnekasse?',
+  },
+  hjaelper: {
+    mostCount: 'Hvem har flest noterede fejl i denne kollegakasse?',
+    fewestCount: 'Hvem har færrest noterede fejl i denne kollegakasse?',
+    totalCount: 'Hvor mange fejl er der noteret i alt i denne kollegakasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden en noteret fejl?',
+    quoteWho: quote => `Ifølge Kollegakassen blev der noteret en fejl om: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilken fejl blev noteret for ${name}?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne kollegakasse?',
   },
 };
 function getQuestionTemplates(themeId) {
