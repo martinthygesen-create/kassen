@@ -589,7 +589,7 @@
      rettet til ca. 2 kort synlige efter feedback). Bredere, liggende kort
      med en linjes reel beskrivelse (ruleTagline) i stedet for de gamle
      104px kvadrat-fliser der kun havde plads til emoji+navn. */
-  .skin-carousel-wrap{ margin:10px -18px 0; padding:0 18px; }
+  .skin-carousel-wrap{ margin:10px -26px 0; padding:0 26px; }
   .skin-carousel{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:4px 0 10px; }
   .skin-carousel::-webkit-scrollbar{ display:none; }
   .skin-card{ flex:0 0 46%; scroll-snap-align:center; text-align:center; border-radius:20px; background:var(--sea); border:2px solid transparent; padding:16px 10px; cursor:pointer; transition:border-color .15s, transform .08s; box-shadow:0 8px 20px rgba(0,0,0,0.2); }
@@ -1482,20 +1482,18 @@ function renderCreateFlowStep1(){
     </div>
   `;
   wrap.innerHTML = `
-    <div class="onboard-card">
-      <label class="field-label" style="color:rgba(255,247,232,0.6); text-align:center;">Hvilken slags kasse skal I lave?</label>
-      <div class="skin-carousel-wrap">
-        <div class="skin-carousel" id="skinCarousel">
-          ${SKIN_PRESETS.map(skin => cardHtml(skin.id, skin.emoji, skin.name, skin.ruleTagline)).join('')}
-          ${cardHtml('custom', '✏️', 'Opret selv', 'Byg jeres helt egen kasse')}
-        </div>
+    <label class="field-label" style="color:rgba(255,247,232,0.6); text-align:center;">Hvilken slags kasse skal I lave?</label>
+    <div class="skin-carousel-wrap">
+      <div class="skin-carousel" id="skinCarousel">
+        ${SKIN_PRESETS.map(skin => cardHtml(skin.id, skin.emoji, skin.name, skin.ruleTagline)).join('')}
+        ${cardHtml('custom', '✏️', 'Opret selv', 'Byg jeres helt egen kasse')}
       </div>
-      <div class="skin-dots" id="skinDots">
-        ${SKIN_PRESETS.map(()=>`<div class="skin-dot"></div>`).join('')}
-        <div class="skin-dot"></div>
-      </div>
-      <p class="hint" style="margin:8px 0 0; font-size:11px; color:rgba(255,247,232,0.4); text-align:center;">Swipe for at se flere — vælg én for at gå videre.</p>
     </div>
+    <div class="skin-dots" id="skinDots">
+      ${SKIN_PRESETS.map(()=>`<div class="skin-dot"></div>`).join('')}
+      <div class="skin-dot"></div>
+    </div>
+    <p class="hint" style="margin:8px 0 0; font-size:11px; color:rgba(255,247,232,0.4); text-align:center;">Swipe for at se flere — vælg én for at gå videre.</p>
   `;
   document.querySelectorAll('#skinCarousel [data-skin-id]').forEach(el=>{
     el.onclick = ()=>{
