@@ -728,22 +728,42 @@ let toastTimer = null;
 function isAdmin(){ return !!(state && profile && state.members[0] && state.members[0].id === profile.memberId); }
 
 /* ============ SJOV / BANTER ============ */
-const BANTER = [
+// Spec-vs-reality-fund (Del 2-audit): BANTER var ÉT fælles array brugt af
+// ALLE 9 skins uanset poolPolarity, og hver eneste linje nævnte "brok"
+// eksplicit — lækkede altså ind i alle andre skins OG gav punishment-
+// flavored drilleri ("appel afvist", "ingen refusion") på REWARD-polaritet-
+// rum (Rosekassen/Konkurrencekassen), hvor en bekræftet hændelse er noget
+// positivt, ikke en bøde. Split i to generiske (ikke brok-specifikke) sæt,
+// valgt efter state.poolPolarity.
+const BANTER_PUNISHMENT = [
   'Endnu en for retfærdighedens sejr! ⚖️',
   'Solen skinner, og nu gør puljen også! ☀️',
   'Det der koster altså — velkommen til klubben. 🎟️',
-  'Brok registreret, appel afvist. 🧑‍⚖️',
+  'Registreret, appel afvist. 🧑‍⚖️',
   'Ka det virkelig passe? Tjah, det gjorde det. 💸',
-  'En til krukken, en mindre brok i verden (håber vi). 🤞',
-  'Beklager, ingen refusion på den slags brok. 🙅',
+  'En til krukken. 🤞',
+  'Beklager, ingen refusion på den slags. 🙅',
   'Krukken siger tak for donationen! 🙏',
   'Det var dyrt sagt. Bogstaveligt talt. 💰',
-  'Forestil dig en verden helt uden brok... men indtil da: tak for bidraget! 😇',
-  'Én dag brokker ingen sig. I dag var ikke den dag. 🌅',
-  'Held og lykke med at brokke dig mindre i morgen. 🍀',
+  'Held og lykke med at undgå det i morgen. 🍀',
   'Verden var lidt bedre for et øjeblik siden. 🙃',
 ];
-function randomBanter(){ return BANTER[Math.floor(Math.random()*BANTER.length)]; }
+const BANTER_REWARD = [
+  'Endnu en for de gode gerningers skyld! 🌟',
+  'Solen skinner, og nu gør puljen også! ☀️',
+  'Det der var altså flot — velkommen til klubben. 🎟️',
+  'Registreret og godkendt af enstemmig jury. 🧑‍⚖️',
+  'Ka det virkelig passe? Tjah, det gjorde det. ✨',
+  'En til krukken, en god ting mere i verden. 🤞',
+  'Krukken siger tak for bidraget! 🙏',
+  'Det var flot gjort. Bogstaveligt talt. 🏅',
+  'Held og lykke med at gøre det igen i morgen. 🍀',
+  'Verden var lidt bedre for et øjeblik siden. 🙃',
+];
+function randomBanter(){
+  const pool = (state && state.poolPolarity === 'reward') ? BANTER_REWARD : BANTER_PUNISHMENT;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
 
 const TREATS = [
   { cost: 40, label: 'middag ude 🍽️' },
@@ -783,6 +803,28 @@ function toast(msg){
   clearTimeout(toastTimer);
   const duration = Math.min(7500, Math.max(2800, msg.length * 75));
   toastTimer = setTimeout(()=>t.classList.remove('show'), duration);
+}
+// Del 1.3 (in-app nudges): giver et tydeligt, tema-korrekt praj når noget
+// ÆNDRER sig PASSIVT (fra en andens handling) i baggrunden — nyt indlæg der
+// venter på ens stemme, eller en sag der lige er afgjort af andre. Egne
+// handlinger (man opretter/stemmer selv) håndteres allerede direkte af
+// deres respektive handlers og skal IKKE duplikeres her — se kaldsstedet i
+// refreshState, som kun kører dette ved stille baggrunds-polling.
+function notifyPendingDiff(oldList, newList){
+  const oldIds = new Set(oldList.map(p=>p.id));
+  const newIds = new Set(newList.map(p=>p.id));
+  const copy = themeCopy();
+  const freshlyAdded = newList.find(p=>!oldIds.has(p.id));
+  if(freshlyAdded){
+    const accused = state.members.find(m=>m.id===freshlyAdded.memberId);
+    toast(`🔔 Ny sag i ${copy.listLabel} — ${accused ? accused.name : 'nogen'} venter på din stemme`);
+    return; // vis kun ét praj pr. poll — undgår at overskrive hinanden i den fælles toast
+  }
+  const freshlyResolved = oldList.find(p=>!newIds.has(p.id) && !p.votes.includes(profile.memberId));
+  if(freshlyResolved){
+    const accused = state.members.find(m=>m.id===freshlyResolved.memberId);
+    toast(`✅ Sagen om ${accused ? accused.name : 'nogen'} er afgjort`);
+  }
 }
 function shareUrl(){
   const u = new URL(location.href);
@@ -926,6 +968,13 @@ async function refreshState(silent){
     setOfflineBanner(false);
     const json = JSON.stringify(s);
     if(silent && json === lastStateJSON) return; // intet nyt — undgå at afbryde en igangværende scroll unødigt
+    // Del 1.3 (in-app nudges): opdager PASSIVT modtagne ændringer (fra en
+    // andens handling, ikke ens egen) ved at diffe pendingList FØR/EFTER —
+    // kun relevant ved stille baggrunds-polling, ikke ved en handling man
+    // selv lige har trigget (den håndterer sin egen toast allerede).
+    if(silent && state && profile){
+      notifyPendingDiff(state.pendingList || [], s.pendingList || []);
+    }
     lastStateJSON = json;
     state = s;
     const typingTag = document.activeElement && document.activeElement.tagName;
@@ -2603,7 +2652,7 @@ function renderGameScreen(){
 
 const SLOT_REEL_H = 58;
 // Bygger selve spillemaskine-markup'et — samme .slot-cabinet/.slot-window/
-// .reel-design som Brokkekassens daglige "dagens gratis brok"-lodtrækning,
+// .reel-design som Brokkekassens daglige "dagens gratis omgang"-lodtrækning,
 // nu genbrugt til Chancen. Reelernes fyld-symboler er tilfældige hver gang
 // denne kaldes (harmløst — de ruller ud af syne uanset), men SIDSTE symbol
 // på hver reel er altid vinderen, og strip'en er som DEFAULT allerede
@@ -5778,6 +5827,13 @@ function bindPendingCardHandlers(){
   document.querySelectorAll('[data-voter]').forEach(el=>{
     el.onclick = async ()=>{
       if(!profile || el.dataset.voter !== profile.memberId) return;
+      // Optimistisk UI (Del 1.1, input-lag): markér pillen som stemt MED
+      // DET SAMME, i stedet for at vente på server-rundturen — server-
+      // svaret er stadig autoritativt og overskriver denne visning via
+      // render(), så der er ingen risiko for at UI'et "lyver" varigt, kun
+      // at det føles øjeblikkeligt for den der trykker.
+      if(!el.classList.contains('voted')){ el.classList.add('voted'); el.textContent = el.textContent + ' ✓'; }
+      el.style.pointerEvents = 'none';
       const pendingId = el.dataset.pending;
       const p = state.pendingList.find(x=>x.id===pendingId);
       const complainer = p && state.members.find(m=>m.id===p.memberId);
@@ -5786,10 +5842,13 @@ function bindPendingCardHandlers(){
         state = r.state;
         if(r.confirmed){
           launchCoinToJar(()=>{
+            const name = complainer ? complainer.name : 'Nogen';
             if(r.free){
-              toast(`🎫 ${complainer ? complainer.name : 'Nogen'} brugte sit gratis brok — denne var på husets regning!`);
+              toast(`🎫 ${name} brugte sin gratis omgang — denne var på husets regning!`);
+            }else if(state.poolPolarity === 'reward'){
+              toast(`🎉 ${name} har nu optjent 1${state.unit || '€'} mere — ${randomBanter()}`);
             }else{
-              toast(`💰 ${complainer ? complainer.name : 'Nogen'} skylder nu 1${state.unit || '€'} mere — ${randomBanter()}`);
+              toast(`💰 ${name} skylder nu 1${state.unit || '€'} mere — ${randomBanter()}`);
             }
             render();
           });
@@ -5846,7 +5905,7 @@ function renderFeed(main){
   const winner = state.freeBrokMemberId ? state.members.find(m=>m.id===state.freeBrokMemberId && !m.isBot) : null;
   const winnerBanner = winner ? `<div class="feed-item" style="border-style:dashed; border-color:rgba(255,201,60,0.5); background:rgba(255,201,60,0.1); align-items:center;">
     <div class="avatar" style="background:linear-gradient(160deg,#ffc93c,#e8a317); color:var(--ink);">🍀</div>
-    <div class="feed-body"><div class="feed-name">${escapeHtml(winner.name)} har vundet 1 gratis brok i dag</div><div class="feed-msg">Ét brok i dag er på husets regning</div></div>
+    <div class="feed-body"><div class="feed-name">${escapeHtml(winner.name)} har vundet dagens gratis omgang</div><div class="feed-msg">Én hændelse i dag er på husets regning</div></div>
   </div>` : '';
   // Gammelt brok kan enten stadig ligge i state.events (bare ældre end i dag)
   // eller allerede være arkiveret i historikken (fx fra en tidligere "Gør op",
@@ -5931,7 +5990,7 @@ function renderBalanceToday(main){
     const freeTag = state.freeBrokMemberId === m.id ? ' 🎫' : '';
     const streak = streaks[m.id] || 0;
     let sub;
-    if(state.freeBrokMemberId === m.id) sub = 'Har dagens gratis brok';
+    if(state.freeBrokMemberId === m.id) sub = 'Har dagens gratis omgang';
     else if(isTop) sub = 'TopBrokker i dag';
     else if(isLeast) sub = 'Helgenen i dag 😇';
     else if(streak > 0) sub = `🔥 ${streak} dag${streak===1?'':'e'} uden brok`;
@@ -6199,7 +6258,7 @@ function playFreeBrokDraw(previewWinnerId, isPreview){
         winnerNameEl.style.opacity = '1';
       }
       closeBtn.style.display = 'block';
-      toast(`🍀 ${winner.name} har dagens gratis brok!`);
+      toast(`🍀 ${winner.name} har dagens gratis omgang!`);
     }
 
     lever.onclick = ()=>{
@@ -6353,8 +6412,8 @@ function openAdminMenuSheet(){
     <div class="divider">test &amp; mindre ændringer</div>
     ${state.events.length ? `<button class="sheet-btn test" id="adminRemoveEventBtn">🫤 Markér mistænkt snyd</button>` : ''}
     <button class="sheet-btn test" id="adminTestDrawBtn">🎰 Test spillemaskinen</button>
-    <button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk gratis brok om</button>
-    <p class="hint" style="${hintStyle}">Trækker dagens gratis brok om blandt de rigtige medlemmer — rører ikke streaks.</p>
+    <button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk gratis omgang om</button>
+    <p class="hint" style="${hintStyle}">Trækker dagens gratis omgang om blandt de rigtige medlemmer — rører ikke streaks.</p>
     ${state.history.length ? `<button class="sheet-btn test" id="adminUndoBtn">↩️ Fortryd seneste opgørelse</button>` : ''}
     <button class="sheet-btn test" id="adminBackdateBtn">⏪ Ryk dagstæller én dag tilbage</button>
 
@@ -6396,7 +6455,7 @@ function openAdminMenuSheet(){
         state = r.state;
         closeSheet();
         const winner = state.freeBrokMemberId ? state.members.find(m=>m.id===state.freeBrokMemberId) : null;
-        toast(winner ? `🎲 ${winner.name} har nu dagens gratis brok!` : '🎲 Trukket om');
+        toast(winner ? `🎲 ${winner.name} har nu dagens gratis omgang!` : '🎲 Trukket om');
       }catch(e){ toast(e.message); }
     };
     const undoBtn = document.getElementById('adminUndoBtn');
@@ -6515,7 +6574,7 @@ function openBroadcastSheet(){
   openSheet(`
     <h2>Send besked til alle 📣</h2>
     <p class="hint">Sendes som en rigtig push-notifikation til alle der har slået notifikationer til (🔔).</p>
-    <textarea id="broadcastInput" rows="3" maxlength="200" placeholder="Fx: Kære familie – nu kører det! I morgen kan du enten vinde dagens gratis brok, eller også er det bare dig der brokker dig for meget 😉"></textarea>
+    <textarea id="broadcastInput" rows="3" maxlength="200" placeholder="Fx: Kære alle – nu kører det! Husk at registrere jeres hændelser 😉"></textarea>
     <button class="sheet-btn primary" id="doBroadcast">Send</button>
     <button class="sheet-btn ghost" id="cancelBroadcast">Annuller</button>
   `, ()=>{
@@ -6540,7 +6599,7 @@ function openSettleSheet(){
   const rows = state.members.filter(m=>!m.isBot).sort((a,b)=>(bal[b.id]||0)-(bal[a.id]||0)).map(m=>`<div class="hr-line"><span>${escapeHtml(m.name)}</span><span>${bal[m.id]||0}${escapeHtml(state.unit || '€')}</span></div>`).join('');
   openSheet(`
     <h2>Gør op 💶</h2>
-    <p class="hint">Total i puljen: <b>${totalPool()}${escapeHtml(state.unit || '€')}</b>. Dette arkiverer hele puljen i historikken og starter helt forfra. Streaks og gratis brok opdateres som normalt.</p>
+    <p class="hint">Total i puljen: <b>${totalPool()}${escapeHtml(state.unit || '€')}</b>. Dette arkiverer hele puljen i historikken og starter helt forfra. Streaks og gratis omgang opdateres som normalt.</p>
     ${rows}
     <button class="sheet-btn danger" id="doSettle">Bekræft og gør op</button>
     <button class="sheet-btn ghost" id="cancelSettle">Annuller</button>
