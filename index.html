@@ -451,7 +451,7 @@
   .feed-name{font-weight:700; font-size:14.5px; color:var(--cream);}
   .feed-name .amt{color:var(--coin); font-weight:800; margin-left:6px;}
   .feed-msg{font-size:13.5px; color:rgba(255,247,232,0.75); margin-top:2px; word-wrap:break-word;}
-  .feed-time{font-size:11px; color:rgba(255,247,232,0.4); margin-top:4px;}
+  .feed-time{font-size:11px; color:rgba(255,247,232,0.55); margin-top:4px;}
   .empty-state{ text-align:center; padding:50px 20px; color:rgba(255,247,232,0.55); }
   .empty-state .emoji{font-size:38px; display:block; margin-bottom:10px;}
   .empty-state b{color:var(--cream); display:block; font-family:'Baloo 2',sans-serif; font-size:17px; margin-bottom:4px;}
@@ -459,7 +459,7 @@
   .bal-row{ display:flex; align-items:center; gap:12px; background:rgba(255,247,232,0.07); border:1px solid rgba(255,247,232,0.1); border-radius:16px; padding:12px 14px; margin-bottom:10px; }
   .bal-name{flex:1; font-weight:600; font-size:14.5px;}
   .bal-amt{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);}
-  .bal-amt.zero{color:rgba(255,247,232,0.35); font-weight:700;}
+  .bal-amt.zero{color:rgba(255,247,232,0.55); font-weight:700;}
   .bal-name.me::after{ content:' (dig)'; font-weight:400; opacity:.6; font-size:12px; }
 
   .section-label{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:rgba(255,247,232,0.65); margin:14px 4px 10px; }
@@ -531,7 +531,11 @@
   .onboard h1{font-size:28px; margin:10px 0 6px;}
   .onboard p{font-size:14.5px; color:rgba(255,247,232,0.7); line-height:1.5; margin-bottom:26px;}
   .onboard-card{ background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); border-radius:20px; padding:20px; text-align:left; }
-  .onboard-pick:not(.selected){ opacity:.35; }
+  /* opacity-dæmpning gælder kun toggle-baserede vælgere (fx bekræftelses-
+     model/rytme/adgang), IKKE engangs-navigations-lister som skin-vælgeren
+     i step 1 af opret-flowet, hvor intet er "fravalgt" — der er bare endnu
+     ikke klikket på noget. */
+  .onboard-pick.toggle-pick:not(.selected){ opacity:.35; }
   /* Delt "hvilken app"-kort-stil (onboarding-valg + ☰-menu) — ikonet sidder i
      en fast-høj boks øverst i kortet, så ikonerne altid flugter vandret på
      tværs af rækken uanset om et af navnene (fx "Brokkekassen") knækker om
@@ -1257,7 +1261,7 @@ function renderCreateFlowCustom(){
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Baseret på</label>
       <div class="app-pick-row" id="customBaseRow" style="margin:10px 0 4px;">
         ${SKIN_PRESETS.map((skin, i) => `
-          <div class="onboard-pick app-pick${i===0?' selected':''}" data-base-id="${skin.id}" style="background:var(--sea); color:#fff;">
+          <div class="onboard-pick toggle-pick app-pick${i===0?' selected':''}" data-base-id="${skin.id}" style="background:var(--sea); color:#fff;">
             <div class="app-pick-icon">${skin.emoji}</div>
             <div class="app-pick-label">${escapeHtml(skin.name)}</div>
           </div>
@@ -1307,13 +1311,13 @@ function renderCreateFlowStep2(skinOrId){
       <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">Skift</button>
     </div>
     <div class="onboard-card">
-      <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.55); text-align:center;">${escapeHtml(skin.smaatText)}</p>
+      <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
       <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
-        <div class="onboard-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
+        <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Alle bekræfter sammen</div>
         </div>
-        <div class="onboard-pick app-pick${skin.confirmationModel==='host-approval'?' selected':''}" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
+        <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='host-approval'?' selected':''}" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Én bestemmer</div>
         </div>
       </div>
@@ -1322,22 +1326,22 @@ function renderCreateFlowStep2(skinOrId){
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller flere)</label>
       <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
         <div class="app-pick-row" id="gamePickRow">
-          <div class="onboard-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
+          <div class="onboard-pick toggle-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
             <div class="app-pick-icon">🫙</div>
             <div class="app-pick-label">${escapeHtml(skin.name)}</div>
           </div>
           ${(skin.allowedGames || ['spil','mrbrok','complainer']).includes('spil') ? `
-          <div class="onboard-pick app-pick selected" data-pick="spil" style="background:var(--sea); color:#fff;">
+          <div class="onboard-pick toggle-pick app-pick selected" data-pick="spil" style="background:var(--sea); color:#fff;">
             <div class="app-pick-icon">👉</div>
             <div class="app-pick-label">${escapeHtml(skin.gameNames.spil)}</div>
           </div>` : ''}
           ${(skin.allowedGames || ['spil','mrbrok','complainer']).includes('mrbrok') ? `
-          <div class="onboard-pick app-pick selected" data-pick="mrbrok" style="background:var(--sea); color:#fff;">
+          <div class="onboard-pick toggle-pick app-pick selected" data-pick="mrbrok" style="background:var(--sea); color:#fff;">
             <div class="app-pick-icon">🕵️</div>
             <div class="app-pick-label">${escapeHtml(skin.gameNames.mrbrok)}</div>
           </div>` : ''}
           ${(skin.allowedGames || ['spil','mrbrok','complainer']).includes('complainer') ? `
-          <div class="onboard-pick app-pick selected" data-pick="complainer" style="background:var(--sea); color:#fff;">
+          <div class="onboard-pick toggle-pick app-pick selected" data-pick="complainer" style="background:var(--sea); color:#fff;">
             <div class="app-pick-icon">🪤</div>
             <div class="app-pick-label">${escapeHtml(skin.gameNames.complainer)}</div>
           </div>` : ''}
@@ -1349,19 +1353,19 @@ function renderCreateFlowStep2(skinOrId){
     <div class="onboard-card">
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Lukketid</label>
       <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 16px;">
-        <div class="onboard-pick app-pick${skin.dailyRhythm ? ' selected' : ''}" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
+        <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? ' selected' : ''}" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Nulstiller hver dag</div>
         </div>
-        <div class="onboard-pick app-pick${skin.dailyRhythm ? '' : ' selected'}" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
+        <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? '' : ' selected'}" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Kører til I lukker den</div>
         </div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Adgang</label>
       <div class="app-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
-        <div class="onboard-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
+        <div class="onboard-pick toggle-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Alle med linket kan joine</div>
         </div>
-        <div class="onboard-pick app-pick" data-access-model="approval" style="background:var(--sea); color:#fff;">
+        <div class="onboard-pick toggle-pick app-pick" data-access-model="approval" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Nye skal godkendes</div>
         </div>
       </div>
@@ -1958,7 +1962,7 @@ function renderInner(){
     <header>
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <span>Brokke<span>kassen</span></span>
-        <button id="btnAppMenu" title="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
+        <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
       <span class="day-chip" style="align-self:flex-start; font-size:11px; color:rgba(255,247,232,0.85);">Dag ${dayCount()}</span>
     </header>
@@ -2364,7 +2368,7 @@ function renderGameScreen(){
     <header class="theme-spil${isRose?' theme-rose':''}">
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <span>Brok<span>spillet</span> 👉</span>
-        <button id="btnAppMenu" title="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
+        <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
     <main id="main" style="padding:0 16px 40px;">${gameBodyHtml(g)}</main>
@@ -3900,7 +3904,7 @@ function renderMrbrokScreen(){
     <header class="theme-mrbrok">
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <span>Mr<span>Brok</span> 🕵️</span>
-        <button id="btnAppMenu" title="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
+        <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
     <main id="main" style="padding:0 16px 40px;">${mrbrokBodyHtml(m)}</main>
@@ -4634,7 +4638,7 @@ function renderComplainerScreen(){
     <header class="theme-complainer">
       <div class="title" style="font-size:22px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <span>Det Store <span>Brokkeri</span></span>
-        <button id="btnAppMenu" title="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
+        <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
     <main id="main" style="padding:0 16px 40px;">${complainerBodyHtml(c)}</main>
