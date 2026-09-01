@@ -1850,7 +1850,7 @@ function renderCreateOrJoin(errorMsg){
       ${roomIds.map(rid => `
         <div class="bal-row" style="margin-bottom:6px; cursor:pointer;" data-goto-room="${rid}">
           <div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(myRooms[rid].name)}</div>
-          <div class="feed-body"><div class="bal-name">${escapeHtml(rid)}</div><div style="font-size:12px; color:rgba(5,32,36,0.55);">som ${escapeHtml(myRooms[rid].name)}</div></div>
+          <div class="feed-body"><div class="bal-name">${escapeHtml(rid)}</div><div style="font-size:12px; color:rgba(255,247,232,0.55);">som ${escapeHtml(myRooms[rid].name)}</div></div>
         </div>
       `).join('')}
     </div>
@@ -1922,9 +1922,9 @@ function renderWhoAmI(justCreated){
       ${justCreated ? `
         <div class="divider">del med familien</div>
         <div class="onboard-card" style="text-align:center;">
-          <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(5,32,36,0.4);">Jeres kode</p>
-          <div id="codeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--sea); padding:6px 0 2px;">${roomId}</div>
-          <p style="margin:0 0 14px; font-size:12.5px; color:rgba(5,32,36,0.5);">De andre indtaster koden under "Har du fået et link?"</p>
+          <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,247,232,0.5);">Jeres kode</p>
+          <div id="codeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--coin); padding:6px 0 2px;">${roomId}</div>
+          <p style="margin:0 0 14px; font-size:12.5px; color:rgba(255,247,232,0.55);">De andre indtaster koden under "Har du fået et link?"</p>
           <button class="sheet-btn ghost" id="copyBtn" style="margin-top:0;">📤 Del link i stedet</button>
         </div>
       ` : ''}
@@ -2044,9 +2044,9 @@ function showInviteSplash(onClose){
     <h3>Inviter resten af flokken</h3>
     <p>${escapeHtml(roomName)} er klar — del koden eller linket, så andre kan joine med det samme. Inviter 2–${cap} deltagere — det er kassens loft for denne type.</p>
     <div class="onboard-card" style="text-align:center; margin-bottom:18px;">
-      <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(5,32,36,0.4);">Jeres kode</p>
-      <div id="inviteSplashCodeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--sea); padding:6px 0 2px;">${roomId}</div>
-      <p style="margin:0 0 14px; font-size:12.5px; color:rgba(5,32,36,0.5);">Tryk for at kopiere koden</p>
+      <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,247,232,0.5);">Jeres kode</p>
+      <div id="inviteSplashCodeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--coin); padding:6px 0 2px;">${roomId}</div>
+      <p style="margin:0 0 14px; font-size:12.5px; color:rgba(255,247,232,0.55);">Tryk for at kopiere koden</p>
       <button class="sheet-btn primary" id="inviteSplashCopyLinkBtn" style="margin-top:0;">📤 Kopier invitationslink</button>
     </div>
     <button class="sheet-btn ghost" id="inviteSplashCloseBtn" style="margin-top:0;">Senere, gå videre til rummet</button>
