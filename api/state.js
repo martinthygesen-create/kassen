@@ -1,4 +1,4 @@
-const { getState, setState, mutateState, processPendingExpiry, checkSilenceNudge, healPendingVotes, redactStateFor } = require('./_lib/store');
+const { getState, mutateState, processPendingExpiry, checkSilenceNudge, healPendingVotes, opportunisticStateChangeMightBeDue, redactStateFor } = require('./_lib/store');
 const { expireGamePhaseIfDue, BROKSPILLET_AUTO_MS, COMPLAINT_COUNTDOWN_MS } = require('./_lib/gameFlow');
 const { expireMrbrokPhaseIfDue } = require('./_lib/mrbrokFlow');
 const { expireComplainerPhaseIfDue } = require('./_lib/complainerFlow');
@@ -67,16 +67,34 @@ module.exports = async (req, res) => {
     let state = await getState(roomId);
     if (!state) return res.status(404).json({ error: 'ukendt brokkekasse' });
 
-    // Klienterne poller herind hvert par sekunder mens appen er åben, så det
-    // er her (i stedet for en rigtig cron-service) vi opportunistisk tjekker
-    // hængende anklager for reminder/udløb.
-    const dueReminders = processPendingExpiry(state);
-    const nudgeSilence = checkSilenceNudge(state);
-    // Selv samme selv-helbredning som brok.js — fanger en anklage der blev
-    // hængende (fx pga. bots i "need") uden at kræve at nogen rører selve
-    // afstemningen igen, siden klienterne poller herind konstant.
-    const healedIds = healPendingVotes(state);
-    if (dueReminders.length || nudgeSilence || healedIds.length) await setState(roomId, state);
+    // Rum-dynamik-protokollen, tech-fix #1: dette brugte tidligere almindelig
+    // getState+setState (læs-så-skriv, IKKE CAS-beskyttet) — verificeret
+    // empirisk til at give 1:1 duplikerede push-notifikationer når flere
+    // klienters polls rammer samme "moden reminder" i samme vindue (hver
+    // læste den samme "ikke reminded endnu"-tilstand, FØR nogen af dem nåede
+    // at skrive). Flyttet ind i mutateState: kun ÉT af de samtidige forsøg
+    // vinder CAS-skrivningen (og dermed sender push) — de andre genberegner
+    // mod den FRISKE, allerede-markerede state ved retry og finder korrekt
+    // 0 due reminders, ingen dublet.
+    let dueReminders = [];
+    let nudgeSilence = false;
+    // Samme billige forhåndstjek-mønster som game/mrbrok/complainer-
+    // expiry'en nedenfor — undgår en CAS-skriverunde på HVER poll fra HVER
+    // klient, når der (langt de fleste gange) reelt intet er at opdatere.
+    const mutatedOpportunistic = opportunisticStateChangeMightBeDue(state) ? await mutateState(roomId, async (fresh) => {
+      const due = processPendingExpiry(fresh);
+      const silence = checkSilenceNudge(fresh);
+      // Selv samme selv-helbredning som brok.js — fanger en anklage der blev
+      // hængende (fx pga. bots i "need") uden at kræve at nogen rører selve
+      // afstemningen igen, siden klienterne poller herind konstant.
+      const healed = healPendingVotes(fresh);
+      return { due, silence, healed };
+    }) : null;
+    if (mutatedOpportunistic) {
+      state = mutatedOpportunistic.state;
+      dueReminders = mutatedOpportunistic.result.due;
+      nudgeSilence = mutatedOpportunistic.result.silence;
+    }
 
     // Samme opportunistiske mønster for Brokspillets fase-timing — men denne
     // mutation involverer Math.random() (Chancen, indhold osv.), så den skal

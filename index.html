@@ -1499,15 +1499,19 @@ function renderCreateFlowStep2(skinOrId){
     </div>
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
+      ${skin.id === 'hjaelper' ? `
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
       <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
-          <div class="app-pick-label">Alle bekræfter sammen</div>
+          <div class="app-pick-label">Alle stemmer — flertallet bestemmer</div>
         </div>
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='host-approval'?' selected':''}" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
-          <div class="app-pick-label">Én bestemmer</div>
+          <div class="app-pick-label">Holdlederen afgør</div>
         </div>
       </div>
+      ` : `
+      <p class="hint" style="margin:0; font-size:11.5px; color:rgba(255,247,232,0.5); text-align:center;">Alle stemmer — flertallet bestemmer. Ingen enkeltperson kan overtrumfe gruppen.</p>
+      `}
     </div>
     <div class="onboard-card">
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller flere)</label>
@@ -1538,15 +1542,16 @@ function renderCreateFlowStep2(skinOrId){
       </div>
     </div>
     <div class="onboard-card">
-      <label class="field-label" style="color:rgba(255,247,232,0.6);">Lukketid</label>
-      <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 16px;">
-        <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? ' selected' : ''}" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
-          <div class="app-pick-label">Nulstiller hver dag</div>
-        </div>
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvor længe skal jeres kasse køre?</label>
+      <div class="app-pick-row" id="rhythmPickRow" style="margin:10px 0 6px;">
         <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? '' : ' selected'}" data-daily-rhythm="0" style="background:var(--sea); color:#fff;">
-          <div class="app-pick-label">Kører til I lukker den</div>
+          <div class="app-pick-label">Enkelt Event (Fest, Tur, Aften)</div>
+        </div>
+        <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? ' selected' : ''}" data-daily-rhythm="1" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Løbende Kasse (Kontor, Hverdag)</div>
         </div>
       </div>
+      <p class="hint" id="rhythmSubtext" style="margin:0 0 14px; font-size:11.5px; color:rgba(255,247,232,0.45);">${skin.dailyRhythm ? 'Kører fast i hverdagen. Nulstiller automatisk hver nat kl. 03:00.' : 'Til I er færdige. Ingen daglig nulstilling — slutter med en samlet kåring.'}</p>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Adgang</label>
       <div class="app-pick-row" id="accessPickRow" style="margin:10px 0 16px;">
         <div class="onboard-pick toggle-pick app-pick selected" data-access-model="open" style="background:var(--sea); color:#fff;">
@@ -1577,6 +1582,11 @@ function renderCreateFlowStep2(skinOrId){
       el.onclick = ()=>{
         document.querySelectorAll(`#${id} .onboard-pick`).forEach(o=>o.classList.remove('selected'));
         el.classList.add('selected');
+        if(id === 'rhythmPickRow'){
+          const isDaily = el.dataset.dailyRhythm === '1';
+          const subtext = document.getElementById('rhythmSubtext');
+          if(subtext) subtext.textContent = isDaily ? 'Kører fast i hverdagen. Nulstiller automatisk hver nat kl. 03:00.' : 'Til I er færdige. Ingen daglig nulstilling — slutter med en samlet kåring.';
+        }
       };
     });
   });
@@ -1587,7 +1597,12 @@ function renderCreateFlowStep2(skinOrId){
   // Dommeren). "Kan den ikke, er den ikke available" — MrBrok-flisen
   // skjules og fravælges, den vises ikke bare deaktiveret.
   function applyHostApprovalGameRestriction(){
-    const isHostApproval = document.querySelector('#confirmationPickRow [data-confirmation-model="host-approval"]').classList.contains('selected');
+    // confirmationPickRow findes kun for hjaelper-baserede skins (se Del
+    // 1-sanering: "Én bestemmer" er fjernet fra alle rene underholdnings-
+    // skins) — for alle andre er confirmationModel altid 'quorum', så der
+    // er intet at begrænse.
+    const hostApprovalEl = document.querySelector('#confirmationPickRow [data-confirmation-model="host-approval"]');
+    const isHostApproval = !!hostApprovalEl && hostApprovalEl.classList.contains('selected');
     const mrbrokTile = document.querySelector('#gamePickRow [data-pick="mrbrok"]');
     if(!mrbrokTile) return;
     mrbrokTile.style.display = isHostApproval ? 'none' : '';
@@ -1901,17 +1916,22 @@ function showRoomIntroSplash(){
 }
 
 /* ============ MAIN RENDER ============ */
-function totalPool(){ return state.events.filter(e=>!e.free && !e.voided).length; }
+// Rum-dynamik-protokollen, tech-fix #2: en "double"-hændelse (reward-
+// polaritetens lykketrækningsbonus, se healPendingVotes i api/_lib/
+// store.js) tæller for 2 i stedet for 1 — modstykket til "free" (som
+// tæller 0). Ingen hændelse er nogensinde begge dele.
+function eventWeight(e){ if(e.voided) return 0; if(e.free) return 0; if(e.double) return 2; return 1; }
+function totalPool(){ return state.events.reduce((sum,e)=>sum+eventWeight(e), 0); }
 // Alle nuværende (endnu ikke afregnede) brok — kan sagtens strække sig over flere dage.
 function balances(){
   const map = {}; state.members.filter(m=>!m.isBot).forEach(m=>map[m.id]=0);
-  state.events.forEach(e=>{ if(!e.free && !e.voided && map[e.memberId]!==undefined) map[e.memberId]++; });
+  state.events.forEach(e=>{ const w = eventWeight(e); if(w && map[e.memberId]!==undefined) map[e.memberId]+=w; });
   return map;
 }
 // Kun dagens brok (siden kl. 04), til "Dagens BigSpender".
 function todayBalances(){
   const map = {}; state.members.filter(m=>!m.isBot).forEach(m=>map[m.id]=0);
-  state.events.forEach(e=>{ if(!e.free && !e.voided && e.ts >= state.dayBoundary && map[e.memberId]!==undefined) map[e.memberId]++; });
+  state.events.forEach(e=>{ const w = eventWeight(e); if(w && e.ts >= state.dayBoundary && map[e.memberId]!==undefined) map[e.memberId]+=w; });
   return map;
 }
 
@@ -2203,7 +2223,7 @@ function renderInner(){
         <span>${titleHtml(state.themeName || 'Brokkekassen', ['kassen'])}</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
-      <span class="day-chip" style="align-self:flex-start; font-size:11px; color:rgba(255,247,232,0.85);">Dag ${dayCount()}</span>
+      ${state.dailyRhythm ? `<span class="day-chip" style="align-self:flex-start; font-size:11px; color:rgba(255,247,232,0.85);">Dag ${dayCount()}</span>` : ''}
     </header>
     <div class="jar-wrap" id="jarWrap" style="cursor:pointer;">
       ${jarSVG(fillPct)}
@@ -5843,7 +5863,9 @@ function bindPendingCardHandlers(){
         if(r.confirmed){
           launchCoinToJar(()=>{
             const name = complainer ? complainer.name : 'Nogen';
-            if(r.free){
+            if(r.double){
+              toast(`✨ ${name} ramte dagens bonus — dobbelt værdi denne gang!`);
+            }else if(r.free){
               toast(`🎫 ${name} brugte sin gratis omgang — denne var på husets regning!`);
             }else if(state.poolPolarity === 'reward'){
               toast(`🎉 ${name} har nu optjent 1${state.unit || '€'} mere — ${randomBanter()}`);
@@ -5891,7 +5913,7 @@ function feedItemHtml(e, old){
   return `<div class="feed-item" style="opacity:${opacity};">
     <div class="avatar" style="${e.voided?'filter:grayscale(1);':''}">${initials(name)}</div>
     <div class="feed-body">
-    <div class="feed-name">${escapeHtml(name)} <span class="amt">${e.voided ? '🫤 talt fra' : (e.gameLoss ? `👉 +1${escapeHtml(state.unit || '€')}` : (e.free ? '🎫 gratis' : `+1${escapeHtml(state.unit || '€')}`))}</span></div>
+    <div class="feed-name">${escapeHtml(name)} <span class="amt">${e.voided ? '🫤 talt fra' : (e.gameLoss ? `👉 +1${escapeHtml(state.unit || '€')}` : (e.double ? `✨ dobbelt: +2${escapeHtml(state.unit || '€')}` : (e.free ? '🎫 gratis' : `+1${escapeHtml(state.unit || '€')}`)))}</span></div>
     ${e.message ? `<div class="feed-msg" style="${e.voided?'text-decoration:line-through;':''}">${complaintPrefix}"${escapeHtml(e.message)}"</div>` : ''}
     ${e.voided ? `<div class="feed-msg" style="color:rgba(255,201,60,0.85); font-weight:600;">🫤 Mistanke om snyd — tæller ikke med</div>` : ''}
     <div class="feed-time">${fmtTime(e.ts)}</div></div></div>`;
@@ -5905,7 +5927,7 @@ function renderFeed(main){
   const winner = state.freeBrokMemberId ? state.members.find(m=>m.id===state.freeBrokMemberId && !m.isBot) : null;
   const winnerBanner = winner ? `<div class="feed-item" style="border-style:dashed; border-color:rgba(255,201,60,0.5); background:rgba(255,201,60,0.1); align-items:center;">
     <div class="avatar" style="background:linear-gradient(160deg,#ffc93c,#e8a317); color:var(--ink);">🍀</div>
-    <div class="feed-body"><div class="feed-name">${escapeHtml(winner.name)} har vundet dagens gratis omgang</div><div class="feed-msg">Én hændelse i dag er på husets regning</div></div>
+    <div class="feed-body"><div class="feed-name">${escapeHtml(winner.name)} har vundet dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'}</div><div class="feed-msg">${state.poolPolarity === 'reward' ? 'Næste bekræftede hændelse tæller dobbelt' : 'Én hændelse i dag er på husets regning'}</div></div>
   </div>` : '';
   // Gammelt brok kan enten stadig ligge i state.events (bare ældre end i dag)
   // eller allerede være arkiveret i historikken (fx fra en tidligere "Gør op",
@@ -5990,7 +6012,7 @@ function renderBalanceToday(main){
     const freeTag = state.freeBrokMemberId === m.id ? ' 🎫' : '';
     const streak = streaks[m.id] || 0;
     let sub;
-    if(state.freeBrokMemberId === m.id) sub = 'Har dagens gratis omgang';
+    if(state.freeBrokMemberId === m.id) sub = state.poolPolarity === 'reward' ? 'Har dagens bonus-chance ✨' : 'Har dagens gratis omgang';
     else if(isTop) sub = 'TopBrokker i dag';
     else if(isLeast) sub = 'Helgenen i dag 😇';
     else if(streak > 0) sub = `🔥 ${streak} dag${streak===1?'':'e'} uden brok`;
@@ -6258,7 +6280,7 @@ function playFreeBrokDraw(previewWinnerId, isPreview){
         winnerNameEl.style.opacity = '1';
       }
       closeBtn.style.display = 'block';
-      toast(`🍀 ${winner.name} har dagens gratis omgang!`);
+      toast(state.poolPolarity === 'reward' ? `🍀 ${winner.name} har dagens bonus-chance!` : `🍀 ${winner.name} har dagens gratis omgang!`);
     }
 
     lever.onclick = ()=>{
@@ -6412,16 +6434,23 @@ function openAdminMenuSheet(){
     <div class="divider">test &amp; mindre ændringer</div>
     ${state.events.length ? `<button class="sheet-btn test" id="adminRemoveEventBtn">🫤 Markér mistænkt snyd</button>` : ''}
     <button class="sheet-btn test" id="adminTestDrawBtn">🎰 Test spillemaskinen</button>
-    <button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk gratis omgang om</button>
-    <p class="hint" style="${hintStyle}">Trækker dagens gratis omgang om blandt de rigtige medlemmer — rører ikke streaks.</p>
+    ${state.dailyRhythm ? `
+    <button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om</button>
+    <p class="hint" style="${hintStyle}">Trækker dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om blandt de rigtige medlemmer — rører ikke streaks.</p>
+    ` : ''}
     ${state.history.length ? `<button class="sheet-btn test" id="adminUndoBtn">↩️ Fortryd seneste opgørelse</button>` : ''}
-    <button class="sheet-btn test" id="adminBackdateBtn">⏪ Ryk dagstæller én dag tilbage</button>
+    ${state.dailyRhythm ? `<button class="sheet-btn test" id="adminBackdateBtn">⏪ Ryk dagstæller én dag tilbage</button>` : ''}
 
     <div class="divider">kan ikke fortrydes</div>
     <button class="sheet-btn danger" id="adminResetBtn">🧹 Nulstil alt</button>
     <p class="hint" style="${hintStyle}">Sletter regnskab og historik. Rummet består.</p>
+    ${state.dailyRhythm ? `
     <button class="sheet-btn danger" id="adminFinalCloseBtn">🔒 Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid</button>
     <p class="hint" style="${hintStyle}">Arkiverer og lukker for nyt brok. Historik bevares.</p>
+    ` : `
+    <button class="sheet-btn danger" id="adminFinalCloseBtn">🏆 Afslut Spil &amp; Kår Vinder</button>
+    <p class="hint" style="${hintStyle}">Kårer vinderen ud fra det samlede regnskab og lukker for altid. Kan ikke fortrydes.</p>
+    `}
     <button class="sheet-btn danger" id="adminDeleteRoomBtn">🗑️ Slet dette rum permanent</button>
     <p class="hint" style="${hintStyle}">Sletter alt med det samme. Ingen fortrydelse.</p>
 
@@ -6455,7 +6484,7 @@ function openAdminMenuSheet(){
         state = r.state;
         closeSheet();
         const winner = state.freeBrokMemberId ? state.members.find(m=>m.id===state.freeBrokMemberId) : null;
-        toast(winner ? `🎲 ${winner.name} har nu dagens gratis omgang!` : '🎲 Trukket om');
+        toast(winner ? `🎲 ${winner.name} har nu dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'}!` : '🎲 Trukket om');
       }catch(e){ toast(e.message); }
     };
     const undoBtn = document.getElementById('adminUndoBtn');
@@ -6635,10 +6664,27 @@ function openResetSheet(){
 }
 
 function openFinalCloseSheet(){
+  // Single Event-rum (dailyRhythm:false) får en dedikeret "Kår Vinder"-
+  // afslutning i stedet for den neutrale "luk for altid"-tekst — matcher
+  // samme 🏆/😇-logik som allerede bruges i Broklisten/Toplister, så
+  // "vinderen" betyder det samme begreb begge steder i appen.
+  const isSingleEvent = state.dailyRhythm === false;
+  let winnerHtml = '';
+  if(isSingleEvent){
+    const totals = allTimeTotals();
+    const members = state.members.filter(m=>!m.isBot);
+    const maxV = Math.max(0, ...members.map(m=>totals[m.id]||0));
+    const winners = members.filter(m=>(totals[m.id]||0) === maxV && maxV > 0);
+    if(winners.length){
+      const names = winners.map(m=>escapeHtml(m.name)).join(' & ');
+      winnerHtml = `<div class="onboard-card" style="text-align:center; margin-bottom:14px;"><div style="font-size:40px;">🏆</div><div style="font-weight:800; font-size:18px; color:#fff; margin-top:4px;">${names}</div><div style="font-size:12.5px; color:rgba(255,247,232,0.6); margin-top:2px;">${maxV}${escapeHtml(state.unit || '€')} — vinder af ${escapeHtml(state.themeName || 'kassen')}!</div></div>`;
+    }
+  }
   openSheet(`
-    <h2>Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid 🔒</h2>
-    <p class="hint">Gør evt. den sidste åbne pulje op, gemmer den i historikken og lukker helt af — ingen kan starte flere hændelser herefter. I kan stadig se Regnskab og Historik. Kan ikke fortrydes.</p>
-    <button class="sheet-btn danger" id="doFinalClose">Ja, luk for altid</button>
+    <h2>${isSingleEvent ? 'Afslut Spil &amp; Kår Vinder 🏆' : `Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid 🔒`}</h2>
+    ${winnerHtml}
+    <p class="hint">${isSingleEvent ? 'Gemmer det samlede regnskab i historikken og lukker rummet helt af — ingen kan starte flere hændelser herefter. I kan stadig se regnskab og historik.' : 'Gør evt. den sidste åbne pulje op, gemmer den i historikken og lukker helt af — ingen kan starte flere hændelser herefter. I kan stadig se Regnskab og Historik.'} Kan ikke fortrydes.</p>
+    <button class="sheet-btn danger" id="doFinalClose">${isSingleEvent ? 'Ja, afslut og kår vinder' : 'Ja, luk for altid'}</button>
     <button class="sheet-btn ghost" id="cancelFinalClose">Annuller</button>
   `, ()=>{
     document.getElementById('cancelFinalClose').onclick = closeSheet;
@@ -6646,7 +6692,7 @@ function openFinalCloseSheet(){
       const btn = e.currentTarget;
       if(btn.disabled) return;
       btn.disabled = true;
-      try{ const r = await api('admin', { action: 'close', roomId, actorId: profile.memberId }); state = r.state; closeSheet(); toast(`🔒 ${state.themeName || 'Brokkekassen'} er lukket — tak for turen!`); activeTab='broklisten'; brokListSubTab='alltime'; render(); }
+      try{ const r = await api('admin', { action: 'close', roomId, actorId: profile.memberId }); state = r.state; closeSheet(); toast(isSingleEvent ? `🏆 ${state.themeName || 'Kassen'} er afsluttet — tak for i dag!` : `🔒 ${state.themeName || 'Brokkekassen'} er lukket — tak for turen!`); activeTab='broklisten'; brokListSubTab='alltime'; render(); }
       catch(e){ toast(e.message); btn.disabled = false; }
     };
   });

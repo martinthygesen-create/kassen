@@ -42,7 +42,9 @@ module.exports = async (req, res) => {
 
       const confirmedIds = healPendingVotes(state);
       const confirmed = confirmedIds.includes(pendingId);
-      const free = confirmed && !!(state.events.find(e => e.id === pendingId) || {}).free;
+      const confirmedEvent = confirmed ? (state.events.find(e => e.id === pendingId) || {}) : {};
+      const free = !!confirmedEvent.free;
+      const double = !!confirmedEvent.double;
       const milestone = confirmed ? checkPoolMilestone(state) : null;
       await setState(roomId, state);
 
@@ -53,7 +55,7 @@ module.exports = async (req, res) => {
         } catch (e) { /* push-fejl må ikke vælte selve stemmen */ }
       }
 
-      return res.status(200).json({ state: redactStateFor(state, voterId), confirmed, free });
+      return res.status(200).json({ state: redactStateFor(state, voterId), confirmed, free, double });
     }
 
     if (action === 'cancel') {

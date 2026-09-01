@@ -48,7 +48,7 @@ function hasAdminAccess(state, memberId) {
   return isAdmin(state, memberId) || isCohost(state, memberId);
 }
 
-const RESET_HOUR = 4; // ny runde starter kl 04 lokal tid
+const RESET_HOUR = 3; // ny runde starter kl 03 lokal tid (jf. rum-dynamik-protokollen)
 const RESET_TZ = 'Europe/Copenhagen';
 
 function emptyState() {
@@ -165,13 +165,35 @@ function checkSilenceNudge(state) {
   return true;
 }
 
+// Billigt, ikke-muterende forhåndstjek — samme princip som
+// gameExpiryMightBeDue/mrbrokExpiryMightBeDue/complainerExpiryMightBeDue i
+// api/state.js: undgår en CAS-skriverunde (mutateState) på HVER poll fra
+// HVER klient hvert 3. sekund, når der reelt intet er at opdatere. Duplikat
+// af de rene betingelser fra processPendingExpiry/checkSilenceNudge, UDEN
+// selve mutationen — en tilladt let overtrigning (fx pendingList ikke-tom
+// men intet reelt udløbet endnu) er billigere end at risikere at MISSE en
+// reel due-tilstand.
+function opportunisticStateChangeMightBeDue(state) {
+  if (state.pendingList && state.pendingList.length) return true;
+  if (state.dailyRhythm === false) return false;
+  if (state.closed || state.members.length < 2) return false;
+  const lastEventTs = state.events.reduce((max, e) => Math.max(max, e.ts), 0);
+  const lastActivity = Math.max(lastEventTs, state.dayBoundary, state.createdAt);
+  const now = Date.now();
+  if (now - lastActivity < SILENCE_NUDGE_AFTER) return false;
+  if (state.lastSilenceNudgeAt && state.lastSilenceNudgeAt > lastActivity) return false;
+  const hour = copenhagenLocalHour(now);
+  if (hour >= QUIET_HOURS_START || hour < QUIET_HOURS_END) return false;
+  return true;
+}
+
 const MILESTONE_STEP = 10; // fejrer hver 10€ i den aktive pulje
 
 // Har puljen lige rundet et nyt 10€-mærke? Returnerer det nye mærke (eller
 // null), og opdaterer state så det samme mærke ikke fejres to gange. Nulstilles
 // ved "Gør op" (se settleRound), så en ny runde igen kan fejre fra 10€.
 function checkPoolMilestone(state) {
-  const total = state.events.filter(e => !e.free && !e.voided).length;
+  const total = state.events.reduce((sum, e) => sum + (e.voided ? 0 : e.free ? 0 : e.double ? 2 : 1), 0);
   const milestone = Math.floor(total / MILESTONE_STEP) * MILESTONE_STEP;
   if (milestone > 0 && milestone > (state.lastMilestoneAt || 0)) {
     state.lastMilestoneAt = milestone;
@@ -267,16 +289,19 @@ function autoSettleIfDue(state) {
 function settleRound(state) {
   updateStreaksAndDrawLottery(state);
 
+  // Samme vægtning som index.html's eventWeight() (tech-fix #2): en
+  // "double"-hændelse (reward-lykketrækning) tæller 2, "free" tæller 0.
+  const weight = e => e.voided ? 0 : e.free ? 0 : e.double ? 2 : 1;
   const totals = {};
   // Bots må aldrig blive stående i den arkiverede historik — de er kun til
   // test-spil, se isBot i room.js.
   state.members.filter(m => !m.isBot).forEach(m => (totals[m.id] = 0));
-  state.events.forEach(e => { if (!e.free && !e.voided && totals[e.memberId] !== undefined) totals[e.memberId]++; });
+  state.events.forEach(e => { const w = weight(e); if (w && totals[e.memberId] !== undefined) totals[e.memberId] += w; });
 
   state.history.push({
     startedAt: state.createdAt,
     closedAt: Date.now(),
-    total: state.events.filter(e => !e.free && !e.voided).length,
+    total: state.events.reduce((sum, e) => sum + weight(e), 0),
     totals,
     events: state.events,
   });
@@ -480,9 +505,21 @@ function healPendingVotes(state) {
     } else if (p.votes.length < p.need) {
       return true;
     }
-    const free = !!(state.freeBrokMemberId && state.freeBrokMemberId === p.memberId);
-    state.events.push({ id: p.id, memberId: p.memberId, message: p.message, ts: Date.now(), votes: p.votes, free });
-    if (free) state.freeBrokMemberId = null;
+    // Rum-dynamik-protokollen, tech-fix #2: lykketrækningens "vinder" gav
+    // FØR altid en "gratis omgang" (tæller 0, se index.html's
+    // totalPool/balances) — for punishment-polaritet (Brokkekassen m.fl.)
+    // giver det mening som en fribillet. For REWARD-polaritet
+    // (Rosekassen/Konkurrencekassen) betyder "tæller 0" derimod at en god
+    // gerning/sejr bliver ANNULLERET, hvilket er bagvendt — en "gevinst" på
+    // en gevinst-baseret kasse skal give en BONUS (dobbelt værdi), ikke en
+    // udslettelse. Samme lodtræknings-mekanik (freeBrokMemberId), forskellig
+    // konsekvens afhængig af state.poolPolarity.
+    const isLucky = !!(state.freeBrokMemberId && state.freeBrokMemberId === p.memberId);
+    const isReward = state.poolPolarity === 'reward';
+    const free = isLucky && !isReward;
+    const double = isLucky && isReward;
+    state.events.push({ id: p.id, memberId: p.memberId, message: p.message, ts: Date.now(), votes: p.votes, free, double });
+    if (isLucky) state.freeBrokMemberId = null;
     confirmedIds.push(p.id);
     return false;
   });
@@ -548,4 +585,4 @@ function redactStateForInner(state, viewerId) {
   return redactComplainerFor(withMrbrok, viewerId);
 }
 
-module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor, getGameNames, PENDING_REMINDER_AFTER, PENDING_EXPIRE_AFTER };
+module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, opportunisticStateChangeMightBeDue, checkPoolMilestone, redactStateFor, getGameNames, PENDING_REMINDER_AFTER, PENDING_EXPIRE_AFTER };
