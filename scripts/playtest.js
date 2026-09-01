@@ -271,8 +271,10 @@ async function playtestComplainer(themeId, botNames) {
   complainerFlow.beginComplainRound(state, 1);
 
   let guard = 0;
+  let challengeTested = false;
   while (state.complainer.current.type !== 'gameover' && guard < 80) {
-    const cur = state.complainer.current;
+    const c = state.complainer;
+    const cur = c.current;
     if (cur.type === 'complain') {
       complainerFlow.advanceComplain(state);
     } else if (cur.type === 'interrogation') {
@@ -284,6 +286,20 @@ async function playtestComplainer(themeId, botNames) {
       });
       complainerFlow.resolveSuspicionRound(state);
     } else if (cur.type === 'bet') {
+      // EXPERIMENTAL "Udfordring" (se complainerFlow.js's
+      // applyComplainerChallenge): afprøves PRÆCIS én gang, på første
+      // bet-runde, af en spiller der ikke selv er topId — spejler
+      // api/complainer.js's 'challenge'-handlers egne betingelser
+      // (challengeEnabled, !cur.choice, actorId !== topId, ikke brugt før).
+      if (!challengeTested && c.challengeEnabled && !cur.challenged) {
+        const challenger = players.find(p => p !== cur.topId);
+        if (challenger) {
+          complainerFlow.applyComplainerChallenge(state, challenger);
+          challengeTested = true;
+          assert(cur.challenged === true, 'Udfordring blev ikke registreret på cur.challenged');
+          assert(cur.stakeMultiplier === 2, `Udfordring skulle fordoble stakeMultiplier, fik ${cur.stakeMultiplier}`);
+        }
+      }
       cur.choice = 'safe';
       complainerFlow.resolveBet(state);
     } else if (cur.type === 'guess') {
@@ -300,7 +316,8 @@ async function playtestComplainer(themeId, botNames) {
   }
   assert(guard < 80, `Det Store Brokkeri nåede aldrig 'gameover' inden for ${guard} forsøg — mulig uendelig løkke`);
   assert(state.complainer.current.type === 'gameover', `forventede fase 'gameover', fik '${state.complainer.current && state.complainer.current.type}'`);
-  log(`✅ Det Store Brokkeri fuldført til gameover (guiltyWon=${state.complainer.current.guiltyWon})`);
+  assert(challengeTested, 'EXPERIMENTAL "Udfordring" blev aldrig afprøvet — ingen bet-runde med en ikke-topId-spiller opstod');
+  log(`✅ Det Store Brokkeri fuldført til gameover (guiltyWon=${state.complainer.current.guiltyWon}), inkl. EXPERIMENTAL "Udfordring"`);
   return state;
 }
 
@@ -329,9 +346,9 @@ if (require.main === module) main();
 
 module.exports = { playtestKrukke, playtestBrokspillet, playtestMrBrok, playtestComplainer, makeBotState };
 
-// TODO (opfølgning — ikke bygget i denne omgang):
-// - Ægte tidsudløbs-test (PENDING_EXPIRE_AFTER, BROKSPILLET_AUTO_MS,
-//   MRBROK_COMPLAINT_COUNTDOWN_MS, COMPLAINT_COUNTDOWN_MS): kør med et
-//   forfalsket/fremad-spolet ur i stedet for reel ventetid.
-// - EXPERIMENTAL "Udfordring" (applyComplainerChallenge) er ikke dækket af
-//   playtestComplainer ovenfor — driveren tager altid den simple 'safe'-vej.
+// Tidligere TODO'er, nu lukket:
+// - Ægte tidsudløbstest: se scripts/test_time_expiry.js (bagdaterede
+//   tidsstempler mod PENDING_EXPIRE_AFTER/BROKSPILLET_AUTO_MS/
+//   MRBROK_COMPLAINT_COUNTDOWN_MS/COMPLAINT_COUNTDOWN_MS).
+// - EXPERIMENTAL "Udfordring": nu dækket inde i playtestComplainer ovenfor
+//   (afprøves præcis én gang, første bet-runde).

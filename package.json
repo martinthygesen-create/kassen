@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "validate-theme": "node scripts/validate-theme.js",
-    "playtest": "node scripts/playtest.js"
+    "playtest": "node scripts/playtest.js",
+    "test-time-expiry": "node scripts/test_time_expiry.js"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",

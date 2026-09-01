@@ -534,4 +534,4 @@ function redactStateForInner(state, viewerId) {
   return redactComplainerFor(withMrbrok, viewerId);
 }
 
-module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor, getGameNames };
+module.exports = { getState, setState, mutateState, ApiError, deleteRoom, createRoom, genRoomId, uid, emptyState, neededVotes, healPendingVotes, isAdmin, isCohost, hasAdminAccess, settleRound, updateStreaksAndDrawLottery, redrawFreeBrok, processPendingExpiry, checkSilenceNudge, checkPoolMilestone, redactStateFor, getGameNames, PENDING_REMINDER_AFTER, PENDING_EXPIRE_AFTER };
