@@ -488,7 +488,7 @@ function healPendingVotes(state) {
   // state.confirmationModel er sat og valgt i opret-flowet ("Alle bekræfter
   // sammen" vs. "Én bestemmer"), men blev ALDRIG rent faktisk læst her —
   // kvorum-tærsklen (neededVotes) gjaldt uændret for host-approval-rum, så
-  // fx Hjælperkassen ("bedømt af holdlederen" ifølge sin egen beskrivelse)
+  // fx Kollegakassen ("bedømt af holdlederen" ifølge sin egen beskrivelse)
   // krævede i praksis stadig kvorum-stemmer fra ALLE medlemmer, præcis som
   // Brokkekassen. host-approval betyder nu reelt at kun én stemme fra en
   // admin/cohost tæller, uanset hvor mange medlemmer der ellers er.

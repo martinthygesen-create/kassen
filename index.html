@@ -536,6 +536,14 @@
      i step 1 af opret-flowet, hvor intet er "fravalgt" — der er bare endnu
      ikke klikket på noget. */
   .onboard-pick.toggle-pick:not(.selected){ opacity:.35; }
+  /* Lille grøn flueben-badge på valgte spil/kasse-fliser (Rum-dynamik-
+     protokol, "checkmarks så alle er sikre på de er valgt") — opacity alene
+     var for svagt et signal til at bekræfte et VALG, kun til at signalere
+     fravalg. Kun på app-pick-fliser med data-pick (spilvalget), ikke på
+     skin-vælgeren i step 1 hvor intet endnu er "valgt/fravalgt". */
+  .app-pick{ position:relative; }
+  .app-pick .app-pick-check{ position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background:var(--coin); color:var(--ink); font-size:11px; font-weight:800; display:none; align-items:center; justify-content:center; line-height:1; }
+  .onboard-pick.toggle-pick.selected .app-pick-check{ display:flex; }
   /* Delt "hvilken app"-kort-stil (onboarding-valg + ☰-menu) — ikonet sidder i
      en fast-høj boks øverst i kortet, så ikonerne altid flugter vandret på
      tværs af rækken uanset om et af navnene (fx "Brokkekassen") knækker om
@@ -1243,11 +1251,11 @@ const SKIN_PRESETS = [
     allowedGames: ['mrbrok', 'complainer'],
   },
   {
-    id: 'hjaelper', name: 'Hjælperkassen', emoji: '🤝',
+    id: 'hjaelper', name: 'Kollegakassen', emoji: '🤝',
     ruleTagline: 'Gentagne fejl i opgaverne noteres af holdlederen.', unit: 'noter',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
     smaatText: 'Gentagne fejl, bedømt af holdlederen',
-    gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Hjælpefælden' },
+    gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Kollegafælden' },
     allowedGames: ['complainer'],
   },
 ];
@@ -1504,9 +1512,17 @@ function renderCreateFlowCustom(){
   };
 }
 
-function renderCreateFlowStep2(skinOrId){
+// Trin 2: KUN identitets-valget (skin er allerede valgt i trin 1, navn
+// vælges her) — bevidst adskilt fra trin 3's indstillinger (Rum-dynamik-
+// protokol, "det store valg forsvinder": navnet skal have plads til at føles
+// som DET store valg, ikke drukne blandt spil/varighed/adgang/bekræftelse på
+// samme skærm). Selve rummet oprettes stadig først for enden af trin 3 —
+// invitationen sker derfor stadig naturligt EFTER indstillingerne er sat,
+// uden at det kræver noget "låst rum"-begreb server-side.
+function renderCreateFlowStep2(skinOrId, prevName){
   const wrap = document.getElementById('createFlowWrap');
   const skin = typeof skinOrId === 'string' ? (SKIN_PRESETS.find(s => s.id === skinOrId) || SKIN_PRESETS[0]) : skinOrId;
+  const nameVal = prevName || skin.name;
   wrap.innerHTML = `
     <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
       <div style="font-size:22px;">${skin.emoji}</div>
@@ -1515,8 +1531,29 @@ function renderCreateFlowStep2(skinOrId){
     </div>
     <div class="onboard-card">
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres gruppe hedde?</label>
-      <input type="text" id="groupNameInput" maxlength="40" value="${escapeHtml(skin.name)}" placeholder="${escapeHtml(skin.name)}" />
+      <input type="text" id="groupNameInput" maxlength="40" value="${escapeHtml(nameVal)}" placeholder="${escapeHtml(skin.name)}" style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;" />
       <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Bruges som navnet på jeres kasse — vælg med omtanke, det kan ikke ændres efter oprettelse.</p>
+    </div>
+    <button class="sheet-btn primary" id="nameNextBtn" style="margin-top:0;">Videre</button>
+  `;
+  document.getElementById('changeSkinBtn').onclick = renderCreateFlowStep1;
+  document.getElementById('nameNextBtn').onclick = ()=>{
+    const groupNameInput = document.getElementById('groupNameInput');
+    const groupName = (groupNameInput && groupNameInput.value.trim()) || skin.name;
+    renderCreateFlowStep3(skin, groupName);
+  };
+}
+
+// Trin 3: resten af opsætningen (spil, varighed, adgang, bekræftelse) — nu
+// sin egen skærm, så den ikke længere skal dele plads/vægt med selve
+// navne-valget. Opretter rummet for enden.
+function renderCreateFlowStep3(skin, groupName){
+  const wrap = document.getElementById('createFlowWrap');
+  wrap.innerHTML = `
+    <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
+      <div style="font-size:22px;">${skin.emoji}</div>
+      <div style="flex:1; font-weight:700; color:#fff;">${escapeHtml(groupName)}</div>
+      <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">← Navn</button>
     </div>
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
@@ -1549,21 +1586,25 @@ function renderCreateFlowStep2(skinOrId){
       <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
         <div class="app-pick-row" id="gamePickRow">
           <div class="onboard-pick toggle-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-check">✓</div>
             <div class="app-pick-icon">🫙</div>
-            <div class="app-pick-label">${escapeHtml(skin.name)}</div>
+            <div class="app-pick-label">${escapeHtml(groupName)}</div>
           </div>
           ${(skin.allowedGames || ['spil','mrbrok','complainer']).includes('spil') ? `
           <div class="onboard-pick toggle-pick app-pick selected" data-pick="spil" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-check">✓</div>
             <div class="app-pick-icon">👉</div>
             <div class="app-pick-label">${escapeHtml(skin.gameNames.spil)}</div>
           </div>` : ''}
           ${(skin.allowedGames || ['spil','mrbrok','complainer']).includes('mrbrok') ? `
           <div class="onboard-pick toggle-pick app-pick selected" data-pick="mrbrok" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-check">✓</div>
             <div class="app-pick-icon">🕵️</div>
             <div class="app-pick-label">${escapeHtml(skin.gameNames.mrbrok)}</div>
           </div>` : ''}
           ${(skin.allowedGames || ['spil','mrbrok','complainer']).includes('complainer') ? `
           <div class="onboard-pick toggle-pick app-pick selected" data-pick="complainer" style="background:var(--sea); color:#fff;">
+            <div class="app-pick-check">✓</div>
             <div class="app-pick-icon">🪤</div>
             <div class="app-pick-label">${escapeHtml(skin.gameNames.complainer)}</div>
           </div>` : ''}
@@ -1597,7 +1638,7 @@ function renderCreateFlowStep2(skinOrId){
     </div>
   `;
   markAppPickScrollable();
-  document.getElementById('changeSkinBtn').onclick = renderCreateFlowStep1;
+  document.getElementById('backToNameBtn').onclick = ()=>renderCreateFlowStep2(skin, groupName);
   document.querySelectorAll('.onboard-pick[data-pick]').forEach(el=>{
     el.onclick = ()=>{
       const willSelect = !el.classList.contains('selected');
@@ -1672,8 +1713,6 @@ function renderCreateFlowStep2(skinOrId){
       const dailyRhythm = selectedRhythmEl ? selectedRhythmEl.dataset.dailyRhythm === '1' : skin.dailyRhythm;
       const selectedAccessEl = document.querySelector('#accessPickRow .onboard-pick.selected');
       const accessModel = (selectedAccessEl && selectedAccessEl.dataset.accessModel) || 'open';
-      const groupNameInput = document.getElementById('groupNameInput');
-      const groupName = (groupNameInput && groupNameInput.value.trim()) || skin.name;
       const r = await api('room', {
         kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
         themeId: skin.id, themeName: groupName, ruleTagline: skin.ruleTagline,
@@ -5881,7 +5920,7 @@ function renderMain(){
 }
 function renderPendingCard(p){
   const complainer = state.members.find(m=>m.id===p.memberId);
-  // Logik-verifikation: "Én bestemmer"-rum (fx Hjælperkassen) kræver nu
+  // Logik-verifikation: "Én bestemmer"-rum (fx Kollegakassen) kræver nu
   // reelt kun holdlederens egen bekræftelse (se healPendingVotes i
   // api/_lib/store.js) — resten af medlemmerne kan derfor ikke selv
   // afgøre sagen ved at trykke deres eget navn, og skal ikke fejlagtigt

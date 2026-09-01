@@ -439,7 +439,7 @@ const COMPLAINER_PROMPTS_LOGN = [
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en løgn du fortalte for længe siden, som nu viser sig at være opdaget. Du forklarer dig til den du løj for dengang. Hvad siger du?' },
 ];
 
-// Godkendelseskasse-motoren (se planens klassifikation: Hjælperkassen — kun
+// Godkendelseskasse-motoren (se planens klassifikation: Kollegakassen — kun
 // Spil 3 mulig, og KUN i dæmpet form: arketyper er ren arbejdsstil, ALDRIG
 // en navngiven reel person som skurk, jf. magt-asymmetrien i et
 // ansættelsesforhold). 5 arketyper, situationer uden nogen konkret anklaget
@@ -747,7 +747,7 @@ const CONTENT_BY_THEME = {
     archetypes: COMPLAINER_ARCHETYPES_HJAELPER,
     situations: COMPLAINER_SITUATIONS_HJAELPER,
     prompts: COMPLAINER_PROMPTS_HJAELPER,
-    gameName: 'Hjælpefælden',
+    gameName: 'Kollegafælden',
   },
   venne: {
     archetypes: COMPLAINER_ARCHETYPES_VENNE,

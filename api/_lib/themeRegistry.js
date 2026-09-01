@@ -65,7 +65,7 @@ const SKIN_REGISTRY = {
     mechanic: 'suspicion-vote', toneRegister: 'playful',
     allowedGames: ['mrbrok', 'complainer'],
   },
-  // Godkendelseskasse-motoren (se planen: Hjælperkassen — magt-asymmetri i
+  // Godkendelseskasse-motoren (se planen: Kollegakassen — magt-asymmetri i
   // et ansættelsesforhold gør "udpeg en skyldig i gruppen" (MrBrok)
   // socialt farligt, og Brokspillets person-roast passer heller ikke.
   // KUN Det Store Brokkeri, og kun i dæmpet arketype-form (ren arbejdsstil,
