@@ -1292,6 +1292,16 @@ const THEME_COPY = {
 };
 function themeCopy(){ return THEME_COPY[(state && state.themeId) || 'brok'] || THEME_COPY.brok; }
 
+// Ingen serverside håndhævet grænse findes (bevidst, se showInviteSplash) —
+// dette er en ANBEFALET vejledende grænse, fundet ved faktisk
+// belastningstest (ikke gæt): kvorum-bekræftelse (neededVotes i
+// api/_lib/store.js) kræver ~2/3 af ANDRE medlemmer for at bekræfte hver
+// eneste anklage — allerede ved 15 medlemmer kræver det 10 uafhængige
+// stemmer for én triviel sag, hvilket bliver upraktisk. host-approval-rum
+// har ikke denne mekaniske begrænsning (kun én admin-stemme kræves,
+// uanset medlemstal), så de kan bære et markant højere anbefalet loft.
+function recommendedMemberCap(){ return (state && state.confirmationModel === 'host-approval') ? 50 : 15; }
+
 // Kasse-motor-generalisering, Fase 4: erstatter den tidligere hardcodede
 // activeApp==='spil'?'Brokspillet':...-ternary (fundet i UI-audit-bilaget,
 // index.html:1688 dengang) — læser tema-afhængige spilnavne fra
@@ -1434,6 +1444,11 @@ function renderCreateFlowStep2(skinOrId){
       <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">Skift</button>
     </div>
     <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres gruppe hedde?</label>
+      <input type="text" id="groupNameInput" maxlength="40" value="${escapeHtml(skin.name)}" placeholder="${escapeHtml(skin.name)}" />
+      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Bruges som navnet på jeres kasse — vælg med omtanke, det kan ikke ændres efter oprettelse.</p>
+    </div>
+    <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
       <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
@@ -1562,9 +1577,11 @@ function renderCreateFlowStep2(skinOrId){
       const dailyRhythm = selectedRhythmEl ? selectedRhythmEl.dataset.dailyRhythm === '1' : skin.dailyRhythm;
       const selectedAccessEl = document.querySelector('#accessPickRow .onboard-pick.selected');
       const accessModel = (selectedAccessEl && selectedAccessEl.dataset.accessModel) || 'open';
+      const groupNameInput = document.getElementById('groupNameInput');
+      const groupName = (groupNameInput && groupNameInput.value.trim()) || skin.name;
       const r = await api('room', {
         kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
-        themeId: skin.id, themeName: skin.name, ruleTagline: skin.ruleTagline,
+        themeId: skin.id, themeName: groupName, ruleTagline: skin.ruleTagline,
         unit: skin.unit, poolPolarity: skin.poolPolarity,
         confirmationModel, dailyRhythm, accessModel,
       });
@@ -1747,12 +1764,11 @@ function renderAwaitingApproval(pendingId, name){
 // (kaldes fra go()-handleren FØR showRoomIntroSplash) — selve invitations-
 // modulet: kode + link klar til at kopiere og sende videre med det samme,
 // i stedet for at opretteren selv skal huske at åbne ☰-menuen for at finde
-// koden igen. Der findes IKKE noget deltager-loft nogen steder i kodebasen
-// (hverken klient- eller serverside — se api/_lib/store.js), så teksten her
-// er bevidst IKKE sat til et opdigtet tal ("op til 8 personer") — det ville
-// se ud som en reel systembegrænsning, men være ren fiktion. Kald
-// `onClose` når modulet lukkes (uanset hvordan), så den kædede
-// showRoomIntroSplash stadig vises bagefter som hidtil.
+// koden igen. Ingen HÅRD serverside-grænse håndhæves (se api/_lib/store.js)
+// — tallet her er recommendedMemberCap(), en reelt målt/testet vejledende
+// grænse (se load_test_capacity.js's fund om kvorum-friktion), ikke et
+// opdigtet tal. Kald `onClose` når modulet lukkes (uanset hvordan), så den
+// kædede showRoomIntroSplash stadig vises bagefter som hidtil.
 function showInviteSplash(onClose){
   if(!roomId){ if(onClose) onClose(); return; }
   const seenKey = 'bk_seen_invite_' + roomId;
@@ -1774,10 +1790,11 @@ function showInviteSplash(onClose){
   backdrop.addEventListener('click', e=>{ if(e.target === backdrop) close(); });
 
   const roomName = state.themeName || 'Brokkekassen';
+  const cap = recommendedMemberCap();
   inner.innerHTML = `
     <div style="font-size:52px;">📨</div>
     <h3>Inviter resten af flokken</h3>
-    <p>${escapeHtml(roomName)} er klar — del koden eller linket, så andre kan joine med det samme. Ingen grænse for hvor mange, der kan være med.</p>
+    <p>${escapeHtml(roomName)} er klar — del koden eller linket, så andre kan joine med det samme. Inviter 2–${cap} deltagere for bedst oplevelse.</p>
     <div class="onboard-card" style="text-align:center; margin-bottom:18px;">
       <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(5,32,36,0.4);">Jeres kode</p>
       <div id="inviteSplashCodeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--sea); padding:6px 0 2px;">${roomId}</div>
@@ -2408,11 +2425,11 @@ function complaintBlockHtml(g, cur){
   if(!pending.length) return '';
   const myId = profile.memberId;
   if(cur.complaint){
-    const byName = cur.complaint.by === 'brokspillet' ? 'Brokspillet' : ((state.members.find(m=>m.id===cur.complaint.by)||{}).name || 'Nogen');
+    const byName = cur.complaint.by === 'brokspillet' ? 'Spillet' : ((state.members.find(m=>m.id===cur.complaint.by)||{}).name || 'Nogen');
     const targetName = (state.members.find(m=>m.id===cur.complaint.targetId)||{}).name || 'nogen';
     return `
       <div class="complaint-banner">
-        <span>${cur.complaint.by === 'brokspillet' ? '🎙️' : '🐌'} <b>${escapeHtml(byName)}</b> brokker sig over at <b>${escapeHtml(targetName)}</b> bruger sin tid</span>
+        <span>${cur.complaint.by === 'brokspillet' ? '🎙️' : '🐌'} <b>${escapeHtml(byName)}</b> er utålmodig, fordi <b>${escapeHtml(targetName)}</b> bruger sin tid</span>
         <span id="complaintCountdown" class="complaint-countdown"></span>
       </div>
     `;
@@ -4054,7 +4071,7 @@ function mrbrokComplaintBlockHtml(m, cur){
     const targetName = (state.members.find(mm=>mm.id===cur.complaint.targetId)||{}).name || 'nogen';
     const line = anonymize
       ? `${cur.complaint.by === 'brokspillet' ? '🎙️' : '🐌'} Turen bruger lang tid`
-      : `${cur.complaint.by === 'brokspillet' ? '🎙️' : '🐌'} <b>${escapeHtml(byName)}</b> brokker sig over at <b>${escapeHtml(targetName)}</b> bruger sin tid`;
+      : `${cur.complaint.by === 'brokspillet' ? '🎙️' : '🐌'} <b>${escapeHtml(byName)}</b> er utålmodig, fordi <b>${escapeHtml(targetName)}</b> bruger sin tid`;
     return `
       <div class="complaint-banner">
         <span>${line}</span>
@@ -5558,7 +5575,7 @@ function complainerComplaintBlockHtml(c, cur){
     const targetName = (state.members.find(mm=>mm.id===cur.complaint.targetId)||{}).name || 'nogen';
     const line = anonymize
       ? `${cur.complaint.by === 'brokkefaelden' ? '🎙️' : '🐌'} Turen bruger lang tid`
-      : `${cur.complaint.by === 'brokkefaelden' ? '🎙️' : '🐌'} <b>${escapeHtml(byName)}</b> brokker sig over at <b>${escapeHtml(targetName)}</b> bruger sin tid`;
+      : `${cur.complaint.by === 'brokkefaelden' ? '🎙️' : '🐌'} <b>${escapeHtml(byName)}</b> er utålmodig, fordi <b>${escapeHtml(targetName)}</b> bruger sin tid`;
     return `
       <div class="complaint-banner">
         <span>${line}</span>
