@@ -492,9 +492,15 @@ function healPendingVotes(state) {
   // krævede i praksis stadig kvorum-stemmer fra ALLE medlemmer, præcis som
   // Brokkekassen. host-approval betyder nu reelt at kun én stemme fra en
   // admin/cohost tæller, uanset hvor mange medlemmer der ellers er.
+  // Rum-dynamik-protokol, Del 1.3: 3. confirmationModel — "første-til-mølle".
+  // Den FØRSTE stemme fra en anden end den oprindelige anklager afgør sagen
+  // øjeblikkeligt. Opretterens/anklagerens egen vidne-stemme (initialVotes i
+  // api/brok.js) tælles bevidst IKKE med her — se den fils create-handler,
+  // som af samme grund udelader den for netop dette confirmationModel.
   const isHostApproval = state.confirmationModel === 'host-approval';
+  const isFirstToVote = state.confirmationModel === 'first-to-vote';
   const realMemberCount = state.members.filter(m => !m.isBot).length;
-  const correctNeed = isHostApproval ? 1 : neededVotes(realMemberCount);
+  const correctNeed = (isHostApproval || isFirstToVote) ? 1 : neededVotes(realMemberCount);
   state.pendingList.forEach(p => { if (p.need > correctNeed) p.need = correctNeed; });
 
   const confirmedIds = [];
@@ -502,6 +508,12 @@ function healPendingVotes(state) {
     if (isHostApproval) {
       const hasAdminVote = p.votes.some(id => hasAdminAccess(state, id));
       if (!hasAdminVote) return true;
+    } else if (isFirstToVote) {
+      // Anklagerens EGEN stemme (hvis de senere skulle taste sig selv,
+      // se index.html's renderPendingCard som forhindrer dette i UI'et)
+      // må aldrig selv kunne afgøre sagen — kun en stemme fra en ANDEN.
+      const outsideVotes = p.votes.filter(id => id !== p.actorId);
+      if (outsideVotes.length < 1) return true;
     } else if (p.votes.length < p.need) {
       return true;
     }

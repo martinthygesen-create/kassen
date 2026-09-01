@@ -1,5 +1,15 @@
 const { createRoom, genRoomId, mutateState, uid, redactStateFor } = require('./_lib/store');
 
+// Rum-dynamik-protokol, Del 1.2: de anbefalede lofter (fundet ved faktisk
+// belastningstest, se load_test_capacity.js) håndhæves nu fysisk, ikke kun
+// vist som vejledende tal i invite-modulet (recommendedMemberCap() i
+// index.html — SKAL holdes i sync med disse to tal, samme grænse begge
+// steder). Kvorum-rum rammer upraktisk mange påkrævede stemmer per sag før
+// dette; host-approval-rum har ingen tilsvarende mekanisk begrænsning og
+// kan derfor bære markant flere.
+const MAX_MEMBERS_QUORUM = 15;
+const MAX_MEMBERS_HOST_APPROVAL = 50;
+
 // Samler "opret rum" og "join rum" i én serverless function i stedet for to —
 // Vercels Hobby-plan tillader kun 12 functions i alt.
 module.exports = async (req, res) => {
@@ -22,9 +32,18 @@ module.exports = async (req, res) => {
       // medlemmer med samme navn men forskellige id'er. mutateState's
       // CAS-retry lukker dette hul på samme måde som brok.js/admin.js.
       let outcome = null;
+      let capReached = false;
       const mutated = await mutateState(roomId, async (state) => {
         let member = state.members.find(m => m.name.toLowerCase() === cleanName.toLowerCase());
         if (member) { outcome = { type: 'member', memberId: member.id }; return; }
+
+        // Deltager-loft (Del 1.2) — kendte medlemmer (fundet ovenfor) og
+        // bots (test-spil) rammes aldrig af dette, kun rigtige NYE tilmeldinger.
+        if (!isBot) {
+          const realCount = state.members.filter(m => !m.isBot).length;
+          const cap = state.confirmationModel === 'host-approval' ? MAX_MEMBERS_HOST_APPROVAL : MAX_MEMBERS_QUORUM;
+          if (realCount >= cap) { capReached = true; return; }
+        }
 
         // Kasse-motor-generalisering, operationelt valg "adgang" (se
         // KASSEMOTORPLAN.md's "To lag"-afsnit): accessModel:'approval'
@@ -57,6 +76,11 @@ module.exports = async (req, res) => {
       });
       if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
       const { state } = mutated;
+      if (capReached) {
+        const cap = state.confirmationModel === 'host-approval' ? MAX_MEMBERS_HOST_APPROVAL : MAX_MEMBERS_QUORUM;
+        const kasseName = (state.themeName || 'Kassen').toLowerCase();
+        return res.status(409).json({ error: `Kassen er fuld — maksimalt ${cap} deltagere i denne ${kasseName}.` });
+      }
       if (outcome.type === 'pending') return res.status(200).json({ pending: true, pendingId: outcome.pendingId, state: redactStateFor(state, null) });
       return res.status(200).json({ memberId: outcome.memberId, state: redactStateFor(state, outcome.memberId) });
     }

@@ -84,14 +84,20 @@ module.exports = async (req, res) => {
     // Den der opretter anklagen er allerede vidne til at det skete, så deres
     // egen stemme tæller med med det samme — resten skal stadig bekræfte
     // uafhængigt (hvis man anklager sig selv, tæller det ikke som en stemme).
-    const initialVotes = (actorId && actorId !== memberId && state.members.find(m => m.id === actorId)) ? [actorId] : [];
+    // UNDTAGELSE (Del 1.3, "første-til-mølle"): her skal netop den FØRSTE
+    // stemme UDOVER anklageren afgøre sagen — anklagerens egen vidne-stemme
+    // må derfor ikke selv kunne udløse den øjeblikkelige afgørelse.
+    const isFirstToVote = state.confirmationModel === 'first-to-vote';
+    const initialVotes = (!isFirstToVote && actorId && actorId !== memberId && state.members.find(m => m.id === actorId)) ? [actorId] : [];
+    const isHostApproval = state.confirmationModel === 'host-approval';
     state.pendingList.push({
       id: uid(),
       memberId,
+      actorId: actorId || null,
       message: cleanMessage,
       votes: initialVotes,
       openedAt: Date.now(),
-      need: neededVotes(state.members.filter(m => !m.isBot).length),
+      need: (isFirstToVote || isHostApproval) ? 1 : neededVotes(state.members.filter(m => !m.isBot).length),
     });
     await setState(roomId, state);
 

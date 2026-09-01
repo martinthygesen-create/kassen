@@ -780,11 +780,21 @@ function whatToBuy(total){
   const n = Math.floor(total / t.cost);
   return `= ${n}× ${t.label}`;
 }
-function titleFor(count){
-  if(count >= 10) return 'Broklegende 👑';
-  if(count >= 6) return 'Storbrokker';
-  if(count >= 3) return 'Rutineret brokkehoved';
-  if(count >= 1) return 'Brokke-nybegynder';
+// Rum-dynamik-protokol, Del 1.1: alle 4 tidligere titler nævnte "brok"
+// eksplicit, uafhængigt af skin — lækkede altså ind i alle andre skins
+// (Sladrekassen, Rosekassen osv.). Nu generisk OG polaritets-bevidst.
+function titleFor(count, polarity){
+  if(polarity === 'reward'){
+    if(count >= 10) return 'Legende 🌟';
+    if(count >= 6) return 'Superstjerne';
+    if(count >= 3) return 'Rutineret bidragyder';
+    if(count >= 1) return 'Nybegynder';
+    return 'Endnu intet bidrag';
+  }
+  if(count >= 10) return 'Legende 👑';
+  if(count >= 6) return 'Storsynder';
+  if(count >= 3) return 'Rutineret overtræder';
+  if(count >= 1) return 'Nybegynder';
   return 'Pletfri (indtil videre)';
 }
 
@@ -1253,6 +1263,15 @@ const SKIN_PRESETS = [
 // server-side) — IKKE en generisk find/erstat af ordet "brok", da fx
 // Rosekassen har modsat polaritet (ros, ikke anklage) og derfor har brug
 // for en reelt anderledes formulering, ikke bare et synonym.
+// Rum-dynamik-protokol, Del 1.3: "første-til-mølle" (confirmationModel
+// 'first-to-vote') er kun tilgængelig som valg for disse 4 skins — de
+// passer alle til en hurtig, uformel afgørelse (regelbrud/rygte/løgn/
+// rundefejl er typisk indlysende for den der først reagerer), i modsætning
+// til Rosekassen/Konkurrencekassen hvor en enkelt persons hurtige reaktion
+// ikke bør kunne overtrumfe en fælles fejring, eller Brokkekassen/
+// Vennekassen hvor det oprindelige "alle vidner sammen"-koncept er kernen.
+const FIRST_TO_VOTE_SKINS = ['bode', 'sladre', 'logn', 'drik'];
+
 const THEME_COPY = {
   brok: {
     feedLabel: 'Brok-feed',
@@ -1341,14 +1360,16 @@ const THEME_COPY = {
 };
 function themeCopy(){ return THEME_COPY[(state && state.themeId) || 'brok'] || THEME_COPY.brok; }
 
-// Ingen serverside håndhævet grænse findes (bevidst, se showInviteSplash) —
-// dette er en ANBEFALET vejledende grænse, fundet ved faktisk
-// belastningstest (ikke gæt): kvorum-bekræftelse (neededVotes i
-// api/_lib/store.js) kræver ~2/3 af ANDRE medlemmer for at bekræfte hver
-// eneste anklage — allerede ved 15 medlemmer kræver det 10 uafhængige
-// stemmer for én triviel sag, hvilket bliver upraktisk. host-approval-rum
-// har ikke denne mekaniske begrænsning (kun én admin-stemme kræves,
-// uanset medlemstal), så de kan bære et markant højere anbefalet loft.
+// Rum-dynamik-protokol, Del 1.2: dette er nu det FAKTISK håndhævede loft,
+// ikke kun en visningstekst — api/room.js's join-handler afviser nye
+// tilmeldinger over grænsen med samme to tal (MAX_MEMBERS_QUORUM/
+// MAX_MEMBERS_HOST_APPROVAL). Tallene stammer fra en reel belastningstest,
+// ikke gæt: kvorum-bekræftelse (neededVotes i api/_lib/store.js) kræver
+// ~2/3 af ANDRE medlemmer for at bekræfte hver eneste anklage — allerede
+// ved 15 medlemmer kræver det 10 uafhængige stemmer for én triviel sag.
+// host-approval-rum har ikke denne mekaniske begrænsning (kun én admin-
+// stemme kræves, uanset medlemstal), så de kan bære et markant højere loft.
+// HOLD DISSE TAL I SYNC MED api/room.js — samme grænse skal gælde begge steder.
 function recommendedMemberCap(){ return (state && state.confirmationModel === 'host-approval') ? 50 : 15; }
 
 // Kasse-motor-generalisering, Fase 4: erstatter den tidligere hardcodede
@@ -1507,6 +1528,16 @@ function renderCreateFlowStep2(skinOrId){
         </div>
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='host-approval'?' selected':''}" data-confirmation-model="host-approval" style="background:var(--sea); color:#fff;">
           <div class="app-pick-label">Holdlederen afgør</div>
+        </div>
+      </div>
+      ` : FIRST_TO_VOTE_SKINS.includes(skin.id) ? `
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen, eller afgør den første der reagerer?</label>
+      <div class="app-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
+        <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel!=='first-to-vote'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Alle stemmer — flertallet bestemmer</div>
+        </div>
+        <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='first-to-vote'?' selected':''}" data-confirmation-model="first-to-vote" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">Først til mølle afgør</div>
         </div>
       </div>
       ` : `
@@ -1858,7 +1889,7 @@ function showInviteSplash(onClose){
   inner.innerHTML = `
     <div style="font-size:52px;">📨</div>
     <h3>Inviter resten af flokken</h3>
-    <p>${escapeHtml(roomName)} er klar — del koden eller linket, så andre kan joine med det samme. Inviter 2–${cap} deltagere for bedst oplevelse.</p>
+    <p>${escapeHtml(roomName)} er klar — del koden eller linket, så andre kan joine med det samme. Inviter 2–${cap} deltagere — det er kassens loft for denne type.</p>
     <div class="onboard-card" style="text-align:center; margin-bottom:18px;">
       <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(5,32,36,0.4);">Jeres kode</p>
       <div id="inviteSplashCodeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--sea); padding:6px 0 2px;">${roomId}</div>
@@ -5823,14 +5854,21 @@ function renderPendingCard(p){
   // afgøre sagen ved at trykke deres eget navn, og skal ikke fejlagtigt
   // tro at deres tryk tæller med (heller ikke visuelt).
   const isHostApproval = state.confirmationModel === 'host-approval';
+  // "Første-til-mølle" (Del 1.3): anklagerens EGEN stemme kan ikke afgøre
+  // sagen (se healPendingVotes) — deres pille skal derfor heller ikke se
+  // tappelig ud, ellers tror de fejlagtigt at deres eget tryk virker.
+  const isFirstToVote = state.confirmationModel === 'first-to-vote';
   const chips = state.members.filter(m=>!m.isBot).map(m=>{
     const voted = p.votes.includes(m.id);
     const mine = profile && m.id === profile.memberId;
-    const canTap = mine && (!isHostApproval || isAdmin());
+    const isActor = isFirstToVote && p.actorId && m.id === p.actorId;
+    const canTap = mine && !isActor && (!isHostApproval || isAdmin());
     return `<div class="name-pill ${voted?'voted':''}" data-pending="${p.id}" data-voter="${m.id}" style="${canTap?'':'opacity:.45; pointer-events:none;'} padding:6px 12px; font-size:13px;">${escapeHtml(m.name)}${voted?' ✓':''}</div>`;
   }).join('');
   const statusLabel = isHostApproval
     ? (p.votes.some(id => id === state.members[0].id) ? '1/1' : `venter på ${escapeHtml(state.members[0].name)}`)
+    : isFirstToVote
+    ? 'først til mølle'
     : `${p.votes.length}/${p.need}`;
   return `<div class="feed-item" style="border-style:dashed; border-color:rgba(255,201,60,0.4); background:rgba(255,201,60,0.06);">
     <div class="avatar" style="background:linear-gradient(160deg,#ffc93c,#e8a317); color:var(--ink);">⏳</div>
@@ -5964,22 +6002,36 @@ function allTimeTotals(){
   return totals;
 }
 
+// Rum-dynamik-protokol, Del 1.1: dagsbalance/toplister-overskrifter var
+// hardcodet "TopBrokker"/"Helgenen" uanset polaritet — for reward-skins
+// (Rosekassen/Konkurrencekassen) er "flest point" noget GODT, ikke en
+// "overtrædelse", og en positiv topscore skal ikke stå i samme farve/
+// visuelle "advarsel" som en straf-skins overtræder. isReward styrer BÅDE
+// tekst OG hvem der får den fremhævede accent-farve.
 function spotlightCards(vals){
   const members = state.members.filter(m=>!m.isBot);
   const maxV = Math.max(0, ...Object.values(vals));
   if(maxV <= 0) return '';
   const minV = Math.min(...members.map(m=>vals[m.id]||0));
+  const isReward = state.poolPolarity === 'reward';
   const topNames = members.filter(m=>(vals[m.id]||0) === maxV).map(m=>m.name).join(' & ');
-  const saintNames = minV < maxV ? members.filter(m=>(vals[m.id]||0) === minV).map(m=>m.name).join(' & ') : null;
+  const bottomNames = minV < maxV ? members.filter(m=>(vals[m.id]||0) === minV).map(m=>m.name).join(' & ') : null;
   const card = (title, emoji, names, amt, accent) => `
     <div style="flex:1; background:${accent ? 'rgba(255,107,74,0.14)' : 'rgba(255,247,232,0.07)'}; border:1px solid ${accent ? 'rgba(255,107,74,0.35)' : 'rgba(255,247,232,0.15)'}; border-radius:16px; padding:12px; text-align:center;">
       <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,247,232,0.68);">${emoji} ${title}</div>
       <div style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:${names.length>14?'12.5':'15'}px; color:var(--cream); margin-top:4px; line-height:1.2;">${escapeHtml(names)}</div>
       <div style="font-size:12px; color:var(--coin);">${amt}${escapeHtml(state.unit || '€')}</div>
     </div>`;
+  if(isReward){
+    // Flest point er den gode nyhed her — ingen grund til en "bundskraber"-
+    // modpol, det ville bare fejre den der har bidraget mindst.
+    return `<div style="display:flex; gap:10px; margin-bottom:18px;">
+      ${card('Dagens Stjerne', '🌟', topNames, maxV, true)}
+    </div>`;
+  }
   return `<div style="display:flex; gap:10px; margin-bottom:18px;">
-    ${card('TopBrokker', '🏆', topNames, maxV, true)}
-    ${saintNames ? card('Helgenen', '😇', saintNames, minV, false) : ''}
+    ${card('Dagens overtræder', '🏆', topNames, maxV, true)}
+    ${bottomNames ? card('Helgenen', '😇', bottomNames, minV, false) : ''}
   </div>`;
 }
 
@@ -6012,11 +6064,12 @@ function renderBalanceToday(main){
     const freeTag = state.freeBrokMemberId === m.id ? ' 🎫' : '';
     const streak = streaks[m.id] || 0;
     let sub;
-    if(state.freeBrokMemberId === m.id) sub = state.poolPolarity === 'reward' ? 'Har dagens bonus-chance ✨' : 'Har dagens gratis omgang';
-    else if(isTop) sub = 'TopBrokker i dag';
-    else if(isLeast) sub = 'Helgenen i dag 😇';
-    else if(streak > 0) sub = `🔥 ${streak} dag${streak===1?'':'e'} uden brok`;
-    else sub = titleFor(amt);
+    const isReward = state.poolPolarity === 'reward';
+    if(state.freeBrokMemberId === m.id) sub = isReward ? 'Har dagens bonus-chance ✨' : 'Har dagens gratis omgang';
+    else if(isTop) sub = isReward ? 'Dagens Stjerne 🌟' : 'Dagens overtræder';
+    else if(isLeast && !isReward) sub = 'Helgenen i dag 😇';
+    else if(streak > 0 && !isReward) sub = `🔥 ${streak} dag${streak===1?'':'e'} uden hændelser`;
+    else sub = titleFor(amt, state.poolPolarity);
     return `<div class="bal-row"><div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(m.name)}</div><div class="feed-body"><div class="bal-name ${profile && m.id===profile.memberId?'me':''}">${escapeHtml(m.name)}${crown}${freeTag}</div><div style="font-size:12px; color:rgba(255,247,232,0.68);">${sub}</div></div><div class="bal-amt ${amt===0?'zero':''}">${amt}${escapeHtml(state.unit || '€')}</div></div>`;
   }).join('');
 
