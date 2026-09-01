@@ -529,7 +529,7 @@
   .onboard{ padding:60px 26px 30px; text-align:center; }
   .onboard .emoji{font-size:52px;}
   .onboard h1{font-size:28px; margin:10px 0 6px;}
-  .onboard p{font-size:14.5px; color:rgba(255,247,232,0.7); line-height:1.5; margin-bottom:26px;}
+  .onboard p{font-size:14.5px; color:rgba(255,247,232,0.7); line-height:1.35; margin-bottom:22px;}
   .onboard-card{ background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); border-radius:20px; padding:20px; text-align:left; }
   /* opacity-dæmpning gælder kun toggle-baserede vælgere (fx bekræftelses-
      model/rytme/adgang), IKKE engangs-navigations-lister som skin-vælgeren
@@ -1474,12 +1474,37 @@ function renderCreateFlowStep1(){
   document.querySelector('#skinPickRow [data-custom-skin]').onclick = ()=>renderCreateFlowCustom();
 }
 
+// Genererer spilnavne til et "Opret selv"-rum ud fra selve gruppenavnet, i
+// stedet for at arve BASE-skinnets — fundet som en reel inkonsekvens (ikke
+// kun kosmetisk): en "Kaffekassen" bygget på Bødekassen som base viste
+// stille "Bødespillet"/"Bødedetektiven"/"Bødefælden", et navn ingen i
+// rummet nogensinde valgte eller ville genkende. Følger nøjagtig samme
+// "{stamme}spillet/detektiven/fælden"-mønster som de kuraterede skins selv
+// (fx Vennekassen → Vennespillet/Vennedetektiven/Vennefælden) — bekræftet
+// ved at sammenligne med SKIN_PRESETS' egne navne.
+function deriveCustomGameNames(name){
+  let stem = (name || '').trim().replace(/kassen$/i, '').replace(/kasse$/i, '').trim();
+  if(!stem) stem = (name || 'Jeres').trim();
+  return {
+    spil: `${stem}spillet`,
+    mrbrok: `${stem}detektiven`,
+    complainer: `${stem}fælden`,
+  };
+}
+
+// Nogle faste, generiske ikoner at vælge imellem til "Opret selv" — et
+// friskt sæt (ikke en gentagelse af de kuraterede skins' egne ikoner), så
+// et brugerdefineret rum kan få sit EGET udtryk i stedet for stiltiende at
+// arve BASE-skinnets emoji (samme inkonsekvens-fund som spilnavnene).
+const CUSTOM_EMOJI_CHOICES = ['🫙','☕','🎉','⭐','🎯','🏠','🎮','📚','🚗','💼'];
+
 // "Opret din egen" (se KASSEMOTORPLAN.md's "Oprettelses-UX: navngivne
 // skabeloner"-afsnit): brugeren skriver et frit navn + en kort "hvad handler
 // det om"-differentiator og vælger en af de kuraterede skins som BASE — den
-// arves (indhold, spilnavne, allowedGames, enhed, polaritet), kun navn og
-// "med småt" er nye. Ingen ny CONTENT_BY_THEME nødvendig, matcher planens
-// "arver dens indstillinger under overfladen".
+// arves (enhed, polaritet, bekræftelsesmodel, hvilke spil der er med), men
+// IKKE længere emoji eller spilnavne (se deriving-funktionerne ovenfor) —
+// kun navn og "med småt" var oprindeligt tænkt som "jeres eget", men i
+// praksis var emoji/spilnavne lige så synligt en del af rummets identitet.
 function renderCreateFlowCustom(prefill){
   setBelowCreateFlowVisible(false);
   const wrap = document.getElementById('createFlowWrap');
@@ -1491,6 +1516,14 @@ function renderCreateFlowCustom(prefill){
       <input type="text" id="customNameInput" value="${escapeHtml((prefill && prefill.name) || '')}" placeholder="Fx Vennekassen" maxlength="30" style="margin-bottom:14px;" />
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad handler jeres kasse om? (kort)</label>
       <input type="text" id="customAboutInput" value="${escapeHtml((prefill && prefill.about) || '')}" placeholder="Fx sene ankomster" maxlength="40" style="margin-bottom:14px;" />
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Ikon</label>
+      <div class="app-pick-row wrap-pick-row" id="customEmojiRow" style="margin:10px 0 14px;">
+        ${CUSTOM_EMOJI_CHOICES.map((emoji, i) => `
+          <div class="onboard-pick toggle-pick app-pick${emoji===((prefill && prefill.emoji) || CUSTOM_EMOJI_CHOICES[0])?' selected':''}" data-emoji="${emoji}" style="background:var(--sea); color:#fff; flex:0 0 auto; min-width:56px; padding:14px 4px;">
+            <div class="app-pick-icon" style="font-size:26px;">${emoji}</div>
+          </div>
+        `).join('')}
+      </div>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Baseret på</label>
       <div class="app-pick-row" id="customBaseRow" style="margin:10px 0 4px;">
         ${SKIN_PRESETS.map(skin => `
@@ -1511,6 +1544,12 @@ function renderCreateFlowCustom(prefill){
       el.classList.add('selected');
     };
   });
+  document.querySelectorAll('#customEmojiRow .onboard-pick').forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll('#customEmojiRow .onboard-pick').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+  });
   document.getElementById('customNextBtn').onclick = ()=>{
     const name = document.getElementById('customNameInput').value.trim();
     const about = document.getElementById('customAboutInput').value.trim();
@@ -1518,17 +1557,19 @@ function renderCreateFlowCustom(prefill){
     if(!about){ toast('Skriv kort hvad den handler om'); return; }
     const baseEl = document.querySelector('#customBaseRow .onboard-pick.selected');
     const base = SKIN_PRESETS.find(s => s.id === (baseEl && baseEl.dataset.baseId)) || SKIN_PRESETS[0];
+    const emojiEl = document.querySelector('#customEmojiRow .onboard-pick.selected');
+    const emoji = (emojiEl && emojiEl.dataset.emoji) || CUSTOM_EMOJI_CHOICES[0];
     // "Med småt"-skabelonen er FÆLLES på tværs af alle skins (se planens
     // "Konkret 'med småt'-tekst pr. skin"-afsnit): "{differentiator},
     // {bekræftelsesmodel}" — her sammensat dynamisk i stedet for slået op
     // i en tabel, da et frit navn ingen har skrevet før ikke findes der.
     const aboutCapitalized = about.charAt(0).toUpperCase() + about.slice(1);
     const customSkin = {
-      id: base.id, name, emoji: base.emoji,
+      id: base.id, name, emoji,
       ruleTagline: `${aboutCapitalized}, og det tæller i ${name.toLowerCase()}s pulje.`, unit: base.unit,
       poolPolarity: base.poolPolarity, confirmationModel: base.confirmationModel, dailyRhythm: base.dailyRhythm,
       smaatText: `${aboutCapitalized}, bekræftet af alle`,
-      gameNames: base.gameNames, allowedGames: base.allowedGames,
+      gameNames: deriveCustomGameNames(name), allowedGames: base.allowedGames,
       // customAbout/customBaseId er IKKE en del af skin-formen resten af
       // koden forventer (kun brugt til at kunne genskabe "Opret selv"-
       // formularens felter hvis værten trykker "← Tilbage" fra trin 3).
@@ -1691,7 +1732,7 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
   markAppPickScrollable();
   document.getElementById('backToNameBtn').onclick = ()=>{
     if(isCustom){
-      renderCreateFlowCustom({ name: groupName, about: skin.customAbout, baseId: skin.customBaseId });
+      renderCreateFlowCustom({ name: groupName, about: skin.customAbout, baseId: skin.customBaseId, emoji: skin.emoji });
     } else {
       renderCreateFlowStep2(skin, groupName);
     }
@@ -1804,7 +1845,7 @@ function renderCreateOrJoin(errorMsg){
     <div class="onboard">
       <div class="emoji">🍯</div>
       <h1>…Kassen</h1>
-      <p>Peer-bekræftet regnskab + mini-spil, delt med jeres gruppe.</p>
+      <p>Få en på kassen – spil med vennerne (eller fjenderne 😉).</p>
       ${errorMsg ? `<p style="color:var(--coral); font-weight:600; margin-top:-14px;">${errorMsg}</p>` : ''}
       <div id="createFlowWrap"></div>
       <div id="belowCreateFlow">
