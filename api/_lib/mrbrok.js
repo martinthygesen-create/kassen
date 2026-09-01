@@ -167,6 +167,92 @@ const MRBROK_CLUE_TIPS_LOGN = [
   'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
 ];
 
+// Vennekassen — Gruppekasse-motor, nær-identisk social kontekst som brok
+// (se KASSEMOTORPLAN.md's klassifikation), men domænet er specifikt
+// VENNEGRUPPENS egne mønstre (planlægning/fester/rejser), ikke ferie
+// generelt. "brokker sig over" undgået bevidst (samme grund som
+// Bødekassen/Sladrekassen — Dommerens lækage-tjek fanger ordet "brok" i et
+// fremmed temas indhold, se commit-historikken for Konkurrencekassens
+// første forsøg).
+const MRBROK_TOPICS_VENNE = [
+  'Glemsom vennegruppe-planlægger — er irriteret over at ingen svarer i gruppechatten',
+  'Skeptisk madklub-medlem — er utilfreds med hvem der altid glemmer at handle ind',
+  'Utålmodig spilaften-vært — er irriteret over folk der aldrig kan finde ud af reglerne',
+  'Træt karpooler — er utilfreds med venner der aldrig er klar til tiden',
+  'Irriteret festplanlægger — er irriteret over gæster der melder afbud i sidste øjeblik',
+  'Skuffet rejsefælle — er skuffet over venner der aldrig kan blive enige om planer',
+  'Frustreret gruppechat-admin — er frustreret over folk der spammer med memes',
+  'Utilfreds fitness-makker — er utilfreds med venner der aflyser træning hele tiden',
+  'Vred fælleskøkken-bruger — er vred over opvask der aldrig bliver taget',
+  'Skeptisk lånefinansier — er skeptisk over venner der "glemmer" at betale tilbage',
+];
+
+const MRBROK_CLUE_TIPS_VENNE = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Vær irriteret over en PERSON i situationen, ikke bare selve tingen',
+  'Svar på en følelse ved det, ikke selve tingen',
+  'Vend spørgsmålet en anelse — svar på det du helst selv ville være irriteret over',
+  'Nævn hvor tit "det her" sker for dig',
+  'Beskriv hvordan du plejer at reagere i situationen',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
+// Rosekassen — reward-polaritet (ros i stedet for brok, se planens "ren
+// polaritetsvending"). Domæne: at GIVE ros/anerkendelse, ikke klage.
+const MRBROK_TOPICS_ROSE = [
+  'Varm konferencier — roser alle for mindste præstation',
+  'Stolt træner — roser holdet efter hver eneste kamp',
+  'Entusiastisk mentor — roser den mindste fremgang hos andre',
+  'Hjertevarm bedsteforælder — roser børnebørnenes mindste bedrifter',
+  'Anerkendende chef — roser medarbejdere for rettidig aflevering',
+  'Begejstret fan — roser sit idol for alt de gør',
+  'Opmuntrende yogainstruktør — roser deltagerne for at møde op overhovedet',
+  'Taknemmelig kunde — roser personalet for den mindste ekstra service',
+  'Stolt forælder — roser børnenes mindste fremskridt højlydt',
+  'Inspireret elev — roser læreren for enhver god forklaring',
+];
+
+const MRBROK_CLUE_TIPS_ROSE = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Ros en PERSON i situationen, ikke bare selve tingen',
+  'Svar med en følelse ved det, ikke selve tingen',
+  'Vend spørgsmålet en anelse — svar med den ros du helst selv ville give',
+  'Nævn hvor tit du plejer at rose den slags',
+  'Beskriv hvordan du plejer at reagere når du selv bliver rost',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
+// Drikkekassen — session-baseret (dailyRhythm:false, se planens note om at
+// den kræver en session- i stedet for dags-cyklus). Domæne: fest/drikkeleg.
+const MRBROK_TOPICS_DRIK = [
+  'Doven bartender — er træt af gæster der aldrig kan bestemme sig',
+  'Skeptisk quizvært — er utilfreds med hold der snyder med mobilen',
+  'Utålmodig taxa-bestiller — er irriteret over gæster der ikke kan finde app\'en',
+  'Træt DJ — er træt af gæster der altid beder om samme sang',
+  'Irriteret rundefordeler — er irriteret over folk der "glemmer" deres runde',
+  'Skuffet spilleder — er skuffet over folk der ikke kan reglerne i drukspil',
+  'Frustreret vært — er frustreret over gæster der drikker af andres glas',
+  'Utilfreds baransvarlig — er utilfreds med gæster der prøver at snyde med alder',
+  'Vred nabo til festen — er vred over støjniveauet efter midnat',
+  'Skeptisk eftervagt — er skeptisk over undskyldninger dagen derpå',
+];
+
+const MRBROK_CLUE_TIPS_DRIK = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Vær irriteret over en PERSON i situationen, ikke bare selve tingen',
+  'Svar på en følelse ved det, ikke selve tingen',
+  'Vend spørgsmålet en anelse — svar på det du helst selv ville være irriteret over',
+  'Nævn hvor tit "det her" sker til fester',
+  'Beskriv hvordan du plejer at reagere dagen derpå',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til MRBROK_TOPICS/
 // MRBROK_CLUE_TIPS ovenfor (ingen indholds-omskrivning, kun et lookup-lag
@@ -194,6 +280,9 @@ const CONTENT_BY_THEME = {
   },
   sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Sladrehanen' },
   logn: { mrbrokTopics: MRBROK_TOPICS_LOGN, mrbrokClueTips: MRBROK_CLUE_TIPS_LOGN, gameName: 'Løgnedetektiven' },
+  venne: { mrbrokTopics: MRBROK_TOPICS_VENNE, mrbrokClueTips: MRBROK_CLUE_TIPS_VENNE, gameName: 'Vennedetektiven' },
+  rose: { mrbrokTopics: MRBROK_TOPICS_ROSE, mrbrokClueTips: MRBROK_CLUE_TIPS_ROSE, gameName: 'Rosedetektiven' },
+  drik: { mrbrokTopics: MRBROK_TOPICS_DRIK, mrbrokClueTips: MRBROK_CLUE_TIPS_DRIK, gameName: 'Rundedetektiven' },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;

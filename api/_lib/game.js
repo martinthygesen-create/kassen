@@ -303,6 +303,120 @@ const DECOY_SLADRE = [
   'Fortalte alle om en overraskelsesfest, før den var en overraskelse',
 ];
 
+// Vennekassen
+const QUIPLASH_PROMPTS_VENNE = [
+  'Den mest sandsynlige grund til at {target} aflyser i sidste øjeblik er...',
+  'Skriv den mest drilske kommentar til {target} om deres planlægningsevner',
+  '{target} ville aldrig kunne overleve en vennetur uden...',
+  'Den perfekte hævn over {target} for at glemme sin runde er...',
+  'Hvis {target} havde sin egen vennegruppe-titel, ville den hedde...',
+  '{target}s hemmelige superkraft er at være verdensmester i at...',
+  'Det {target} bruger alt for lang tid på at vælge er...',
+  'Om 10 år er {target} stadig kendt i vennegruppen for...',
+];
+const QUIPLASH_DECOYS_VENNE = [
+  'At booke det samme sommerhus tre år i træk uden at spørge',
+  'At love at "lige tjekke kalenderen" og aldrig svare igen',
+  'At tabe brætspillet og kræve revanche med det samme',
+  'At sende 15 beskeder i gruppechatten på fem minutter',
+  'At foreslå det samme spisested hver eneste gang',
+  'At love at køre, men altid komme for sent',
+  'At glemme at betale sin andel af regningen',
+  'At tage æren for en andens gode idé til vennetur',
+];
+const WORLD_TRIVIA_VENNE = [
+  { question: 'Ifølge en kendt teori af antropologen Robin Dunbar er der en øvre grænse for hvor mange stabile venskaber en person typisk kan opretholde. Cirka hvor mange?', correct: 'Omkring 150', distractors: ['Omkring 15', 'Omkring 1.500', 'Omkring 5'] },
+];
+const WORLD_TRUEFALSE_VENNE = [
+  { statement: 'Ifølge antropologen Robin Dunbar kan mennesker typisk kun opretholde omkring 150 stabile sociale relationer ad gangen — kendt som "Dunbars tal".', isTrue: true },
+];
+const DECOY_VENNE = [
+  'Glemte at svare i gruppechatten i tre dage',
+  'Bookede samme weekend som en andens fødselsdag',
+  'Tabte brætspillet og væltede brættet "ved et uheld"',
+  'Foreslog samme restaurant for fjerde gang i træk',
+  'Kom en time for sent til den fælles afgang',
+  'Glemte sin andel af den fælles dagligvarehandel',
+  'Meldte afbud dagen før den planlagte tur',
+  'Tog den sidste øl uden at sige det',
+];
+
+// Rosekassen — reward-polaritet
+const QUIPLASH_PROMPTS_ROSE = [
+  'Den mest velfortjente ros til {target} lige nu er...',
+  'Skriv den flotteste kompliment til {target}',
+  '{target} fortjener ros for altid at være god til...',
+  'Den bedste overraskelse {target} kunne give er...',
+  'Hvis {target} havde sin egen hæderspris, ville den hedde...',
+  '{target}s mest undervurderede talent er...',
+  'Det {target} gør bedst uden at vide det er...',
+  'Om 10 år bliver {target} stadig rost for...',
+];
+const QUIPLASH_DECOYS_ROSE = [
+  'At altid huske andres fødselsdage uden at blive mindet om det',
+  'At dele sin sidste is uden at blive spurgt',
+  'At give den mest oprigtige kompliment til den rette person',
+  'At heppe højest selv når man selv taber',
+  'At sige noget pænt til en fremmed uden grund',
+  'At takke betjeningen ekstra tydeligt',
+  'At rose en kollega foran chefen',
+  'At give en ærlig, men venlig tilbagemelding',
+];
+const WORLD_TRIVIA_ROSE = [
+  { question: 'Forskning i positiv psykologi (bl.a. af John Gottman) peger på et bestemt forhold mellem positive og negative kommentarer, der kendetegner stærke parforhold. Hvad kaldes det populært?', correct: 'Gottman-forholdet (ca. 5:1 positivt/negativt)', distractors: ['50/50-reglen', 'Guldne snit-reglen', '90/10-reglen'] },
+];
+const WORLD_TRUEFALSE_ROSE = [
+  { statement: 'Forskeren John Gottman har foreslået at stærke parforhold typisk har omkring fem positive interaktioner for hver negativ.', isTrue: true },
+];
+const DECOY_ROSE = [
+  'Roste en kollega for en detalje ingen andre lagde mærke til',
+  'Gav en uventet kompliment til en fremmed i køen',
+  'Fremhævede en vens fremgang foran hele gruppen',
+  'Sagde noget pænt om maden til kokken selv',
+  'Gav en ærlig, opmuntrende tilbagemelding',
+  'Roste børnenes tålmodighed efter en lang dag',
+  'Takkede chaufføren ekstra tydeligt',
+  'Fremhævede en holdkammerats indsats efter tabet',
+];
+
+// Drikkekassen — session-baseret
+const QUIPLASH_PROMPTS_DRIK = [
+  'Den mest sandsynlige grund til at {target} skylder en runde er...',
+  'Skriv den mest drilske kommentar til {target} om deres rundefidus',
+  '{target} ville helt sikkert glemme sin runde hvis...',
+  'Den perfekte hævn over {target} for at snyde i drikkelegen er...',
+  'Hvis {target} havde sin egen signaturdrink, ville den hedde...',
+  '{target}s hemmelige talent er at undgå at give runder ved at...',
+  'Det {target} altid kommer for sent til festen med er...',
+  'Om 10 år skylder {target} stadig en runde for...',
+];
+const QUIPLASH_DECOYS_DRIK = [
+  'At love en runde og "glemme" det med det samme',
+  'At spille samme sang tre gange i træk',
+  'At snyde tydeligt i en drikkeleg og benægte det',
+  'At forsvinde lige når regningen kommer',
+  'At love at være ædru vært og alligevel drikke mest',
+  'At sove over sig til sin egen fest',
+  'At glemme hvor mange runder man selv har fået',
+  'At love at ringe efter en taxa og glemme det',
+];
+const WORLD_TRIVIA_DRIK = [
+  { question: 'Den skandinaviske skåltradition med at sige "skål" stammer sprogligt fra hvilket ord?', correct: 'Det gamle ord for drikkekar/bæger', distractors: ['Et gammelt krigsråb', 'Et ord for held', 'Navnet på en vikingekonge'] },
+];
+const WORLD_TRUEFALSE_DRIK = [
+  { statement: 'Ordet "skål" som skåltale stammer sprogligt fra ordet for selve drikkekarret/bægeret man drak af.', isTrue: true },
+];
+const DECOY_DRIK = [
+  'Glemte sin runde for tredje gang på en aften',
+  'Spillede den samme sang igen og igen',
+  'Snød tydeligt i en drikkeleg',
+  'Forsvandt lige da regningen kom',
+  'Sov over sig til sin egen fest',
+  'Lovede at ringe efter en taxa og glemte det',
+  'Drak af andres glas ved en fejl',
+  'Kom uden gave til den fælles fest',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til konstanterne
 // ovenfor (ingen indholds-omskrivning, kun et lookup-lag) — DECOY_BROK
@@ -340,6 +454,33 @@ const CONTENT_BY_THEME = {
   // andet emne, jf. planens "3 af de 6 er samme motor med forskelligt
   // navn/indhold" — her er det bevidst SAMME indhold, kun navnet skifter),
   // kun gameName er nyt, for ikke at bryde checkThemeIdentityNotLeaked.
+  venne: {
+    quiplashPrompts: QUIPLASH_PROMPTS_VENNE,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_VENNE,
+    worldTrivia: WORLD_TRIVIA_VENNE,
+    worldTrueFalse: WORLD_TRUEFALSE_VENNE,
+    decoyBrok: DECOY_VENNE,
+    gameName: 'Vennespillet',
+  },
+  rose: {
+    quiplashPrompts: QUIPLASH_PROMPTS_ROSE,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_ROSE,
+    worldTrivia: WORLD_TRIVIA_ROSE,
+    worldTrueFalse: WORLD_TRUEFALSE_ROSE,
+    decoyBrok: DECOY_ROSE,
+    gameName: 'Rosespillet',
+  },
+  drik: {
+    quiplashPrompts: QUIPLASH_PROMPTS_DRIK,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_DRIK,
+    worldTrivia: WORLD_TRIVIA_DRIK,
+    worldTrueFalse: WORLD_TRUEFALSE_DRIK,
+    decoyBrok: DECOY_DRIK,
+    gameName: 'Rundespillet',
+  },
   konkurrence: {
     quiplashPrompts: QUIPLASH_PROMPTS,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
@@ -424,6 +565,33 @@ const QUESTION_TEMPLATES_BY_THEME = {
     quoteWho: quote => `Ifølge Bødekassen fik nogen en bøde for: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse fik ${name} en bøde for?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne bødekasse?',
+  },
+  venne: {
+    mostCount: 'Hvem har brokket sig flest gange i denne vennekasse?',
+    fewestCount: 'Hvem har brokket sig færrest gange i denne vennekasse?',
+    totalCount: 'Hvor mange brok er der registreret i alt i denne vennekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
+    quoteWho: quote => `Ifølge Vennekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne vennekasse?',
+  },
+  rose: {
+    mostCount: 'Hvem har rost flest gange i denne rosekasse?',
+    fewestCount: 'Hvem har rost færrest gange i denne rosekasse?',
+    totalCount: 'Hvor mange roser er der registreret i alt i denne rosekasse?',
+    longestStreak: 'Hvem har den længste aktuelle ros-streak?',
+    quoteWho: quote => `Ifølge Rosekassen roste nogen: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilken ros gav ${name}?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne rosekasse?',
+  },
+  drik: {
+    mostCount: 'Hvem har brokket sig flest gange i denne drikkekasse?',
+    fewestCount: 'Hvem har brokket sig færrest gange i denne drikkekasse?',
+    totalCount: 'Hvor mange brok er der registreret i alt i denne drikkekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
+    quoteWho: quote => `Ifølge Drikkekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne drikkekasse?',
   },
   konkurrence: {
     mostCount: 'Hvem fører flest gange i denne konkurrencekasse?',

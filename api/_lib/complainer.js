@@ -503,6 +503,204 @@ const COMPLAINER_PROMPTS_HJAELPER = [
   { id: 'rel1', category: 'relational', tier: 2, text: 'Du bliver selv mindet om en lignende fejl du selv lavede for nylig. Du nævner det alligevel videre til en kollega. Hvad siger du?' },
 ];
 
+// Vennekassen — 6 arketyper, vennegruppe-specifikke personaer.
+const COMPLAINER_ARCHETYPES_VENNE = [
+  {
+    id: 'venn_for_sent', name: 'Den evigt for sent ankomne ven',
+    promptHook: 'Som en der aldrig når det til tiden —',
+    instructions: [
+      'Du har altid en ny, kreativ undskyldning klar.',
+      'Du lover "aldrig igen" hver gang.',
+      'Du er charmerende nok til at slippe godt fra det.',
+    ],
+  },
+  {
+    id: 'madanmelder_kompromisloes', name: 'Den kompromisløse madanmelder',
+    promptHook: 'Som en der altid har en mening om stedet —',
+    instructions: [
+      'Du er brandret i din kritik af små detaljer.',
+      'Du sammenligner med "et bedre sted" du kender.',
+      'Du er overrasket hvis nogen er uenig.',
+    ],
+  },
+  {
+    id: 'planlaegger_bookende', name: 'Den evigt bookende planlægger',
+    promptHook: 'Som en der elsker en detaljeret plan —',
+    instructions: [
+      'Du bliver stresset hvis planen ændres i sidste øjeblik.',
+      'Du sender opdateringer i gruppechatten konstant.',
+      'Du er stolt af dit regneark.',
+    ],
+  },
+  {
+    id: 'improvisator_afslappet', name: 'Den afslappede improvisator',
+    promptHook: 'Som en der aldrig planlægger noget på forhånd —',
+    instructions: [
+      'Du er uanfægtet af kaos.',
+      'Du foreslår altid "vi finder ud af det".',
+      'Du er skuffet hvis nogen presser på for en fast plan.',
+    ],
+  },
+  {
+    id: 'gruppeleder_nostalgisk', name: 'Den nostalgiske gruppeleder',
+    promptHook: 'Som en der altid husker "de gode gamle dage" —',
+    instructions: [
+      'Du sammenligner alt med "dengang".',
+      'Du bliver sentimental uden varsel.',
+      'Du insisterer på gamle traditioner.',
+    ],
+  },
+  {
+    id: 'vennespiller_konkurrence', name: 'Den konkurrenceprægede vennespiller',
+    promptHook: 'Som en der aldrig kan lade være med at vinde —',
+    instructions: [
+      'Du tager selv et venskabeligt spil alvorligt.',
+      'Du fejrer sejre lidt for højlydt.',
+      'Du kræver revanche med det samme.',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_VENNE = ['ven', 'fest', 'rejse', 'spil'];
+
+const COMPLAINER_PROMPTS_VENNE = [
+  { id: 'fest1', category: 'fest', tier: 1, text: 'Du opdager at værten glemte at invitere dig til den fælles ferieplanlægning. Du brokker dig til en ven der ikke engang skal med. Hvad siger du?' },
+  { id: 'rejse1', category: 'rejse', tier: 2, text: 'Vennegruppen kan ikke blive enige om rejsemål for tredje weekend i træk. Du brokker dig til din partner, som ikke er en del af vennegruppen. Hvad siger du?' },
+  { id: 'spil1', category: 'spil', tier: 1, text: 'En ven tager brætspilsaftenen alt for seriøst igen. Du brokker dig til en anden ven, der lige er ankommet. Hvad siger du?' },
+  { id: 'ven1', category: 'ven', tier: 1, text: 'En ven aflyser jeres faste aftale for tredje gang i træk. Du brokker dig til en kollega, som aldrig har mødt vedkommende. Hvad siger du?' },
+  { id: 'ven2', category: 'ven', tier: 3, text: 'Du opdager at en ven har inviteret alle andre til noget, undtagen dig. Du brokker dig til vennens partner. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 2, text: 'En ven brokker sig konstant over planlægning, men bidrager aldrig selv med noget. Du brokker dig om DET til en tredje ven. Hvad siger du?' },
+];
+
+// Rosekassen — reward-polaritet, 5 arketyper, personaer der ROSER.
+const COMPLAINER_ARCHETYPES_ROSE = [
+  {
+    id: 'konferencier_overstroemmende', name: 'Den overstrømmende konferencier',
+    promptHook: 'Med et mikrofonklart smil og lovord til alle —',
+    instructions: [
+      'Du roser i superlativer, aldrig moderat.',
+      'Du klapper og hepper højlydt.',
+      'Du finder noget positivt i alt.',
+    ],
+  },
+  {
+    id: 'mentor_stille', name: 'Den stille anerkendende mentor',
+    promptHook: 'Som en der roser med få, men velvalgte ord —',
+    instructions: [
+      'Du taler roligt og oprigtigt.',
+      'Du fremhæver én konkret detalje, ikke det hele.',
+      'Du mener hvert ord du siger.',
+    ],
+  },
+  {
+    id: 'heppekor_entusiastisk', name: 'Den entusiastiske heppekor-leder',
+    promptHook: 'Som en der aldrig kan sidde stille af begejstring —',
+    instructions: [
+      'Du er højlydt og energisk.',
+      'Du inddrager alle omkring dig i din begejstring.',
+      'Du gentager rosen flere gange for at understrege den.',
+    ],
+  },
+  {
+    id: 'analytisk_ros_giver', name: 'Den analytiske ros-giver',
+    promptHook: 'Som en der roser med konkrete argumenter —',
+    instructions: [
+      'Du underbygger din ros med specifikke eksempler.',
+      'Du sammenligner med tidligere præstationer.',
+      'Du er saglig, men tydeligt imponeret.',
+    ],
+  },
+  {
+    id: 'familiaer_varm', name: 'Den varme familiære ros-giver',
+    promptHook: 'Som en der roser som var det ens eget barn —',
+    instructions: [
+      'Du er varm og personlig i din tone.',
+      'Du nævner hvor stolt du er.',
+      'Du krammer verbalt gennem ordene.',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_ROSE = ['ven', 'familie', 'arbejde', 'fremmed'];
+
+const COMPLAINER_PROMPTS_ROSE = [
+  { id: 'ven1', category: 'ven', tier: 1, text: 'En ven overraskede hele gruppen med en gennemtænkt gave. Du roser vedkommende til en fælles ven, som ikke selv var med. Hvad siger du?' },
+  { id: 'familie1', category: 'familie', tier: 1, text: 'Din søster lavede en fantastisk middag til hele familien. Du roser hende til din mor, som ikke selv smagte den. Hvad siger du?' },
+  { id: 'arbejde1', category: 'arbejde', tier: 2, text: 'En kollega reddede et vigtigt projekt i sidste øjeblik. Du roser vedkommende til en helt anden afdeling. Hvad siger du?' },
+  { id: 'fremmed1', category: 'fremmed', tier: 1, text: 'En fremmed hjalp dig med noget helt uventet på gaden. Du roser oplevelsen til en ven over telefonen. Hvad siger du?' },
+  { id: 'ven2', category: 'ven', tier: 3, text: 'En ven har ændret sig markant til det bedre det seneste år. Du roser forandringen direkte til vennen selv. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 2, text: 'Du bliver selv rost for noget, og indser at du sjældent giver samme ros videre. Du roser nu en anden for præcis det samme. Hvad siger du?' },
+];
+
+// Drikkekassen — session-baseret, 6 arketyper, fest/drikkeleg-personaer.
+const COMPLAINER_ARCHETYPES_DRIK = [
+  {
+    id: 'rundegiver_overivrig', name: 'Den overivrige rundegiver',
+    promptHook: 'Som en der altid byder på en tur mere —',
+    instructions: [
+      'Du er storsindet og lidt for generøs.',
+      'Du glemmer let hvor mange runder du selv har givet.',
+      'Du bliver fornærmet hvis nogen takker nej.',
+    ],
+  },
+  {
+    id: 'rundeunddrager_strategisk', name: 'Den strategiske rundeunddrager',
+    promptHook: 'Som en der altid lige er på toilettet ved regningen —',
+    instructions: [
+      'Du finder kreative undskyldninger for at forsvinde.',
+      'Du foreslår "vi deler bare til sidst" og glemmer det.',
+      'Du er charmerende nok til at slippe godt fra det.',
+    ],
+  },
+  {
+    id: 'quizspiller_haabloes', name: 'Den håbløse quizspiller',
+    promptHook: 'Som en der altid gætter helt forkert med stor selvtillid —',
+    instructions: [
+      'Du svarer højlydt og selvsikkert på forkerte svar.',
+      'Du forsvarer dit svar selv når du bliver rettet.',
+      'Du er uforstyrret af at tabe.',
+    ],
+  },
+  {
+    id: 'drikkelegsspiller_konkurrence', name: 'Den competitive drikkelegsspiller',
+    promptHook: 'Som en der tager enhver drikkeleg dødsens alvorligt —',
+    instructions: [
+      'Du tager reglerne bogstaveligt og strengt.',
+      'Du kræver revanche med det samme.',
+      'Du fejrer sejre højlydt.',
+    ],
+  },
+  {
+    id: 'tidlig_hjemgaaende', name: 'Den trætte tidlig-hjemgående',
+    promptHook: 'Som en der altid vil hjem før alle andre —',
+    instructions: [
+      'Du finder undskyldninger for at gå tidligt.',
+      'Du bliver alligevel overtalt til at blive.',
+      'Du fortryder det næste morgen.',
+    ],
+  },
+  {
+    id: 'fest_veteran_nostalgisk', name: 'Den nostalgiske fest-veteran',
+    promptHook: 'Som en der har været til hver eneste fest i årevis —',
+    instructions: [
+      'Du sammenligner med "sidste års fest".',
+      'Du husker detaljer ingen andre kan huske.',
+      'Du fortæller den samme historie igen.',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_DRIK = ['fest', 'runde', 'spil', 'morgen'];
+
+const COMPLAINER_PROMPTS_DRIK = [
+  { id: 'fest1', category: 'fest', tier: 1, text: 'Nogen spillede den samme sang tre gange i træk til festen. Du brokker dig til en gæst der lige er ankommet. Hvad siger du?' },
+  { id: 'runde1', category: 'runde', tier: 1, text: 'Du opdager at du har givet tre runder, og ingen andre har givet én. Du brokker dig til bartenderen, som bare ekspederer. Hvad siger du?' },
+  { id: 'spil1', category: 'spil', tier: 2, text: 'Nogen snød tydeligt i drikkelegen, men nægter det. Du brokker dig til en ven der ikke så det ske. Hvad siger du?' },
+  { id: 'morgen1', category: 'morgen', tier: 2, text: 'Du vågner op og opdager at du lovede at arrangere næste fest. Du brokker dig til din partner, som advarede dig i forvejen. Hvad siger du?' },
+  { id: 'fest2', category: 'fest', tier: 3, text: 'Værten glemte at invitere dig til efterfesten. Du brokker dig til en fælles ven, som var der. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen brokker sig over at skulle give en runde, men accepterer altid andres. Du brokker dig om DET til en tredje gæst. Hvad siger du?' },
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
 // situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
@@ -550,6 +748,24 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS_HJAELPER,
     prompts: COMPLAINER_PROMPTS_HJAELPER,
     gameName: 'Hjælpefælden',
+  },
+  venne: {
+    archetypes: COMPLAINER_ARCHETYPES_VENNE,
+    situations: COMPLAINER_SITUATIONS_VENNE,
+    prompts: COMPLAINER_PROMPTS_VENNE,
+    gameName: 'Vennefælden',
+  },
+  rose: {
+    archetypes: COMPLAINER_ARCHETYPES_ROSE,
+    situations: COMPLAINER_SITUATIONS_ROSE,
+    prompts: COMPLAINER_PROMPTS_ROSE,
+    gameName: 'Rosefælden',
+  },
+  drik: {
+    archetypes: COMPLAINER_ARCHETYPES_DRIK,
+    situations: COMPLAINER_SITUATIONS_DRIK,
+    prompts: COMPLAINER_PROMPTS_DRIK,
+    gameName: 'Rundefælden',
   },
 };
 function getThemeContent(themeId) {

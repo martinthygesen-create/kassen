@@ -30,6 +30,21 @@ const SKIN_REGISTRY = {
     mechanic: 'witness-confirm', toneRegister: 'playful',
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
+  venne: {
+    confirmationModel: 'quorum', poolPolarity: 'punishment',
+    mechanic: 'witness-confirm', toneRegister: 'playful',
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
+  rose: {
+    confirmationModel: 'quorum', poolPolarity: 'reward',
+    mechanic: 'witness-confirm', toneRegister: 'playful',
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
+  drik: {
+    confirmationModel: 'quorum', poolPolarity: 'punishment',
+    mechanic: 'witness-confirm', toneRegister: 'playful',
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
   // Konkurrencekasse-motoren (se planen: "Konkurrencekassen var fejlagtigt
   // puttet ind som navne-preset på Gruppekasse-motoren... løbende ranking er
   // naturligt reward-polaritet"). Eneste kurateret skin med
