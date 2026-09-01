@@ -1922,7 +1922,7 @@ function showRoomIntroSplash(){
   if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'brok dig, og det koster en krone i puljen'}`]);
   if(state.gameEnabled) items.push(['👉', gn.spil || 'Brokspillet', 'Hurtige quiz- og afstemningsrunder I spiller sammen']);
   if(state.mrbrokEnabled) items.push(['🕵️', gn.mrbrok || 'MrBrok', `Find den skjulte ${gn.mrbrok || 'MrBrok'}, før de andre bliver afsløret`]);
-  if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', 'Brok dig i karakter — men ingen ved endnu hvem der er skyldig']);
+  if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', 'Vær i karakter — men ingen ved endnu hvem der er skyldig']);
   if(items.length < 2) return; // ingen grund til at forklare "skift mellem" hvis der kun er én ting valgt
 
   const backdropHtml = `<div class="room-splash-backdrop" id="roomSplashBackdrop"><div class="room-splash" id="roomSplashInner"></div></div>`;
@@ -2379,15 +2379,18 @@ function openGameAdminMenuSheet(){
   // hvilket af de to spil der reelt er årsagen, med en direkte "afslut"-vej.
   const blockedByOther = !active && state.mrbrok && state.mrbrok.active;
   const hasHighscore = state.gameStats && Object.keys(state.gameStats).length > 0;
+  const gn = state.gameNames || {};
+  const spilName = gn.spil || 'Brokspillet';
+  const mrbrokName = gn.mrbrok || 'MrBrok';
   openSheet(`
-    <h2>Brokspil-admin ⚙️</h2>
-    <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? 'MrBrok er i gang lige nu — afslut det for at kunne starte Brokspillet.' : 'Der er ikke noget spil i gang lige nu.')}</p>
+    <h2>${escapeHtml(spilName)}-admin ⚙️</h2>
+    <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? `${escapeHtml(mrbrokName)} er i gang lige nu — afslut det for at kunne starte ${escapeHtml(spilName)}.` : 'Der er ikke noget spil i gang lige nu.')}</p>
     <button class="sheet-btn test" id="gameAdminTestChanceBtn">🎲 Test Chancen</button>
     <button class="sheet-btn test" id="gameAdminTestWheelBtn">🎡 Test hjulet</button>
     <button class="sheet-btn test" id="gameAdminTestSlotBtn">🎰 Test spillemaskinen</button>
     ${active || blockedByOther ? '' : `<button class="sheet-btn test" id="gameAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
-    ${active ? `<button class="sheet-btn danger" id="gameAdminRestartBtn">🛑 Afslut Brokspillet</button>` : ''}
-    ${blockedByOther ? `<button class="sheet-btn danger" id="gameAdminEndOtherBtn">🛑 Afslut MrBrok</button>` : ''}
+    ${active ? `<button class="sheet-btn danger" id="gameAdminRestartBtn">🛑 Afslut ${escapeHtml(spilName)}</button>` : ''}
+    ${blockedByOther ? `<button class="sheet-btn danger" id="gameAdminEndOtherBtn">🛑 Afslut ${escapeHtml(mrbrokName)}</button>` : ''}
     ${hasHighscore ? `<button class="sheet-btn danger" id="gameAdminResetStatsBtn">🏆 Nulstil highscore</button>` : ''}
     <button class="sheet-btn ghost" id="gameAdminCloseBtn">Luk menu</button>
     <p class="hint" style="text-align:center; font-size:10.5px; opacity:.5; margin-top:6px;">${BUILD_TAG}</p>
@@ -2401,13 +2404,13 @@ function openGameAdminMenuSheet(){
     if(restartBtn) restartBtn.onclick = async ()=>{
       closeSheet();
       await gameApi('end', {});
-      toast('🛑 Brokspillet er afsluttet — klar til en ny omgang');
+      toast(`🛑 ${escapeHtml(spilName)} er afsluttet — klar til en ny omgang`);
     };
     const endOtherBtn = document.getElementById('gameAdminEndOtherBtn');
     if(endOtherBtn) endOtherBtn.onclick = async ()=>{
       closeSheet();
       await mrbrokApi('end', {});
-      toast('🛑 MrBrok er afsluttet — Brokspillet kan nu startes');
+      toast(`🛑 ${escapeHtml(mrbrokName)} er afsluttet — ${escapeHtml(spilName)} kan nu startes`);
     };
     const resetStatsBtn = document.getElementById('gameAdminResetStatsBtn');
     if(resetStatsBtn) resetStatsBtn.onclick = async ()=>{
@@ -2453,8 +2456,8 @@ function openWheelTestSheet(){
   const winner = candidates[Math.floor(Math.random() * candidates.length)];
   openSheet(`
     <h2>Test: Hjulet 🎡</h2>
-    <p class="hint">Sådan ser Casinobrok-hjulet ud — ren visning, påvirker intet rigtigt spil.</p>
-    ${buildWheelChanceHtml('wheelTest', candidates, winner, '🎡 CASINOBROK', false)}
+    <p class="hint">Sådan ser lykkehjulet ud — ren visning, påvirker intet rigtigt spil.</p>
+    ${buildWheelChanceHtml('wheelTest', candidates, winner, '🎡 ORDHJULET', false)}
     <button class="sheet-btn ghost" id="wheelTestReplayBtn" style="margin-top:14px;">🔁 Afspil igen</button>
     <button class="sheet-btn ghost" id="wheelTestCloseBtn">Luk</button>
   `, ()=>{
@@ -3251,6 +3254,8 @@ function gameReadyHtml(g, cur){
 }
 
 function gameLobbyHtml(){
+  const gn = state.gameNames || {};
+  const spilName = gn.spil || 'Brokspillet';
   // Bot-testspillere (se BOT_NAMES/ensureTestBots) bliver permanente
   // medlemmer af rummet efter første bot-testspil — de skal ALDRIG dukke
   // op som en mulighed i den normale spillerliste for et rigtigt spil,
@@ -3276,9 +3281,9 @@ function gameLobbyHtml(){
   const gameSteps = [
     ['🎭', 'Skriv-og-stem: alle skriver et sjovt svar, så stemmer I på det bedste'],
     ['⚖️', 'Sandt/falsk: én skriver et udsagn om en anden — resten gætter'],
-    ['🎯', 'Hvilket brok? Én skriver et RIGTIGT brok blandt 3 opdigtede — resten gætter hvilket der er ægte'],
-    ['🔍', 'Trivia om jeres egen brok-historik (og lidt verdens-brok ind imellem)'],
-    ['🎰', 'Casinobrok: alle skriver ét brok-ord, og hjulet trækker lod om hvis ord der vinder'],
+    ['🎯', 'Hvilket er ægte? Én skriver et RIGTIGT indlæg blandt 3 opdigtede — resten gætter hvilket der er ægte'],
+    ['🔍', 'Trivia om jeres egen historik (og lidt verdens-viden ind imellem)'],
+    ['🎰', 'Ordhjulet: alle skriver ét ord, og hjulet trækker lod om hvis ord der vinder'],
     ['🌹', 'Rose: skriv en ægte ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
     ['🏆', 'Point tælles på tværs af alle runder — flest point vinder'],
   ];
@@ -3287,8 +3292,8 @@ function gameLobbyHtml(){
   return `
     <div class="empty-state" style="padding-top:18px; padding-bottom:10px;">
       <span class="emoji">👉</span>
-      <b>Brokspillet</b>
-      Skriv, gæt og stem jer igennem jeres egen brok-historie.
+      <b>${escapeHtml(spilName)}</b>
+      Skriv, gæt og stem jer igennem jeres egen historie.
     </div>
     <div class="game-card" style="margin:10px 0 10px;">
       <div id="gameInstructionsToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; ${gameInstructionsOpen?'margin-bottom:8px;':''}">
@@ -3308,7 +3313,7 @@ function gameLobbyHtml(){
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Spil om</label>
       <div class="segmented" style="margin-bottom:14px;">
         <div class="seg ${gameWager!=='euro'?'active':''}" data-wager="fun">🏅 Æren</div>
-        <div class="seg ${gameWager==='euro'?'active':''}" data-wager="euro">💶 1 euro i kassen</div>
+        <div class="seg ${gameWager==='euro'?'active':''}" data-wager="euro">💶 1${escapeHtml(state.unit || '€')} i kassen</div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Antal runder</label>
       <div class="segmented" style="margin-bottom:0;">
@@ -3504,26 +3509,26 @@ function guessBrokHtml(g, cur){
   const isAuthor = profile && profile.memberId === cur.authorId;
   if(cur.phase === 'skipped'){
     return `
-      <div class="game-badge">Runde ${g.round}/${g.totalRounds} · 🎯 Hvilket brok?</div>
-      <div class="empty-state"><span class="emoji">😴</span><b>${escapeHtml(author?author.name:'?')} nåede ikke at skrive et brok</b>Ingen sag denne gang — vi går videre til næste spørgsmål.</div>
+      <div class="game-badge">Runde ${g.round}/${g.totalRounds} · 🎯 Hvilket er ægte?</div>
+      <div class="empty-state"><span class="emoji">😴</span><b>${escapeHtml(author?author.name:'?')} nåede ikke at skrive et indlæg</b>Ingen sag denne gang — vi går videre til næste spørgsmål.</div>
       ${gameReadyHtml(g, cur)}
     `;
   }
   if(cur.phase === 'write'){
     if(!isAuthor){
       return `
-        <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎯 Hvilket brok?</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
-        <div class="empty-state"><span class="emoji">✍️</span><b>${escapeHtml(author?author.name:'?')} skriver et rigtigt brok...</b>Vent til det er klar, så skal I gætte hvilket der er ægte.</div>
+        <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎯 Hvilket er ægte?</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+        <div class="empty-state"><span class="emoji">✍️</span><b>${escapeHtml(author?author.name:'?')} skriver et rigtigt indlæg...</b>Vent til det er klar, så skal I gætte hvilket der er ægte.</div>
         ${complaintBlockHtml(g, cur)}
       `;
     }
     return `
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎯 Det er dig der skriver!</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card" id="gameCard">
-        <p style="font-weight:800; margin:0 0 8px; font-size:16px;">✍️ Skriv et <u>ægte</u> brok</p>
+        <p style="font-weight:800; margin:0 0 8px; font-size:16px;">✍️ Skriv et <u>ægte</u> indlæg</p>
         <p class="hint" style="margin:0 0 10px; color:rgba(255,247,232,0.55);">F.eks.: <i>"Morgenmaden lukkede fem minutter for tidligt"</i> — kort og konkret.</p>
-        <textarea id="gbStatement" rows="2" maxlength="120" placeholder="Skriv dit rigtige brok her..."></textarea>
-        <button class="game-btn" id="gbSubmitBtn" style="margin-top:12px;" disabled>🚀 Send brok</button>
+        <textarea id="gbStatement" rows="2" maxlength="120" placeholder="Skriv dit rigtige indlæg her..."></textarea>
+        <button class="game-btn" id="gbSubmitBtn" style="margin-top:12px;" disabled>🚀 Send</button>
       </div>
       ${complaintBlockHtml(g, cur)}
     `;
@@ -3533,7 +3538,7 @@ function guessBrokHtml(g, cur){
     const eligible = g.players.length - 1;
     const myGuessIndex = (profile && cur.guesses[profile.memberId] !== undefined) ? cur.guesses[profile.memberId] : null;
     const hasGuessed = myGuessIndex !== null;
-    const badgeLabel = isAuthor ? '🎯 Hvilket brok?' : (hasGuessed ? '🎯 Hvilket brok?' : '🎯 Gæt: hvilket er ægte?');
+    const badgeLabel = isAuthor ? '🎯 Hvilket er ægte?' : (hasGuessed ? '🎯 Hvilket er ægte?' : '🎯 Gæt: hvilket er ægte?');
     const opts = (cur.options||[]).map((label,i)=>{
       const isMine = isAuthor && i === cur.correctIndex;
       const clickable = !isAuthor && !hasGuessed;
@@ -3606,9 +3611,9 @@ function casinobrokHtml(g, cur){
     const mine = profile && cur.words[profile.memberId];
     const written = Object.keys(cur.words||{}).length;
     return `
-      <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎰 Casinobrok</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+      <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎰 Ordhjulet</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card" id="gameCard">
-        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin:0 0 8px; font-size:19px;">✍️ Skriv dit eget brokord</p>
+        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin:0 0 8px; font-size:19px;">✍️ Skriv dit eget ord</p>
         <p class="hint" style="margin:0 0 10px; color:rgba(255,247,232,0.55);">Ét ord — hjulet trækker bagefter lod om hvis ord der vinder. F.eks.: <i>"regnvejr"</i>, <i>"snorken"</i> — samme ord er ok.</p>
         <input type="text" id="casinoWordInput" maxlength="24" placeholder="Dit ord..." value="${mine?escapeHtml(mine):''}" ${mine?'disabled':''}>
         ${mine ? '' : `<button class="game-btn" id="casinoSubmitBtn" style="margin-top:12px;">🎰 Send ordet</button>`}
@@ -3651,7 +3656,7 @@ function casinobrokHtml(g, cur){
   }
   if(cur.phase === 'skipped'){
     return `
-      <div class="game-badge">Runde ${g.round}/${g.totalRounds} · 🎰 Casinobrok</div>
+      <div class="game-badge">Runde ${g.round}/${g.totalRounds} · 🎰 Ordhjulet</div>
       <div class="empty-state"><span class="emoji">😴</span><b>Ingen nåede at skrive et ord</b>Ingen sag denne gang — vi går videre til næste spørgsmål.</div>
       ${gameReadyHtml(g, cur)}
     `;
@@ -3691,8 +3696,8 @@ function casinobrokHtml(g, cur){
     <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · Resultat</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
     <div class="game-card" id="gameCard" style="text-align:center;">
       ${cur.chanceVisual === 'slot'
-        ? buildSlotCabinetHtml('chance', candidates, winner, '🎰 CASINOBROK TRÆKKER LOD', revealed, cur.phaseStartedAt)
-        : buildWheelChanceHtml('chance', candidates, winner, '🎰 CASINOBROK TRÆKKER LOD', revealed, cur.phaseStartedAt)}
+        ? buildSlotCabinetHtml('chance', candidates, winner, '🎰 HJULET TRÆKKER LOD', revealed, cur.phaseStartedAt)
+        : buildWheelChanceHtml('chance', candidates, winner, '🎰 HJULET TRÆKKER LOD', revealed, cur.phaseStartedAt)}
       ${candidates.map(c=>{
         const won = revealed && c.id === cur.winnerId;
         return `<div class="feed-item${won?' quip-slot-win':''}" style="${won?'border-color:var(--coin); background:rgba(255,201,60,0.16);':''}">
@@ -4056,7 +4061,7 @@ const MRBROK_CLUE_TIPS = [
   'Hold svaret kort — giv ikke det hele væk på én gang',
   'Klag over en PERSON i situationen, ikke bare selve tingen',
   'Svar på en følelse ved det, ikke selve tingen',
-  'Vend spørgsmålet en anelse — svar på det du helst vil brokke dig over',
+  'Vend spørgsmålet en anelse — svar på det du helst vil sige om det',
   'Nævn hvor tit "det her" sker for dig',
   'Beskriv hvordan du plejer at reagere i situationen',
   'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
@@ -4100,17 +4105,20 @@ async function mrbrokApi(action, extra){
 
 function openMrbrokAdminMenuSheet(){
   const active = state.mrbrok && state.mrbrok.active;
+  const gn = state.gameNames || {};
+  const mrbrokName = gn.mrbrok || 'MrBrok';
+  const spilName = gn.spil || 'Brokspillet';
   // Se tilsvarende kommentar i openGameAdminMenuSheet — kun ét spil ad
   // gangen på tværs af Brokspillet/MrBrok, så denne menu skal også vise
   // det tydeligt hvis det er BROKSPILLET der blokerer, ikke bare sige
   // "intet spil i gang" og lade "Start" fejle med en forvirrende besked.
   const blockedByOther = !active && state.game && state.game.active;
   openSheet(`
-    <h2>MrBrok-admin ⚙️</h2>
-    <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? 'Brokspillet er i gang lige nu — afslut det for at kunne starte MrBrok.' : 'Der er ikke noget spil i gang lige nu.')}</p>
+    <h2>${escapeHtml(mrbrokName)}-admin ⚙️</h2>
+    <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? `${escapeHtml(spilName)} er i gang lige nu — afslut det for at kunne starte ${escapeHtml(mrbrokName)}.` : 'Der er ikke noget spil i gang lige nu.')}</p>
     ${active || blockedByOther ? '' : `<button class="sheet-btn test" id="mrbrokAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
-    ${active ? `<button class="sheet-btn danger" id="mrbrokAdminRestartBtn">🛑 Afslut MrBrok</button>` : ''}
-    ${blockedByOther ? `<button class="sheet-btn danger" id="mrbrokAdminEndOtherBtn">🛑 Afslut Brokspillet</button>` : ''}
+    ${active ? `<button class="sheet-btn danger" id="mrbrokAdminRestartBtn">🛑 Afslut ${escapeHtml(mrbrokName)}</button>` : ''}
+    ${blockedByOther ? `<button class="sheet-btn danger" id="mrbrokAdminEndOtherBtn">🛑 Afslut ${escapeHtml(spilName)}</button>` : ''}
     <button class="sheet-btn ghost" id="mrbrokAdminCloseBtn">Luk menu</button>
     <p class="hint" style="text-align:center; font-size:10.5px; opacity:.5; margin-top:6px;">${BUILD_TAG}</p>
   `, ()=>{
@@ -4120,13 +4128,13 @@ function openMrbrokAdminMenuSheet(){
     if(restartBtn) restartBtn.onclick = async ()=>{
       closeSheet();
       await mrbrokApi('end', {});
-      toast('🛑 MrBrok er afsluttet — klar til en ny omgang');
+      toast(`🛑 ${escapeHtml(mrbrokName)} er afsluttet — klar til en ny omgang`);
     };
     const endOtherBtn = document.getElementById('mrbrokAdminEndOtherBtn');
     if(endOtherBtn) endOtherBtn.onclick = async ()=>{
       closeSheet();
       await gameApi('end', {});
-      toast('🛑 Brokspillet er afsluttet — MrBrok kan nu startes');
+      toast(`🛑 ${escapeHtml(spilName)} er afsluttet — ${escapeHtml(mrbrokName)} kan nu startes`);
     };
     document.getElementById('mrbrokAdminCloseBtn').onclick = closeSheet;
   });
@@ -4312,17 +4320,18 @@ function maybeShowMrbrokRoleSplash(m){
 }
 
 function showMrbrokRoleReveal(m, inner, close){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   const items = m.youAreMrBrok ? [
     ['🎯', '<b>Hold dig skjult</b> — eller gæt rollen rigtigt hvis du bliver afsløret.'],
     ['🎭', 'Runde 2 bliver en imitations-runde: <b>vælg en attitude og performer den</b> — ingen kan tjekke dig endnu.'],
     ['🎪', '<b>Læg dig op ad det de andre siger</b> — brug deres tone og detaljer som dine egne.'],
   ] : [
-    ['🎯', '<b>Afslør MrBrok</b> — uden selv at afsløre rollen så tydeligt at MrBrok kan snige sig med.'],
-    ['🎭', 'Runde 2 bliver en imitations-runde: <b>brok dig som din karakter</b> — performance er pointen der.'],
-    ['🤏', '<b>Svar vagt nok</b> til ikke at hjælpe MrBrok, men <b>klart nok</b> til at de andre tror på dig.'],
+    ['🎯', `<b>Afslør ${escapeHtml(mrbrokName)}</b> — uden selv at afsløre rollen så tydeligt at ${escapeHtml(mrbrokName)} kan snige sig med.`],
+    ['🎭', 'Runde 2 bliver en imitations-runde: <b>vær i karakter</b> — performance er pointen der.'],
+    ['🤏', `<b>Svar vagt nok</b> til ikke at hjælpe ${escapeHtml(mrbrokName)}, men <b>klart nok</b> til at de andre tror på dig.`],
   ];
   const reveal = m.youAreMrBrok
-    ? `<div style="font-size:44px;">🕵️</div><h3>Du er MrBrok!</h3>`
+    ? `<div style="font-size:44px;">🕵️</div><h3>Du er ${escapeHtml(mrbrokName)}!</h3>`
     : (()=>{
         const [role, domain] = (m.topic || '?').split(' — ');
         return `<div style="font-size:44px;">🎭</div><h3>${escapeHtml(role || m.topic || '?')}</h3>${domain ? `<p style="font-size:17px; color:rgba(255,247,232,0.8); margin:-14px 0 24px; font-weight:600;">${escapeHtml(domain)}</p>` : ''}`;
@@ -4345,6 +4354,7 @@ function showMrbrokRoleReveal(m, inner, close){
 // vi kun når hertil når cur.type stadig er 'clue', dvs. spillet fortsætter
 // — var det MrBrok, ville cur.type være 'steal' i stedet, se resolveVote).
 function maybeShowMrbrokEliminationReveal(m){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   if(!m || !m.active || !m.current || m.current.type !== 'clue') return;
   const key = m.startedAt;
   if(mrbrokEliminationShownFor !== key) mrbrokEliminationShownCount = 0;
@@ -4378,7 +4388,7 @@ function maybeShowMrbrokEliminationReveal(m){
       inner.innerHTML = `
         <div style="font-size:44px;">😅</div>
         <h3>${escapeHtml(person?person.name:'?')} blev stemt ud</h3>
-        <p style="font-size:17px; color:rgba(255,247,232,0.8); margin:-14px 0 24px; font-weight:600;">...men det var ikke MrBrok. Spillet fortsætter.</p>
+        <p style="font-size:17px; color:rgba(255,247,232,0.8); margin:-14px 0 24px; font-weight:600;">...men det var ikke ${escapeHtml(mrbrokName)}. Spillet fortsætter.</p>
         <button class="game-btn" id="mrbrokElimCloseBtn" style="margin-top:6px;">Videre</button>
       `;
       if(typeof gsap !== 'undefined') gsap.fromTo(inner, {opacity:0, scale:.95}, {opacity:1, scale:1, duration:.35, ease:'back.out(1.6)'});
@@ -4392,6 +4402,7 @@ function maybeShowMrbrokEliminationReveal(m){
 // dramatiske mønster som rolle-afsløringen. Nøglen er m.startedAt+round,
 // så samme runde ikke viser den to gange ved almindelige polls.
 function maybeShowMrbrokVoteStartSplash(m){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   if(!m || !m.active || !m.current || m.current.type !== 'vote') return;
   const key = m.startedAt + ':' + m.current.round;
   if(mrbrokVoteStartSplashShownFor === key) return;
@@ -4407,7 +4418,7 @@ function maybeShowMrbrokVoteStartSplash(m){
   inner.innerHTML = `
     <div style="font-size:52px;">🚨</div>
     <h3>${isFirst ? 'Nu bliver det alvor!' : 'Afstemning igen!'}</h3>
-    <p style="font-size:17px; color:rgba(255,247,232,0.85); margin:-14px 0 22px; font-weight:600;">Hvem tror I er MrBrok?</p>
+    <p style="font-size:17px; color:rgba(255,247,232,0.85); margin:-14px 0 22px; font-weight:600;">Hvem tror I er ${escapeHtml(mrbrokName)}?</p>
     <div id="mrbrokVoteStartCountdown" style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:64px; color:var(--coin);">3</div>
   `;
   if(typeof gsap !== 'undefined') gsap.fromTo(inner, {opacity:0, scale:.95}, {opacity:1, scale:1, duration:.35, ease:'back.out(1.6)'});
@@ -4440,9 +4451,10 @@ function mrbrokTopicBanner(m){
     </div>`;
   }
   if(m.youAreMrBrok){
+    const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
     return `<div class="game-card" id="mrbrokRoleToggle" style="text-align:center; border-color:rgba(255,201,60,0.5); background:rgba(255,201,60,0.08); cursor:pointer;">
       <div style="font-size:26px;">🕵️</div>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin:4px 0 0;">Du er MrBrok!</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin:4px 0 0;">Du er ${escapeHtml(mrbrokName)}!</p>
       <p class="hint" style="color:rgba(255,247,232,0.7);">Du kender IKKE rollen de andre har — <b style="color:rgba(255,247,232,0.92);">læg dig op ad deres tone og svar</b> for ikke at blive afsløret.</p>
       <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.4); font-size:11.5px;">Tryk for at skjule igen</p>
     </div>`;
@@ -4476,15 +4488,24 @@ function mrbrokLobbyHtml(){
     return `<div class="name-pill ${on?'selected':''}" data-mrbrok-player="${mm.id}" style="${on?'':'opacity:.5;'}">${on?'✅':'➖'} ${escapeHtml(mm.name)}</div>`;
   }).join('');
   const enough = mrbrokSelectedPlayers.length >= 3;
+  // Kasse-motor-generalisering, Del 1 (dynamisk omlægning af mini-spil):
+  // hele instruktions-blokken hardcodede "MrBrok" og "brok" som verbum,
+  // uafhængigt af skin — lækkede altså direkte ind i alle 8 andre skins'
+  // MrBrok-lobby. gn.mrbrok er allerede den korrekt temaede spil-/rolle-
+  // betegnelse (fx "Sladrehanen") — samme ord bruges bevidst BÅDE som
+  // spillets navn og den hemmelige rolles navn, præcis som "MrBrok" selv
+  // gør det i original-skinnet (find MrBrok = find Sladrehanen).
+  const gn = state.gameNames || {};
+  const mrbrokName = gn.mrbrok || 'MrBrok';
   const steps = [
-    ['🎯', '<b>Målet:</b> afslør MrBrok — uden selv at afsløre rollen så tydeligt at MrBrok kan snige sig med'],
-    ['🎭', 'Alle undtagen én får <b>den samme rolle</b> med et bredt brok-domæne — fx "sur stewardesse, besværlige passagerer"'],
-    ['🎉', 'Runde 2 er en <b>imitations-runde</b> — brok dig som karakteren ville, ingen kan blive fanget i noget endnu'],
-    ['🗣️', 'Fra runde 2: de andre spørger dig om rollen — <b>svar vagt nok til ikke at hjælpe MrBrok, men klart nok til at de andre tror på dig</b>'],
-    ['🕵️', 'MrBrok kender ikke rollen — skal <b>lægge sig op ad de andres tone og svar</b> for ikke at blive afsløret'],
+    ['🎯', `<b>Målet:</b> afslør ${escapeHtml(mrbrokName)} — uden selv at afsløre rollen så tydeligt at ${escapeHtml(mrbrokName)} kan snige sig med`],
+    ['🎭', 'Alle undtagen én får <b>den samme rolle</b> med et bredt tema — fx "sur stewardesse, besværlige passagerer"'],
+    ['🎉', 'Runde 2 er en <b>imitations-runde</b> — reager i karakter, som rollen ville, ingen kan blive fanget i noget endnu'],
+    ['🗣️', `Fra runde 2: de andre spørger dig om rollen — <b>svar vagt nok til ikke at hjælpe ${escapeHtml(mrbrokName)}, men klart nok til at de andre tror på dig</b>`],
+    ['🕵️', `${escapeHtml(mrbrokName)} kender ikke rollen — skal <b>lægge sig op ad de andres tone og svar</b> for ikke at blive afsløret`],
     ['🤔', 'Efter et par nysgerrige runder begynder I at <b>stemme hemmeligt</b> — den mest mistænkelige ryger ud'],
     ['🍿', 'Stemt ud? Så kigger du med resten af spillet'],
-    ['🎯', 'Fanges MrBrok, får de <b>ét sidste gæt</b> på rollen for at stjæle sejren alligevel'],
+    ['🎯', `Fanges ${escapeHtml(mrbrokName)}, får de <b>ét sidste gæt</b> på rollen for at stjæle sejren alligevel`],
   ];
   // Foldes automatisk ud første gang nogen ser lobbyen på denne enhed, og
   // sammen alle gange efter — så det ikke bare bliver fyld man scroller
@@ -4494,7 +4515,7 @@ function mrbrokLobbyHtml(){
   return `
     <div class="empty-state" style="padding-top:18px; padding-bottom:10px;">
       <span class="emoji">🕵️</span>
-      <b>MrBrok</b>
+      <b>${escapeHtml(mrbrokName)}</b>
       Find ud af hvem der bluffer — inden de gennemskuer jer.
     </div>
     <div class="game-card" style="margin:10px 0 10px;">
@@ -4515,7 +4536,7 @@ function mrbrokLobbyHtml(){
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Spil om</label>
       <div class="segmented" style="margin-bottom:14px;">
         <div class="seg ${mrbrokWager!=='euro'?'active':''}" data-mrbrok-wager="fun">🏅 Æren</div>
-        <div class="seg ${mrbrokWager==='euro'?'active':''}" data-mrbrok-wager="euro">💶 1 euro i kassen</div>
+        <div class="seg ${mrbrokWager==='euro'?'active':''}" data-mrbrok-wager="euro">💶 1${escapeHtml(state.unit || '€')} i kassen</div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.7); display:flex; align-items:center; justify-content:space-between;"><span>Runder før første afstemning</span><span style="opacity:.7; font-weight:400; text-transform:none; letter-spacing:normal;">mere tid til at snuse rundt</span></label>
       ${(()=>{
@@ -4531,7 +4552,7 @@ function mrbrokLobbyHtml(){
         <p class="hint" style="margin:6px 0 0; color:rgba(255,247,232,0.55);">3 giver et spil på ca. 12-16 minutter for en typisk gruppe.${minWarmup > 2 ? ` Løftet op til mindst ${minWarmup} pga. antal spillere — ellers fylder udstemning mere end selve spillet.` : ''}</p>`;
       })()}
     </div>
-    <button class="game-btn" id="startMrbrokBtn" ${enough?'':'disabled'}>🕵️ Start MrBrok (${mrbrokSelectedPlayers.length} spillere)</button>
+    <button class="game-btn" id="startMrbrokBtn" ${enough?'':'disabled'}>🕵️ Start ${escapeHtml(mrbrokName)} (${mrbrokSelectedPlayers.length} spillere)</button>
     ${enough?'':'<p class="hint" style="text-align:center;">Vælg mindst 3 spillere</p>'}
     ${mrbrokHighscoreHtml()}
   `;
@@ -4577,6 +4598,7 @@ function mrbrokImitationRounds(totalPreVoteRounds){
 }
 
 function mrbrokClueHtml(m, cur){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   const speaker = state.members.find(mm=>mm.id===cur.speakerId);
   const isSpeaker = profile && profile.memberId === cur.speakerId;
   const turnNo = cur.turnIndex + 1, totalTurns = cur.order.length;
@@ -4586,8 +4608,8 @@ function mrbrokClueHtml(m, cur){
 
   if(isSpeaker){
     const prompt = isImitationRound
-      ? '<b style="color:rgba(255,247,232,0.95);">Brok dig som din karakter ville gøre</b> — ingen spørgsmål denne runde, bare vis os hvem du er. Overdriv gerne, ingen kan blive fanget i noget endnu.'
-      : 'De andre spørger dig om rollen — svar HØJT, <b style="color:rgba(255,247,232,0.95);">vagt nok til ikke at hjælpe MrBrok, men klart nok til at de andre tror på dig</b>.';
+      ? '<b style="color:rgba(255,247,232,0.95);">Vær i karakter</b> — ingen spørgsmål denne runde, bare vis os hvem du er. Overdriv gerne, ingen kan blive fanget i noget endnu.'
+      : `De andre spørger dig om rollen — svar HØJT, <b style="color:rgba(255,247,232,0.95);">vagt nok til ikke at hjælpe ${escapeHtml(mrbrokName)}, men klart nok til at de andre tror på dig</b>.`;
     return `
       ${badge}
       ${mrbrokTopicBanner(m)}
@@ -4624,7 +4646,8 @@ function mrbrokClueHtml(m, cur){
 // selv, ligesom alle andre — så der er ingen særskilt "youAreMrBrok"-gren
 // længere; alle aktive spillere (MrBrok inklusiv) ser nøjagtig samme skærm.
 function mrbrokVoteHtml(m, cur){
-  const badge = `<div class="game-badge">Runde ${m.round} · 🤔 Hvem er MrBrok?</div>`;
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
+  const badge = `<div class="game-badge">Runde ${m.round} · 🤔 Hvem er ${escapeHtml(mrbrokName)}?</div>`;
   const eligible = m.activeIds.length;
   const already = profile && cur.votes && cur.votes[profile.memberId] !== undefined;
   if(already){
@@ -4632,7 +4655,7 @@ function mrbrokVoteHtml(m, cur){
   }
   return `
     ${badge}
-    <p class="hint" style="text-align:center; margin:0 0 8px; color:rgba(255,247,232,0.7);"><b style="color:rgba(255,247,232,0.92);">Hvem tror du er MrBrok?</b> Den med flest stemmer ryger ud. Din stemme er hemmelig indtil alle har stemt.</p>
+    <p class="hint" style="text-align:center; margin:0 0 8px; color:rgba(255,247,232,0.7);"><b style="color:rgba(255,247,232,0.92);">Hvem tror du er ${escapeHtml(mrbrokName)}?</b> Den med flest stemmer ryger ud. Din stemme er hemmelig indtil alle har stemt.</p>
     ${mrbrokVoteOptionsHtml(m, cur)}
     ${gameProgressHtml(cur.voteCount||0, eligible, 'har stemt')}
     ${mrbrokComplaintBlockHtml(m, cur)}
@@ -4650,8 +4673,9 @@ function mrbrokVoteOptionsHtml(m, cur){
 }
 
 function mrbrokStealHtml(m, cur){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   const mrbrokMember = state.members.find(mm=>mm.id===m.mrBrokId);
-  const badge = `<div class="game-badge">🕵️ MrBrok er afsløret!</div>`;
+  const badge = `<div class="game-badge">🕵️ ${escapeHtml(mrbrokName)} er afsløret!</div>`;
   const eligible = m.activeIds.length; // MrBrok er allerede fjernet fra activeIds på dette tidspunkt
   if(m.youAreMrBrok){
     if(!cur.guess){
@@ -4667,7 +4691,7 @@ function mrbrokStealHtml(m, cur){
     return `${badge}<div class="empty-state"><span class="emoji">🤞</span><b>Dit gæt er sendt</b>De andre stemmer nu om det er tæt nok.</div>${gameProgressHtml(cur.voteCount||0, eligible, 'har stemt')}`;
   }
   if(!cur.guess){
-    return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>${escapeHtml(mrbrokMember?mrbrokMember.name:'MrBrok')} tænker...</b>Vent på deres sidste gæt på emnet.</div>${mrbrokComplaintBlockHtml(m, cur)}`;
+    return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>${escapeHtml(mrbrokMember?mrbrokMember.name:mrbrokName)} tænker...</b>Vent på deres sidste gæt på emnet.</div>${mrbrokComplaintBlockHtml(m, cur)}`;
   }
   const already = profile && profile.memberId in (cur.votes||{});
   if(already){
@@ -4676,7 +4700,7 @@ function mrbrokStealHtml(m, cur){
   return `
     ${badge}
     <div class="game-card" id="mrbrokCard" style="text-align:center;">
-      <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">${escapeHtml(mrbrokMember?mrbrokMember.name:'MrBrok')} gættede emnet var:</p>
+      <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">${escapeHtml(mrbrokMember?mrbrokMember.name:mrbrokName)} gættede emnet var:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px;">"${escapeHtml(cur.guess)}"</p>
       <p class="hint" style="margin:10px 0; color:rgba(255,247,232,0.6);">Var det tæt nok? Husk at være fair — det er kun sjovt hvis dommen er ærlig.</p>
       <div style="display:flex; gap:10px;">
@@ -4695,6 +4719,7 @@ function mrbrokStealHtml(m, cur){
 // stedet for at fylde lige så meget som selve resultatet i hver eneste
 // runde-boks.
 function mrbrokRecapHtml(m, cur){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   if(!cur.voteHistory || !cur.voteHistory.length) return '';
   const rows = cur.voteHistory.map((h,i)=>{
     const eliminated = state.members.find(mm=>mm.id===h.eliminatedId);
@@ -4708,8 +4733,8 @@ function mrbrokRecapHtml(m, cur){
     }).join('');
     return `<div class="game-card" style="text-align:left; margin-bottom:8px;">
       <p class="hint" style="margin:0 0 4px; color:rgba(255,247,232,0.55); font-size:11.5px;">Runde ${h.round}${h.tie?' · uafgjort, Chancen valgte':''}</p>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:16px; margin:0;">${wasMrBrok?'🕵️':'😬'} ${escapeHtml(eliminated?eliminated.name:'?')} blev stemt ud${wasMrBrok?' — det var MrBrok!':''}</p>
-      ${!wasMrBrok?'<p class="hint" style="margin:2px 0 0; color:rgba(255,247,232,0.6);">(ikke MrBrok)</p>':''}
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:16px; margin:0;">${wasMrBrok?'🕵️':'😬'} ${escapeHtml(eliminated?eliminated.name:'?')} blev stemt ud${wasMrBrok?` — det var ${escapeHtml(mrbrokName)}!`:''}</p>
+      ${!wasMrBrok?`<p class="hint" style="margin:2px 0 0; color:rgba(255,247,232,0.6);">(ikke ${escapeHtml(mrbrokName)})</p>`:''}
       <div data-mrbrok-recap-toggle="${i}" style="margin-top:8px; font-size:12px; font-weight:700; color:rgba(255,247,232,0.55); cursor:pointer; text-decoration:underline;">${isOpen?'Skjul stemmer':'Vis hvem stemte hvordan'}</div>
       ${isOpen?`<div style="margin-top:6px;">${votes}</div>`:''}
     </div>`;
@@ -4718,6 +4743,7 @@ function mrbrokRecapHtml(m, cur){
 }
 
 function mrbrokOverHtml(m, cur){
+  const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
   const mrbrokMember = state.members.find(mm=>mm.id===cur.mrBrokId);
   const ranked = state.members.filter(mm=>m.players.includes(mm.id) && mm.id !== cur.mrBrokId).sort((a,b)=>(cur.scores[b.id]||0)-(cur.scores[a.id]||0));
   const scoreRows = ranked.map((mm,i)=>`
@@ -4729,18 +4755,18 @@ function mrbrokOverHtml(m, cur){
   `).join('');
   const stealLine = cur.caught
     ? (cur.stealGuess
-        ? (cur.mrBrokWon ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">😏 MrBrok gættede "${escapeHtml(cur.stealGuess)}" — tæt nok! Sejren blev stjålet.</p>` : `<p class="hint" style="color:rgba(255,247,232,0.7);">MrBrok gættede "${escapeHtml(cur.stealGuess)}" — ikke tæt nok.</p>`)
-        : `<p class="hint" style="color:rgba(255,247,232,0.7);">MrBrok nåede ikke at gætte i tide.</p>`)
-    : `<p class="hint" style="color:rgba(255,247,232,0.7);">MrBrok blev aldrig afsløret af flertallet.</p>`;
+        ? (cur.mrBrokWon ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">😏 ${escapeHtml(mrbrokName)} gættede "${escapeHtml(cur.stealGuess)}" — tæt nok! Sejren blev stjålet.</p>` : `<p class="hint" style="color:rgba(255,247,232,0.7);">${escapeHtml(mrbrokName)} gættede "${escapeHtml(cur.stealGuess)}" — ikke tæt nok.</p>`)
+        : `<p class="hint" style="color:rgba(255,247,232,0.7);">${escapeHtml(mrbrokName)} nåede ikke at gætte i tide.</p>`)
+    : `<p class="hint" style="color:rgba(255,247,232,0.7);">${escapeHtml(mrbrokName)} blev aldrig afsløret af flertallet.</p>`;
   return `
-    <div class="game-badge">🎉 MrBrok er slut!</div>
+    <div class="game-badge">🎉 ${escapeHtml(mrbrokName)} er slut!</div>
     <div class="game-card" id="mrbrokReveal" style="text-align:center; margin-bottom:12px;">
       <div style="font-size:34px;">🫵</div>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">MrBrok var... ${escapeHtml(mrbrokMember?mrbrokMember.name:'?')}!</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">${escapeHtml(mrbrokName)} var... ${escapeHtml(mrbrokMember?mrbrokMember.name:'?')}!</p>
       <p class="hint" style="color:rgba(255,247,232,0.6);">Emnet var: <b style="color:rgba(255,247,232,0.85);">${escapeHtml(cur.topic||'?')}</b></p>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.mrBrokWon?'var(--coin)':'var(--coral)'};">${cur.mrBrokWon ? '👑 MrBrok vandt!' : '👑 De andre afslørede MrBrok!'}</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.mrBrokWon?'var(--coin)':'var(--coral)'};">${cur.mrBrokWon ? `👑 ${escapeHtml(mrbrokName)} vandt!` : `👑 De andre afslørede ${escapeHtml(mrbrokName)}!`}</p>
       ${stealLine}
-      ${m.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.mrBrokWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `MrBrok lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
+      ${m.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.mrBrokWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `${escapeHtml(mrbrokName)} lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
     </div>
     <div class="section-label">🎯 Gætte-regnskab</div>
     ${scoreRows}
@@ -4810,7 +4836,8 @@ function bindMrbrokHandlers(m){
       const pool = mrbrokImitationRounds(m.warmupRounds + 1).has(cur.round) ? MRBROK_IMITATION_TIPS : MRBROK_CLUE_TIPS;
       let pick = pool[Math.floor(Math.random()*pool.length)];
       if(pool.length > 1) while(pick === mrbrokTipText) pick = pool[Math.floor(Math.random()*pool.length)];
-      mrbrokTipText = pick;
+      const mrbrokName = (state.gameNames && state.gameNames.mrbrok) || 'MrBrok';
+      mrbrokTipText = pick.replace(/MrBrok/g, mrbrokName);
       render();
     };
     const doneBtn = document.getElementById('mrbrokDoneBtn');
@@ -4889,18 +4916,20 @@ async function complainerApi(action, extra){
 
 function openComplainerAdminMenuSheet(){
   const active = state.complainer && state.complainer.active;
+  const gn = state.gameNames || {};
+  const complainerName = gn.complainer || 'Det Store Brokkeri';
   // Samme gensidige udelukkelse som Brokspillet/MrBrok allerede viser hinanden
   // — Det Store Brokkeri deltager i samme regel, se api/complainer.js's 'start'-tjek.
   const blockedByGame = !active && state.game && state.game.active;
   const blockedByMrbrok = !active && state.mrbrok && state.mrbrok.active;
   const blockedByOther = blockedByGame || blockedByMrbrok;
-  const blockedName = blockedByGame ? 'Brokspillet' : 'MrBrok';
+  const blockedName = blockedByGame ? (gn.spil || 'Brokspillet') : (gn.mrbrok || 'MrBrok');
   openSheet(`
-    <h2>Det Store Brokkeri-admin ⚙️</h2>
-    <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? `${blockedName} er i gang lige nu — afslut det for at kunne starte Det Store Brokkeri.` : 'Der er ikke noget spil i gang lige nu.')}</p>
+    <h2>${escapeHtml(complainerName)}-admin ⚙️</h2>
+    <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? `${escapeHtml(blockedName)} er i gang lige nu — afslut det for at kunne starte ${escapeHtml(complainerName)}.` : 'Der er ikke noget spil i gang lige nu.')}</p>
     ${active || blockedByOther ? '' : `<button class="sheet-btn test" id="complainerAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
-    ${active ? `<button class="sheet-btn danger" id="complainerAdminRestartBtn">🛑 Afslut Det Store Brokkeri</button>` : ''}
-    ${blockedByOther ? `<button class="sheet-btn danger" id="complainerAdminEndOtherBtn">🛑 Afslut ${blockedName}</button>` : ''}
+    ${active ? `<button class="sheet-btn danger" id="complainerAdminRestartBtn">🛑 Afslut ${escapeHtml(complainerName)}</button>` : ''}
+    ${blockedByOther ? `<button class="sheet-btn danger" id="complainerAdminEndOtherBtn">🛑 Afslut ${escapeHtml(blockedName)}</button>` : ''}
     <button class="sheet-btn ghost" id="complainerAdminCloseBtn">Luk menu</button>
     <p class="hint" style="text-align:center; font-size:10.5px; opacity:.5; margin-top:6px;">${BUILD_TAG}</p>
   `, ()=>{
@@ -4910,13 +4939,13 @@ function openComplainerAdminMenuSheet(){
     if(restartBtn) restartBtn.onclick = async ()=>{
       closeSheet();
       await complainerApi('end', {});
-      toast('🛑 Det Store Brokkeri er afsluttet — klar til en ny omgang');
+      toast(`🛑 ${escapeHtml(complainerName)} er afsluttet — klar til en ny omgang`);
     };
     const endOtherBtn = document.getElementById('complainerAdminEndOtherBtn');
     if(endOtherBtn) endOtherBtn.onclick = async ()=>{
       closeSheet();
       if(blockedByGame) await gameApi('end', {}); else await mrbrokApi('end', {});
-      toast(`🛑 ${blockedName} er afsluttet — Det Store Brokkeri kan nu startes`);
+      toast(`🛑 ${escapeHtml(blockedName)} er afsluttet — ${escapeHtml(complainerName)} kan nu startes`);
     };
     document.getElementById('complainerAdminCloseBtn').onclick = closeSheet;
   });
@@ -5132,7 +5161,7 @@ function maybeShowComplainerRevealSplash(c){
   if(c.youAreGuilty){
     inner.innerHTML = `
       <div style="font-size:52px;">🪤</div>
-      <h3>Du er Den Store Brokker!</h3>
+      <h3>Du er den skyldige!</h3>
       <p>Bliv i karakter gennem den sidste spørgerunde — så skal du gætte en konkret detalje om en af de andre, ud fra det de har sagt undervejs. Ingen andre ved det er dig endnu.</p>
       <button class="game-btn" id="complainerRevealCloseBtn">Forstået, jeg er klar</button>
     `;
@@ -5196,6 +5225,8 @@ function complainerHighscoreHtml(){
 }
 
 function complainerLobbyHtml(){
+  const gn = state.gameNames || {};
+  const complainerName = gn.complainer || 'Det Store Brokkeri';
   const realMembers = state.members.filter(mm=>!mm.isBot);
   const allIds = realMembers.map(mm=>mm.id);
   if(!complainerSelectedPlayers || !complainerKnownMemberIds){
@@ -5212,20 +5243,20 @@ function complainerLobbyHtml(){
   const enough = complainerSelectedPlayers.length >= 3;
   const steps = [
     ['🎭', 'Alle får hemmeligt en <b>arketype</b> (fx "den indre brokker") og en hverdags-situation (chef, nabo, familie, kollega, ven)'],
-    ['🗒️', 'Hver opbygningsrunde skriver alle et kort, konkret brok i karakter — ud fra et spørgsmål der bliver skarpere for hver runde'],
+    ['🗒️', 'Hver opbygningsrunde skriver alle et kort, konkret indlæg i karakter — ud fra et spørgsmål der bliver skarpere for hver runde'],
     ['🤫', 'Bagefter stemmer alle HEMMELIGT om hvem der virker mest skyldig lige nu — ingen ved endnu hvem der reelt ER det'],
     ['🎰', 'Rundens topmest mistænkte vælger: bank et lille sikkert point, eller sats det dobbelt op på at være topmest mistænkt IGEN næste runde'],
-    ['🪤', 'Én af jer er hemmeligt "Den Store Brokker" — men <b>ingen ved det, heller ikke den skyldige selv</b>, før spillet afslører det for dem alene'],
-    ['🎯', 'Når det sker, skal Den Store Brokker — stadig i karakter — gætte en konkret detalje om en anden spiller ud fra det de har sagt'],
-    ['✅', 'De andre stemmer hemmeligt om gættet er tæt nok. Rammer det, vinder Den Store Brokker'],
+    ['🪤', 'Én af jer er hemmeligt <b>den skyldige</b> — men <b>ingen ved det, heller ikke den skyldige selv</b>, før spillet afslører det for dem alene'],
+    ['🎯', 'Når det sker, skal den skyldige — stadig i karakter — gætte en konkret detalje om en anden spiller ud fra det de har sagt'],
+    ['✅', 'De andre stemmer hemmeligt om gættet er tæt nok. Rammer det, vinder den skyldige'],
   ];
   if(complainerInstructionsOpen === null) complainerInstructionsOpen = !localStorage.getItem('bk_complainer_seen_instructions');
   localStorage.setItem('bk_complainer_seen_instructions', '1');
   return `
     <div class="empty-state" style="padding-top:18px; padding-bottom:10px;">
       <span class="emoji">🪤</span>
-      <b>Det Store Brokkeri</b>
-      Brok dig i karakter — men pas på, der er ingen sikker måde at reagere på mistanke.
+      <b>${escapeHtml(complainerName)}</b>
+      Vær i karakter — men pas på, der er ingen sikker måde at reagere på mistanke.
     </div>
     <div class="game-card" style="margin:10px 0 10px;">
       <div id="complainerInstructionsToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; ${complainerInstructionsOpen?'margin-bottom:8px;':''}">
@@ -5245,7 +5276,7 @@ function complainerLobbyHtml(){
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Spil om</label>
       <div class="segmented" style="margin-bottom:14px;">
         <div class="seg ${complainerWager!=='euro'?'active':''}" data-complainer-wager="fun">🏅 Æren</div>
-        <div class="seg ${complainerWager==='euro'?'active':''}" data-complainer-wager="euro">💶 1 euro i kassen</div>
+        <div class="seg ${complainerWager==='euro'?'active':''}" data-complainer-wager="euro">💶 1${escapeHtml(state.unit || '€')} i kassen</div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Antal opbygningsrunder</label>
       <div class="segmented" style="margin-bottom:0;">
@@ -5253,7 +5284,7 @@ function complainerLobbyHtml(){
       </div>
       <p class="hint" style="margin:6px 0 0; color:rgba(255,247,232,0.55);">4 runder giver typisk et spil på ca. 15-20 minutter. Afsløringen kommer altid lige efter sidste runde — aldrig et fast rundetal I selv kan tælle jer frem til fra start.</p>
     </div>
-    <button class="game-btn" id="startComplainerBtn" ${enough?'':'disabled'}>🪤 Start Det Store Brokkeri (${complainerSelectedPlayers.length} spillere)</button>
+    <button class="game-btn" id="startComplainerBtn" ${enough?'':'disabled'}>🪤 Start ${escapeHtml(complainerName)} (${complainerSelectedPlayers.length} spillere)</button>
     ${enough?'':'<p class="hint" style="text-align:center;">Vælg mindst 3 spillere</p>'}
     ${complainerHighscoreHtml()}
   `;
@@ -5437,7 +5468,7 @@ function complainerVoteHtml(c, cur){
   }
   return `
     ${badge}
-    <p class="hint" style="text-align:center; margin:0 0 8px; color:rgba(255,247,232,0.7);"><b style="color:rgba(255,247,232,0.92);">Hvem tror du er Den Store Brokker?</b> Ingen ved det endnu, heller ikke dem selv — ren mavefornemmelse. Din stemme er hemmelig indtil alle har stemt.</p>
+    <p class="hint" style="text-align:center; margin:0 0 8px; color:rgba(255,247,232,0.7);"><b style="color:rgba(255,247,232,0.92);">Hvem tror du er den skyldige?</b> Ingen ved det endnu, heller ikke dem selv — ren mavefornemmelse. Din stemme er hemmelig indtil alle har stemt.</p>
     ${complainerVoteOptionsHtml(c, cur)}
     ${gameProgressHtml(cur.voteCount||0, eligible, 'har stemt')}
     ${complainerComplaintBlockHtml(c, cur)}
@@ -5545,7 +5576,7 @@ function complainerGuessHtml(c, cur){
       return `
         ${badge}
         <div class="game-card" id="complainerCard">
-          <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.7);">Du er Den Store Brokker! Bliv i karakter — gæt en konkret detalje om en af de andre, ud fra det de har sagt undervejs.</p>
+          <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.7);">Du er den skyldige! Bliv i karakter — gæt en konkret detalje om en af de andre, ud fra det de har sagt undervejs.</p>
           <label class="field-label" style="color:rgba(255,247,232,0.7);">Om hvem?</label>
           <div class="name-grid" style="margin-bottom:12px;">
             ${options.map(mm=>`<div class="name-pill ${complainerGuessTargetId===mm.id?'selected':''}" data-complainer-guess-target="${mm.id}">${escapeHtml(mm.name)}</div>`).join('')}
@@ -5558,7 +5589,7 @@ function complainerGuessHtml(c, cur){
     }
     return `${badge}<div class="empty-state"><span class="emoji">🤞</span><b>Dit gæt er sendt</b>De andre stemmer nu om det er tæt nok.</div>`;
   }
-  return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>Nogen tænker...</b>Vent på Den Store Brokkers sidste gæt — I finder snart ud af hvem det er.</div>${complainerHistoryHtml(c)}`;
+  return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>Nogen tænker...</b>Vent på den skyldiges sidste gæt — I finder snart ud af hvem det er.</div>${complainerHistoryHtml(c)}`;
 }
 
 function complainerJudgeHtml(c, cur){
@@ -5574,7 +5605,7 @@ function complainerJudgeHtml(c, cur){
   return `
     ${badge}
     <div class="game-card" id="complainerCard" style="text-align:center;">
-      <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">Den Store Brokker gættede om ${escapeHtml(targetMember?targetMember.name:'?')}:</p>
+      <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">Den skyldige gættede om ${escapeHtml(targetMember?targetMember.name:'?')}:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px;">"${escapeHtml(cur.detail||'?')}"</p>
       <p class="hint" style="margin:10px 0; color:rgba(255,247,232,0.6);">Er det tæt nok? Vær ærlig — det er kun sjovt hvis dommen er fair.</p>
       <div style="display:flex; gap:10px;">
@@ -5626,6 +5657,8 @@ function complainerArchetypeRevealHtml(c){
 }
 
 function complainerOverHtml(c, cur){
+  const gn = state.gameNames || {};
+  const complainerName = gn.complainer || 'Det Store Brokkeri';
   const guiltyMember = state.members.find(mm=>mm.id===cur.guiltyId);
   const targetMember = state.members.find(mm=>mm.id===cur.targetId);
   const ranked = state.members.filter(mm=>c.players.includes(mm.id)).sort((a,b)=>(cur.scores[b.id]||0)-(cur.scores[a.id]||0));
@@ -5637,13 +5670,13 @@ function complainerOverHtml(c, cur){
     </div>
   `).join('');
   return `
-    <div class="game-badge">🎉 Det Store Brokkeri er slut!</div>
+    <div class="game-badge">🎉 ${escapeHtml(complainerName)} er slut!</div>
     <div class="game-card" id="complainerReveal" style="text-align:center; margin-bottom:12px;">
       <div style="font-size:34px;">🫵</div>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">Den Store Brokker var... ${escapeHtml(guiltyMember?guiltyMember.name:'?')}!</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">Den skyldige var... ${escapeHtml(guiltyMember?guiltyMember.name:'?')}!</p>
       <p class="hint" style="color:rgba(255,247,232,0.6);">Gættede om <b style="color:rgba(255,247,232,0.85);">${escapeHtml(targetMember?targetMember.name:'?')}</b>: "${escapeHtml(cur.detail||'?')}"</p>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.guiltyWon?'var(--coin)':'var(--coral)'};">${cur.guiltyWon ? '👑 Den Store Brokker vandt!' : '👑 De andre gennemskuede gættet!'}</p>
-      ${c.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.guiltyWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `Den Store Brokker lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.guiltyWon?'var(--coin)':'var(--coral)'};">${cur.guiltyWon ? '👑 Den skyldige vandt!' : '👑 De andre gennemskuede gættet!'}</p>
+      ${c.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.guiltyWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `Den skyldige lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
     </div>
     <div class="section-label">🎯 Mistanke-regnskab</div>
     ${scoreRows}
