@@ -1199,6 +1199,30 @@ const SKIN_PRESETS = [
 // state.gameNames (sat server-side af redactStateFor, se _lib/store.js's
 // getGameNames). Faldback til de oprindelige brok-navne hvis en ældre,
 // cachet state-version (fra før dette felt fandtes) skulle mangle det.
+// Kasse-motor-generalisering, E2E-tekst-audit-fund: de fire skærm-headers
+// (jar/kasse, Brokspillet, MrBrok, Det Store Brokkeri) hardcodede historisk
+// selve navnene ("Brokkekassen"/"Brokspillet"/"MrBrok"/"Det Store Brokkeri")
+// i stedet for at læse state.themeName/state.gameNames — så ALLE rum viste
+// brok-navnet i header uanset valgt skin. Denne helper genskaber den
+// eksisterende to-farvede titel-stil (almindelig tekst + guld sidste-del)
+// generisk, ved at finde det kendte suffiks for konteksten i stedet for at
+// antage brok-teksten. Matcher for hvert af de 9 kuraterede temaer præcis
+// den originale hardcodede splitning (fx "Brokke"+"kassen", "Mr"+"Brok").
+function splitTitleHighlight(name, suffixes){
+  const lower = (name || '').toLowerCase();
+  for(const suf of suffixes){
+    if(lower.endsWith(suf.toLowerCase())){
+      const cut = name.length - suf.length;
+      return { prefix: name.slice(0, cut), suffix: name.slice(cut) };
+    }
+  }
+  return { prefix: name || '', suffix: '' };
+}
+function titleHtml(name, suffixes){
+  const { prefix, suffix } = splitTitleHighlight(name, suffixes);
+  return suffix ? `${escapeHtml(prefix)}<span>${escapeHtml(suffix)}</span>` : escapeHtml(prefix);
+}
+
 function activeAppDisplayName(){
   const names = (state && state.gameNames) || {};
   if(activeApp==='spil') return names.spil || 'Brokspillet';
@@ -1961,7 +1985,7 @@ function renderInner(){
   app.innerHTML = `
     <header>
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>Brokke<span>kassen</span></span>
+        <span>${titleHtml(state.themeName || 'Brokkekassen', ['kassen'])}</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
       <span class="day-chip" style="align-self:flex-start; font-size:11px; color:rgba(255,247,232,0.85);">Dag ${dayCount()}</span>
@@ -2367,7 +2391,7 @@ function renderGameScreen(){
   app.innerHTML = `
     <header class="theme-spil${isRose?' theme-rose':''}">
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>Brok<span>spillet</span> 👉</span>
+        <span>${titleHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet', ['spillet'])} 👉</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
@@ -3903,7 +3927,7 @@ function renderMrbrokScreen(){
   app.innerHTML = `
     <header class="theme-mrbrok">
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>Mr<span>Brok</span> 🕵️</span>
+        <span>${titleHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok', ['detektiven', 'hanen', 'brok'])} 🕵️</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
@@ -4637,7 +4661,7 @@ function renderComplainerScreen(){
   app.innerHTML = `
     <header class="theme-complainer">
       <div class="title" style="font-size:22px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>Det Store <span>Brokkeri</span></span>
+        <span>${titleHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri', ['fælden', 'brokkeri'])}</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
