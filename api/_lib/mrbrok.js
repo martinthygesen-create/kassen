@@ -138,6 +138,35 @@ const MRBROK_CLUE_TIPS_SLADRE = [
   'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
 ];
 
+// Løgnerkasse-motoren (se KASSEMOTORPLAN.md's klassifikations-tabel: "kun
+// Spil 2+3 mulige" — Brokspillets quiplash/rose kræver "roast en navngiven
+// person", som ikke passer et løgner-domæne). Domæne: lyve/bedrage i stedet
+// for brokke/undskylde. 10 emner — samme bevidste v1-størrelse som de andre.
+const MRBROK_TOPICS_LOGN = [
+  'Bedragerisk forsikringssælger — lyver om dækning for at lukke handlen',
+  'Utro kæreste — lyver om hvor de har været hele aftenen',
+  'Fusker til eksamen — lyver om hvor svaret kom fra',
+  'Falsk influencer — lyver om hvilke produkter der reelt er sponsoreret',
+  'Bedragerisk håndværker — lyver om hvor lang tid arbejdet reelt tager',
+  'Skjult spiller ved pokerbordet — lyver om hvilke kort de har på hånden',
+  'Falsk alibi-vidne — lyver om hvor en ven befandt sig',
+  'Bedragerisk sælger på loppemarked — lyver om hvor gammel varen er',
+  'Skjult dobbeltagent — lyver om hvilken side de reelt arbejder for',
+  'Falsk anmelder — lyver om at have prøvet produktet overhovedet',
+];
+
+const MRBROK_CLUE_TIPS_LOGN = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Lyv om en PERSON i situationen, ikke bare selve tingen',
+  'Svar med en følelse ved det, ikke et direkte faktum',
+  'Vend spørgsmålet en anelse — svar med den løgn du helst selv ville fortælle',
+  'Nævn hvor tit du er kommet afsted med den slags løgne før',
+  'Beskriv hvordan du plejer at reagere når du bliver taget i en løgn',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til MRBROK_TOPICS/
 // MRBROK_CLUE_TIPS ovenfor (ingen indholds-omskrivning, kun et lookup-lag
@@ -151,6 +180,7 @@ const CONTENT_BY_THEME = {
   // spilnavne er brok-brandede og skal reskinnes pr. tema.
   bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Bødedetektiven' },
   sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Sladrehanen' },
+  logn: { mrbrokTopics: MRBROK_TOPICS_LOGN, mrbrokClueTips: MRBROK_CLUE_TIPS_LOGN, gameName: 'Løgnedetektiven' },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;

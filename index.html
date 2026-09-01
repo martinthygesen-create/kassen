@@ -1139,6 +1139,22 @@ const SKIN_PRESETS = [
     gameNames: { spil: 'Sladrespillet', mrbrok: 'Sladrehanen', complainer: 'Sladrefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
+  {
+    id: 'logn', name: 'Løgnerkassen', emoji: '🎭',
+    ruleTagline: 'Bliver din løgn afsløret, koster det en krone.', unit: 'kr',
+    poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
+    smaatText: 'Løgne, afsløret ved afstemning',
+    gameNames: { spil: 'Brokspillet', mrbrok: 'Løgnedetektiven', complainer: 'Løgnefælden' },
+    allowedGames: ['mrbrok', 'complainer'],
+  },
+  {
+    id: 'hjaelper', name: 'Hjælperkassen', emoji: '🤝',
+    ruleTagline: 'Gentagne fejl i opgaverne noteres af holdlederen.', unit: 'noter',
+    poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
+    smaatText: 'Gentagne fejl, bedømt af holdlederen',
+    gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Hjælpefælden' },
+    allowedGames: ['complainer'],
+  },
 ];
 
 // Kasse-motor-generalisering, Fase 4: erstatter den tidligere hardcodede

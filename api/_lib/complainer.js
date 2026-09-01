@@ -366,6 +366,143 @@ const COMPLAINER_PROMPTS_SLADRE = [
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du opdager at den du selv sladrer mest til, sladrer videre om dig til andre. Du sladrer om DET til en helt tredje person. Hvad siger du?' },
 ];
 
+// Løgnerkasse-motoren (se KASSEMOTORPLAN.md's klassifikations-tabel): kun
+// Spil 2 (MrBrok)+3 (Det Store Brokkeri) mulige, Brokspillet udelades helt
+// (se SKIN_PRESETS' allowedGames client-side). 6 arketyper — domæne: at
+// lyve/bortforklare, ikke brokke/undskylde et regelbrud.
+const COMPLAINER_ARCHETYPES_LOGN = [
+  {
+    id: 'sailer_charmerende', name: 'Den charmerende bedrageriske sælger',
+    promptHook: 'Med et smil klar til enhver handel —',
+    instructions: [
+      'Du lyver flydende og uden at blinke.',
+      'Du charmerer dig ud af enhver mistanke.',
+      'Du skifter historie hvis nogen presser for hårdt.',
+    ],
+  },
+  {
+    id: 'nervoes_foerstegang', name: 'Den nervøse førstegangsløgner',
+    promptHook: 'Som en der sjældent lyver, og det ses tydeligt —',
+    instructions: [
+      'Du bliver synligt nervøs og stammer lidt.',
+      'Du overforklarer detaljer ingen bad om.',
+      'Du skifter emne hurtigt hvis nogen stiller opfølgende spørgsmål.',
+    ],
+  },
+  {
+    id: 'dobbeltagent_rutineret', name: 'Den rutinerede dobbeltagent',
+    promptHook: 'Som en der har løjet professionelt i årevis —',
+    instructions: [
+      'Du er fuldstændig rolig og konsistent.',
+      'Du husker dine egne løgne perfekt.',
+      'Du vender mistanken tilbage på den der spørger.',
+    ],
+  },
+  {
+    id: 'teenager_bortforklarende', name: 'Den bortforklarende teenager',
+    promptHook: 'Som en der altid har en ny udflugt klar —',
+    instructions: [
+      'Du skifter historie hvis den første ikke virker.',
+      'Du bliver defensiv og fornærmet over at blive tvivlet.',
+      'Du involverer en ven som "kan bekræfte det".',
+    ],
+  },
+  {
+    id: 'konspirationsteoretiker', name: 'Den overbevisende konspirationsteoretiker',
+    promptHook: 'Som en der tror fuldt og fast på sin egen version —',
+    instructions: [
+      'Du fremlægger løgnen som en indlysende sandhed.',
+      'Du henviser til "kilder" ingen kan tjekke.',
+      'Du bliver ophidset hvis nogen udfordrer historien.',
+    ],
+  },
+  {
+    id: 'pokerspiller_koelig', name: 'Den kølige pokerspiller',
+    promptHook: 'Som en der aldrig lader ansigtet afsløre noget —',
+    instructions: [
+      'Du holder et helt neutralt ansigtsudtryk.',
+      'Du svarer kort og undgår overflødige detaljer.',
+      'Du lader stilhed arbejde for dig i stedet for at forklare for meget.',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_LOGN = ['ven', 'familie', 'arbejde', 'fremmed'];
+
+const COMPLAINER_PROMPTS_LOGN = [
+  { id: 'ven1', category: 'ven', tier: 1, text: 'Du har løjet om hvorfor du aflyste jeres aftale i sidste øjeblik. Du forklarer dig til en fælles ven, som var der og ved bedre. Hvad siger du?' },
+  { id: 'ven2', category: 'ven', tier: 3, text: 'Du har løjet om at kunne lide en vens nye kæreste. Du bliver konfronteret af vennen selv, som fornemmer noget er galt. Hvad siger du?' },
+  { id: 'familie1', category: 'familie', tier: 1, text: 'Du har løjet om hvor meget du reelt brugte på gaven til din svigermor. Du forklarer dig til din partner, som så kvitteringen. Hvad siger du?' },
+  { id: 'arbejde1', category: 'arbejde', tier: 2, text: 'Du har løjet om at have færdiggjort en opgave, du reelt ikke er startet på. Du forklarer dig til din chef, som lige spurgte til status. Hvad siger du?' },
+  { id: 'fremmed1', category: 'fremmed', tier: 1, text: 'Du har løjet om din alder for at slippe billigere ind et sted. Du forklarer dig til en dørmand, som lige har set dit id. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 1, text: 'Du har lige opdaget at en ven løj om noget småt for nylig. Du forklarer nu DIN egen lignende løgn til den samme ven. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en løgn du fortalte for længe siden, som nu viser sig at være opdaget. Du forklarer dig til den du løj for dengang. Hvad siger du?' },
+];
+
+// Godkendelseskasse-motoren (se planens klassifikation: Hjælperkassen — kun
+// Spil 3 mulig, og KUN i dæmpet form: arketyper er ren arbejdsstil, ALDRIG
+// en navngiven reel person som skurk, jf. magt-asymmetrien i et
+// ansættelsesforhold). 5 arketyper, situationer uden nogen konkret anklaget
+// person nævnt i selve prompten.
+const COMPLAINER_ARCHETYPES_HJAELPER = [
+  {
+    id: 'perfektionist_grundig', name: 'Den grundige perfektionist',
+    promptHook: 'Som en der dobbelttjekker alt —',
+    instructions: [
+      'Du er stille og metodisk i din stil.',
+      'Du nævner konkrete detaljer uden at pege på en bestemt person.',
+      'Du holder tonen professionel, aldrig anklagende.',
+    ],
+  },
+  {
+    id: 'multitasker_travl', name: 'Den travle multitasker',
+    promptHook: 'Som en der altid har for mange bolde i luften —',
+    instructions: [
+      'Du taler hurtigt og lidt stresset.',
+      'Du fokuserer på ARBEJDSSTILEN, aldrig en navngiven synder.',
+      'Du foreslår en praktisk løsning fremfor at brokke dig.',
+    ],
+  },
+  {
+    id: 'observatoer_rolig', name: 'Den rolige observatør',
+    promptHook: 'Som en der lægger mærke til mønstre over tid —',
+    instructions: [
+      'Du taler roligt og reflekteret.',
+      'Du beskriver et generelt mønster, ikke en enkelt hændelse.',
+      'Du er konstruktiv i din tone.',
+    ],
+  },
+  {
+    id: 'ny_i_teamet', name: 'Den nye i teamet',
+    promptHook: 'Som en der stadig lærer rutinerne at kende —',
+    instructions: [
+      'Du er nysgerrig og stiller spørgsmål frem for at anklage.',
+      'Du sammenligner med hvordan det blev gjort et andet sted.',
+      'Du er ydmyg i din tone.',
+    ],
+  },
+  {
+    id: 'rutineret_erfaren', name: 'Den erfarne rutinerede',
+    promptHook: 'Som en der har set det meste før —',
+    instructions: [
+      'Du er tålmodig, men tydelig.',
+      'Du refererer til "sådan plejer vi at gøre det".',
+      'Du holder fokus på arbejdsgangen, ikke en person.',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_HJAELPER = ['opgave', 'tid', 'kommunikation'];
+
+const COMPLAINER_PROMPTS_HJAELPER = [
+  { id: 'opgave1', category: 'opgave', tier: 1, text: 'En opgave blev leveret uden at følge den aftalte skabelon. Du nævner det over for en kollega fra en anden afdeling, som ikke kender detaljerne. Hvad siger du?' },
+  { id: 'opgave2', category: 'opgave', tier: 2, text: 'En tilbagevendende opgave bliver konsekvent løst på en anden måde end aftalt. Du nævner det til en ny kollega, som lige er startet. Hvad siger du?' },
+  { id: 'tid1', category: 'tid', tier: 1, text: 'En deadline blev overskredet uden besked i forvejen. Du nævner det til receptionisten, som ikke har noget med sagen at gøre. Hvad siger du?' },
+  { id: 'tid2', category: 'tid', tier: 2, text: 'Et møde starter konsekvent for sent. Du nævner det til en ekstern samarbejdspartner, som lige er ankommet til tiden. Hvad siger du?' },
+  { id: 'kommunikation1', category: 'kommunikation', tier: 1, text: 'En vigtig besked blev ikke videregivet til resten af teamet. Du nævner det til en praktikant, som ikke var involveret. Hvad siger du?' },
+  { id: 'rel1', category: 'relational', tier: 2, text: 'Du bliver selv mindet om en lignende fejl du selv lavede for nylig. Du nævner det alligevel videre til en kollega. Hvad siger du?' },
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
 // situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
@@ -391,6 +528,18 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS_SLADRE,
     prompts: COMPLAINER_PROMPTS_SLADRE,
     gameName: 'Sladrefælden',
+  },
+  logn: {
+    archetypes: COMPLAINER_ARCHETYPES_LOGN,
+    situations: COMPLAINER_SITUATIONS_LOGN,
+    prompts: COMPLAINER_PROMPTS_LOGN,
+    gameName: 'Løgnefælden',
+  },
+  hjaelper: {
+    archetypes: COMPLAINER_ARCHETYPES_HJAELPER,
+    situations: COMPLAINER_SITUATIONS_HJAELPER,
+    prompts: COMPLAINER_PROMPTS_HJAELPER,
+    gameName: 'Hjælpefælden',
   },
 };
 function getThemeContent(themeId) {

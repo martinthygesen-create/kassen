@@ -30,6 +30,28 @@ const SKIN_REGISTRY = {
     mechanic: 'witness-confirm', toneRegister: 'playful',
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
+  // Løgnerkasse-motoren (se KASSEMOTORPLAN.md's klassifikations-tabel):
+  // Brokspillet ('spil') UDELUKKES bevidst — quiplash/rose kræver "roast en
+  // navngiven person", som ikke passer et løgner-domæne. MrBrok/Det Store
+  // Brokkeris "afslør hvem der ikke passer ind"-mekanik er derimod en
+  // BEDRE match her end til original brok.
+  logn: {
+    confirmationModel: 'quorum', poolPolarity: 'punishment',
+    mechanic: 'suspicion-vote', toneRegister: 'playful',
+    allowedGames: ['mrbrok', 'complainer'],
+  },
+  // Godkendelseskasse-motoren (se planen: Hjælperkassen — magt-asymmetri i
+  // et ansættelsesforhold gør "udpeg en skyldig i gruppen" (MrBrok)
+  // socialt farligt, og Brokspillets person-roast passer heller ikke.
+  // KUN Det Store Brokkeri, og kun i dæmpet arketype-form (ren arbejdsstil,
+  // aldrig en navngiven reel person som skurk, se complainer.js's
+  // COMPLAINER_ARCHETYPES_HJAELPER). host-approval matcher at én leder
+  // typisk godkender krukke-hændelser i et sådant forhold.
+  hjaelper: {
+    confirmationModel: 'host-approval', poolPolarity: 'punishment',
+    mechanic: 'host-judged', toneRegister: 'serious',
+    allowedGames: ['complainer'],
+  },
 };
 
 function getThemeRegistryEntry(themeId) {
