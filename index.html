@@ -262,7 +262,7 @@
   .game-card p{ color:var(--cream); }
   .game-btn{ display:block; width:100%; background:linear-gradient(160deg, var(--coral), #e14d2e); color:#fff; border:none; border-radius:100px; padding:15px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px; box-shadow:0 8px 18px rgba(255,107,74,0.35); cursor:pointer; margin-top:14px; }
   .game-btn:active{ transform:scale(.98); }
-  .game-btn:disabled{ background:rgba(255,247,232,0.12); color:rgba(255,247,232,0.4); box-shadow:none; cursor:not-allowed; }
+  .game-btn:disabled{ background:rgba(255,247,232,0.12); color:rgba(255,247,232,0.55); box-shadow:none; cursor:not-allowed; }
   .game-btn.ghost{ background:transparent; box-shadow:none; color:rgba(255,247,232,0.75); font-weight:600; font-size:14px; padding:10px; }
   .game-progress{ display:flex; align-items:center; gap:10px; margin:14px 4px; font-size:12.5px; font-weight:600; color:rgba(255,247,232,0.65); }
   .game-progress .bar-track{ flex:1; }
@@ -612,7 +612,7 @@
   .app-pick-scroll-hint.left{ left:2px; }
   .app-pick-scroll-hint.show{ opacity:1; }
   .onboard-card input{ background:rgba(255,247,232,0.95); }
-  .divider{ display:flex; align-items:center; gap:10px; color:rgba(255,247,232,0.4); font-size:12px; margin:22px 0; }
+  .divider{ display:flex; align-items:center; gap:10px; color:rgba(255,247,232,0.55); font-size:12px; margin:22px 0; }
   .divider::before, .divider::after{ content:''; flex:1; height:1px; background:rgba(255,247,232,0.15); }
   /* .divider er designet til mørke baggrunde (.onboard, spilskærme) — cremet
      tekst på cremet baggrund. Men den bruges også inde i .sheet (☰-menuen,
@@ -1493,7 +1493,7 @@ function renderCreateFlowStep1(){
       ${SKIN_PRESETS.map(()=>`<div class="skin-dot"></div>`).join('')}
       <div class="skin-dot"></div>
     </div>
-    <p class="hint" style="margin:8px 0 0; font-size:11px; color:rgba(255,247,232,0.4); text-align:center;">Swipe for at se flere — vælg én for at gå videre.</p>
+    <p class="hint" style="margin:8px 0 0; font-size:11px; color:rgba(255,247,232,0.55); text-align:center;">Swipe for at se flere — vælg én for at gå videre.</p>
   `;
   document.querySelectorAll('#skinCarousel [data-skin-id]').forEach(el=>{
     el.onclick = ()=>{
@@ -1560,7 +1560,7 @@ function renderCreateFlowCustom(prefill){
   const preselectId = (prefill && prefill.baseId) || SKIN_PRESETS[0].id;
   wrap.innerHTML = `
     <div class="onboard-card">
-      <button class="sheet-btn ghost" id="backToStep1Btn" style="width:auto; margin:0 0 12px; padding:6px 12px; font-size:12px;">← Tilbage</button>
+      <button class="sheet-btn ghost" id="backToStep1Btn" style="width:auto; margin:0 0 12px; padding:6px 12px; font-size:12px; color:rgba(255,247,232,0.7);">← Tilbage</button>
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad skal jeres kasse hedde?</label>
       <input type="text" id="customNameInput" value="${escapeHtml((prefill && prefill.name) || '')}" placeholder="Fx Vennekassen" maxlength="30" style="margin-bottom:14px;" />
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad handler jeres kasse om? (kort)</label>
@@ -1582,7 +1582,7 @@ function renderCreateFlowCustom(prefill){
           </div>
         `).join('')}
       </div>
-      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Bestemmer enhed, polaritet og hvilke spil der er med — kun navn og "med småt" bliver jeres eget.</p>
+      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.58);">Bestemmer enhed, polaritet og hvilke spil der er med — kun navn og "med småt" bliver jeres eget.</p>
       <button class="sheet-btn primary" id="customNextBtn" style="margin-top:14px;">Videre</button>
     </div>
   `;
@@ -1652,18 +1652,18 @@ function renderCreateFlowStep2(skinOrId, prevName){
   // af "← Tilbage" (se den globale variabel og changeSkinBtn nedenfor).
   const nameVal = prevName || createFlowDraftName || '';
   wrap.innerHTML = `
-    <p class="hint" style="text-align:center; margin:0 0 8px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:rgba(255,247,232,0.4);">Trin 2 af 3</p>
+    <p class="hint" style="text-align:center; margin:0 0 8px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:rgba(255,247,232,0.55);">Trin 2 af 3</p>
     <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
       <div style="font-size:22px;">${skin.emoji}</div>
       <div style="flex:1;">
         <div style="font-weight:700; color:#fff;">${escapeHtml(skin.name)}</div>
       </div>
-      <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">← Tilbage</button>
+      <button class="sheet-btn ghost" id="changeSkinBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px; color:rgba(255,247,232,0.7);">← Tilbage</button>
     </div>
     <div class="onboard-card">
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Giv jeres gruppe et navn</label>
       <input type="text" id="groupNameInput" maxlength="40" value="${escapeHtml(nameVal)}" placeholder="${escapeHtml(skin.name)}" style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;" />
-      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45);">Kaldes ellers bare "${escapeHtml(skin.name)}" — kan ikke ændres efter oprettelse.</p>
+      <p class="hint" style="margin:6px 0 0; font-size:11.5px; color:rgba(255,247,232,0.58);">Kaldes ellers bare "${escapeHtml(skin.name)}" — kan ikke ændres efter oprettelse.</p>
     </div>
     <button class="sheet-btn primary" id="nameNextBtn" style="margin-top:0;">Videre</button>
   `;
@@ -1687,14 +1687,14 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
   setBelowCreateFlowVisible(false);
   const wrap = document.getElementById('createFlowWrap');
   wrap.innerHTML = `
-    <p class="hint" style="text-align:center; margin:0 0 8px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:rgba(255,247,232,0.4);">Trin 3 af 3</p>
+    <p class="hint" style="text-align:center; margin:0 0 8px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:rgba(255,247,232,0.55);">Trin 3 af 3</p>
     <div class="onboard-card" style="display:flex; align-items:center; gap:10px; padding:12px 16px;">
       <div style="font-size:22px;">${skin.emoji}</div>
       <div style="flex:1;">
         <div style="font-weight:700; color:#fff;">${escapeHtml(groupName)}</div>
         ${groupName !== skin.name ? `<div style="font-size:11px; color:rgba(255,247,232,0.5);">${escapeHtml(skin.name)}</div>` : ''}
       </div>
-      <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">← Tilbage</button>
+      <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px; color:rgba(255,247,232,0.7);">← Tilbage</button>
     </div>
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
@@ -1725,7 +1725,7 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
     <div class="onboard-card">
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad vil I have med? (vælg en eller flere)</label>
       <div class="app-pick-scroll-wrap" style="margin:10px 0 4px;">
-        <div class="app-pick-row" id="gamePickRow">
+        <div class="app-pick-row wrap-pick-row" id="gamePickRow">
           <div class="onboard-pick toggle-pick app-pick selected" data-pick="kasse" style="background:var(--sea); color:#fff;">
             <div class="app-pick-check">✓</div>
             <div class="app-pick-icon">🫙</div>
@@ -1765,7 +1765,7 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
             <div class="app-pick-label" style="font-size:11px;">Løbende Kasse</div>
           </div>
         </div>
-        <p class="hint" id="rhythmSubtext" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.45);">${skin.dailyRhythm ? 'Nulstiller kl. 03:00 hver nat.' : 'Ingen daglig nulstilling.'}</p>
+        <p class="hint" id="rhythmSubtext" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.58);">${skin.dailyRhythm ? 'Nulstiller kl. 03:00 hver nat.' : 'Ingen daglig nulstilling.'}</p>
       </div>
       <div class="onboard-card" style="padding:14px; margin-top:0;">
         <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Adgang</label>
@@ -1777,7 +1777,7 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
             <div class="app-pick-label" style="font-size:11px;">Skal godkendes</div>
           </div>
         </div>
-        <p class="hint" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.45);">Medvært kan tilføjes senere.</p>
+        <p class="hint" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.58);">Medvært kan tilføjes senere.</p>
       </div>
     </div>
     <button class="sheet-btn primary" id="createBtn" style="margin-top:12px;">Opret nyt rum</button>
@@ -1906,8 +1906,8 @@ function renderCreateOrJoin(errorMsg){
         <div class="onboard-card">
           <label class="field-label" style="color:rgba(255,247,232,0.6);">Har du fået et link?</label>
           <input type="text" id="joinInput" placeholder="Indsæt link eller kode her" autocapitalize="off" autocorrect="off" spellcheck="false" />
-          <button class="sheet-btn ghost" id="joinRoomBtn" style="margin-top:0;">Gå til kassen</button>
-          <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.45); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
+          <button class="sheet-btn ghost" id="joinRoomBtn" style="margin-top:0; color:rgba(255,247,232,0.75);">Gå til kassen</button>
+          <p style="margin:10px 0 0; font-size:11.5px; color:rgba(255,247,232,0.58); text-align:center;">Glemt dit rum? Bed et medlem af rummet om koden eller linket igen.</p>
         </div>
         ${myRoomsList}
         ${homeScreenTip(false)}
@@ -1964,7 +1964,7 @@ function renderWhoAmI(justCreated){
           <p style="margin:0 0 2px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,247,232,0.5);">Jeres kode</p>
           <div id="codeBox" style="cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.04em; color:var(--coin); padding:6px 0 2px;">${roomId}</div>
           <p style="margin:0 0 14px; font-size:12.5px; color:rgba(255,247,232,0.55);">De andre indtaster koden under "Har du fået et link?"</p>
-          <button class="sheet-btn ghost" id="copyBtn" style="margin-top:0;">📤 Del link i stedet</button>
+          <button class="sheet-btn ghost" id="copyBtn" style="margin-top:0; color:rgba(255,247,232,0.75);">📤 Del link i stedet</button>
         </div>
       ` : ''}
     </div>
@@ -2088,7 +2088,7 @@ function showInviteSplash(onClose){
       <p style="margin:0 0 14px; font-size:12.5px; color:rgba(255,247,232,0.55);">Tryk for at kopiere koden</p>
       <button class="sheet-btn primary" id="inviteSplashCopyLinkBtn" style="margin-top:0;">📤 Kopier invitationslink</button>
     </div>
-    <button class="sheet-btn ghost" id="inviteSplashCloseBtn" style="margin-top:0;">Senere, gå videre til rummet</button>
+    <button class="sheet-btn ghost" id="inviteSplashCloseBtn" style="margin-top:0; color:rgba(255,247,232,0.75);">Senere, gå videre til rummet</button>
   `;
   document.getElementById('inviteSplashCodeBox').onclick = ()=>{
     navigator.clipboard.writeText(roomId).then(()=>{ toast('Kode kopieret! 🔢'); close(); }).catch(()=>prompt('Kopiér koden manuelt:', roomId));
@@ -4648,7 +4648,7 @@ function mrbrokTopicBanner(m){
       <div style="font-size:26px;">🕵️</div>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin:4px 0 0;">Du er ${escapeHtml(mrbrokName)}!</p>
       <p class="hint" style="color:rgba(255,247,232,0.7);">Du kender IKKE rollen de andre har — <b style="color:rgba(255,247,232,0.92);">læg dig op ad deres tone og svar</b> for ikke at blive afsløret.</p>
-      <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.4); font-size:11.5px;">Tryk for at skjule igen</p>
+      <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.55); font-size:11.5px;">Tryk for at skjule igen</p>
     </div>`;
   }
   const [role, domain] = (m.topic || '?').split(' — ');
@@ -4656,7 +4656,7 @@ function mrbrokTopicBanner(m){
     <p class="hint" style="margin:0 0 4px; color:rgba(255,247,232,0.6);">Du er:</p>
     <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:0;">${escapeHtml(role || m.topic || '?')}</p>
     ${domain ? `<p class="hint" style="margin:6px 0 0; color:rgba(255,247,232,0.75);">${escapeHtml(domain)}</p>` : ''}
-    <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.4); font-size:11.5px;">Tryk for at skjule igen</p>
+    <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.55); font-size:11.5px;">Tryk for at skjule igen</p>
   </div>`;
 }
 
@@ -5511,7 +5511,7 @@ function complainerRoleBanner(c){
     <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:0; text-align:center;">${escapeHtml(info.name)}</p>
     ${instructionsHtml ? `<ul style="margin:12px 0 0; padding:0 0 0 18px; color:rgba(255,247,232,0.85); font-size:13.5px; line-height:1.5;">${instructionsHtml}</ul>` : ''}
     <p class="hint" style="margin:10px 0 0; color:rgba(255,247,232,0.55); text-align:center;">Din situation lige nu: brok dig over ${escapeHtml(COMPLAINER_SITUATION_LABELS[situation]||situation||'?')}</p>
-    <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.4); font-size:11.5px; text-align:center;">Tryk for at skjule igen</p>
+    <p class="hint" style="margin-top:10px; color:rgba(255,247,232,0.55); font-size:11.5px; text-align:center;">Tryk for at skjule igen</p>
   </div>`;
 }
 
@@ -6711,13 +6711,11 @@ function openAdminMenuSheet(){
 
     <div class="divider">test &amp; mindre ændringer</div>
     ${state.events.length ? `<button class="sheet-btn test" id="adminRemoveEventBtn">🫤 Markér mistænkt snyd</button>` : ''}
-    <button class="sheet-btn test" id="adminTestDrawBtn">🎰 Test spillemaskinen</button>
     ${state.dailyRhythm ? `
     <button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om</button>
     <p class="hint" style="${hintStyle}">Trækker dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om blandt de rigtige medlemmer — rører ikke streaks.</p>
     ` : ''}
     ${state.history.length ? `<button class="sheet-btn test" id="adminUndoBtn">↩️ Fortryd seneste opgørelse</button>` : ''}
-    ${state.dailyRhythm ? `<button class="sheet-btn test" id="adminBackdateBtn">⏪ Ryk dagstæller én dag tilbage</button>` : ''}
 
     <div class="divider">kan ikke fortrydes</div>
     <button class="sheet-btn danger" id="adminResetBtn">🧹 Nulstil alt</button>
@@ -6750,21 +6748,15 @@ function openAdminMenuSheet(){
     document.getElementById('adminShareAppBtn').onclick = doShareApp;
     const removeBtn = document.getElementById('adminRemoveEventBtn');
     if(removeBtn) removeBtn.onclick = ()=>{ closeSheet(); setTimeout(openRemoveEventSheet, 230); };
-    document.getElementById('adminTestDrawBtn').onclick = ()=>{
-      if(state.members.length < 2){ toast('kræver mindst 2 medlemmer for at vise dette'); return; }
-      const previewWinner = state.members[Math.floor(Math.random()*state.members.length)];
-      closeSheet();
-      setTimeout(()=>playFreeBrokDraw(previewWinner.id, true), 230);
-    };
     // Rum-dynamik-fejl (fundet ved rigtig telefonrapport: "luk denne kasse
-    // virker ikke"): adminRedrawFreeBrokBtn/adminBackdateBtn findes KUN i
-    // markup'et når state.dailyRhythm er sandt (se skabelonen ovenfor) —
-    // uden disse to null-guards kastede et ubetinget .onclick= på et
-    // ikke-eksisterende element en synkron fejl, som stoppede HELE resten
-    // af denne callback fra at køre for ethvert enkelt-event-rum (Bøde-
-    // kassen/Drikkekassen som standard, eller ethvert rum sat til "Enkelt
-    // Event") — dermed fik hverken Nulstil, Luk for altid, Slet rum ELLER
-    // "Luk menu" nogensinde deres onclick tilknyttet i de rum.
+    // virker ikke"): adminRedrawFreeBrokBtn findes KUN i markup'et når
+    // state.dailyRhythm er sandt (se skabelonen ovenfor) — uden dette
+    // null-guard kastede et ubetinget .onclick= på et ikke-eksisterende
+    // element en synkron fejl, som stoppede HELE resten af denne callback
+    // fra at køre for ethvert enkelt-event-rum (Bødekassen/Drikkekassen
+    // som standard, eller ethvert rum sat til "Enkelt Event") — dermed fik
+    // hverken Nulstil, Luk for altid, Slet rum ELLER "Luk menu" nogensinde
+    // deres onclick tilknyttet i de rum.
     const redrawBtn = document.getElementById('adminRedrawFreeBrokBtn');
     if(redrawBtn) redrawBtn.onclick = async ()=>{
       try{
@@ -6777,15 +6769,6 @@ function openAdminMenuSheet(){
     };
     const undoBtn = document.getElementById('adminUndoBtn');
     if(undoBtn) undoBtn.onclick = ()=>{ closeSheet(); setTimeout(openUndoArchiveSheet, 230); };
-    const backdateBtn = document.getElementById('adminBackdateBtn');
-    if(backdateBtn) backdateBtn.onclick = async ()=>{
-      try{
-        const r = await api('admin', { action: 'backdate', roomId, actorId: profile.memberId });
-        state = r.state;
-        closeSheet();
-        toast(`☀️ Dagstæller rykket — nu dag ${dayCount()}`);
-      }catch(e){ toast(e.message); }
-    };
     document.getElementById('adminResetBtn').onclick = ()=>{ closeSheet(); setTimeout(openResetSheet, 230); };
     document.getElementById('adminFinalCloseBtn').onclick = ()=>{ closeSheet(); setTimeout(openFinalCloseSheet, 230); };
     document.getElementById('adminDeleteRoomBtn').onclick = ()=>{ closeSheet(); setTimeout(openDeleteRoomSheet, 230); };
