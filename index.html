@@ -1140,6 +1140,14 @@ const SKIN_PRESETS = [
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
+    id: 'konkurrence', name: 'Konkurrencekassen', emoji: '🏆',
+    ruleTagline: 'Vind en runde, og det tæller i puljen.', unit: 'point',
+    poolPolarity: 'reward', confirmationModel: 'quorum', dailyRhythm: true,
+    smaatText: 'Sejre, bekræftet af alle',
+    gameNames: { spil: 'Konkurrencespillet', mrbrok: 'Konkurrencedetektiven', complainer: 'Konkurrencefælden' },
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
+  {
     id: 'logn', name: 'Løgnerkassen', emoji: '🎭',
     ruleTagline: 'Bliver din løgn afsløret, koster det en krone.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,

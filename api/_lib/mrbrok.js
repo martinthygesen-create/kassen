@@ -179,6 +179,19 @@ const CONTENT_BY_THEME = {
   // tema-afhængige, ikke "MrBrok" bogstaveligt, se planens punkt om at
   // spilnavne er brok-brandede og skal reskinnes pr. tema.
   bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Bødedetektiven' },
+  // Konkurrencekassen: SAMME roller/domæne som brok (bredt hverdagsdomæne,
+  // ikke et nyt emne), men "brokker dig over" omskrevet til "praler af" —
+  // reward-polaritet betyder man praler af sejre, ikke brokker sig over tab.
+  // IKKE en ordret genbrug (fangede af Dommerens lækage-tjek ved første
+  // forsøg, se commit-historikken) — kun selve VERBET er nyt, rollerne er
+  // stadig de samme brede hverdags-personaer.
+  konkurrence: {
+    mrbrokTopics: MRBROK_TOPICS.map(t => t.replace(/brokker dig over/g, 'praler af')),
+    mrbrokClueTips: MRBROK_CLUE_TIPS.map(t => t
+      .replace(/Klag over en PERSON i situationen, ikke bare selve tingen/, 'Pral om en PERSON i situationen, ikke bare selve tingen')
+      .replace(/Vend spørgsmålet en anelse — svar på det du helst vil brokke dig over/, 'Vend spørgsmålet en anelse — svar på det du helst selv vil prale af')),
+    gameName: 'Konkurrencedetektiven',
+  },
   sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Sladrehanen' },
   logn: { mrbrokTopics: MRBROK_TOPICS_LOGN, mrbrokClueTips: MRBROK_CLUE_TIPS_LOGN, gameName: 'Løgnedetektiven' },
 };

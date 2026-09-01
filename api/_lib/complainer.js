@@ -523,6 +523,16 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_BODE,
     gameName: 'Bødefælden',
   },
+  // Konkurrencekassen: samme situationer/arketyper som brok (arketyperne
+  // beskriver LEVERINGSSTIL, ikke selve emnet — ingen af dem nævner "brok"),
+  // men prompts omskrevet fra "brokker dig til" til "praler du til" —
+  // reward-polaritet betyder man praler af sejre, ikke klager over tab.
+  konkurrence: {
+    archetypes: COMPLAINER_ARCHETYPES,
+    situations: COMPLAINER_SITUATIONS,
+    prompts: COMPLAINER_PROMPTS.map(p => ({ ...p, text: p.text.replace(/[Dd]u brokker dig( videre)? til/g, m => m.replace('brokker dig', 'praler du')) })),
+    gameName: 'Konkurrencefælden',
+  },
   sladre: {
     archetypes: COMPLAINER_ARCHETYPES_SLADRE,
     situations: COMPLAINER_SITUATIONS_SLADRE,

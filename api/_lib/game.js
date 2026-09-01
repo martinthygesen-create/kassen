@@ -333,6 +333,21 @@ const CONTENT_BY_THEME = {
   },
   // Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
   // KASSEMOTORPLAN.md's klassifikations-tabel: kvorum, alle tre spil mulige).
+  // Konkurrencekassen — poolPolarity:'reward'-motoren (se KASSEMOTORPLAN.md:
+  // "Rettelse af tidligere konklusion: Konkurrencekassen... naturligt
+  // reward-polaritet"). Genbruger brok-indholdet UÆNDRET (ingen nyt domæne —
+  // det der adskiller Konkurrencekassen er ren MEKANIK/polaritet, ikke et
+  // andet emne, jf. planens "3 af de 6 er samme motor med forskelligt
+  // navn/indhold" — her er det bevidst SAMME indhold, kun navnet skifter),
+  // kun gameName er nyt, for ikke at bryde checkThemeIdentityNotLeaked.
+  konkurrence: {
+    quiplashPrompts: QUIPLASH_PROMPTS,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS,
+    worldTrivia: WORLD_TRIVIA,
+    worldTrueFalse: WORLD_TRUEFALSE,
+    gameName: 'Konkurrencespillet',
+  },
   sladre: {
     quiplashPrompts: QUIPLASH_PROMPTS_SLADRE,
     winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
@@ -409,6 +424,15 @@ const QUESTION_TEMPLATES_BY_THEME = {
     quoteWho: quote => `Ifølge Bødekassen fik nogen en bøde for: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse fik ${name} en bøde for?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne bødekasse?',
+  },
+  konkurrence: {
+    mostCount: 'Hvem fører flest gange i denne konkurrencekasse?',
+    fewestCount: 'Hvem fører færrest gange i denne konkurrencekasse?',
+    totalCount: 'Hvor mange sejre er der registreret i alt i denne konkurrencekasse?',
+    longestStreak: 'Hvem har den længste aktuelle sejrsstreak?',
+    quoteWho: quote => `Ifølge Konkurrencekassen vandt nogen på: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilken sejr stod ${name} bag?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne konkurrencekasse?',
   },
   sladre: {
     mostCount: 'Hvem har sladret mest i denne sladrekasse?',
@@ -606,6 +630,7 @@ const DECOY_BROK = [
 // literal ovenfor — DECOY_BROK er en const der endnu ikke er initialiseret
 // på det tidspunkt filen når dertil (temporal dead zone).
 CONTENT_BY_THEME.brok.decoyBrok = DECOY_BROK;
+CONTENT_BY_THEME.konkurrence.decoyBrok = DECOY_BROK;
 
 // Rigtige, tidligere loggede brok fra selve Brokkekassen (hvis den er i
 // brug) blandes ind som decoys sammen med den generiske liste ovenfor —

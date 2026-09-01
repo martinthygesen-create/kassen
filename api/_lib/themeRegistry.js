@@ -30,6 +30,16 @@ const SKIN_REGISTRY = {
     mechanic: 'witness-confirm', toneRegister: 'playful',
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
+  // Konkurrencekasse-motoren (se planen: "Konkurrencekassen var fejlagtigt
+  // puttet ind som navne-preset på Gruppekasse-motoren... løbende ranking er
+  // naturligt reward-polaritet"). Eneste kurateret skin med
+  // poolPolarity:'reward' — dækker den kombination Dommeren ellers aldrig
+  // ville se afprøvet i praksis, se scripts/test_pool_polarity.js.
+  konkurrence: {
+    confirmationModel: 'quorum', poolPolarity: 'reward',
+    mechanic: 'witness-confirm', toneRegister: 'playful',
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
   // Løgnerkasse-motoren (se KASSEMOTORPLAN.md's klassifikations-tabel):
   // Brokspillet ('spil') UDELUKKES bevidst — quiplash/rose kræver "roast en
   // navngiven person", som ikke passer et løgner-domæne. MrBrok/Det Store
