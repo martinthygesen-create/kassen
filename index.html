@@ -1292,9 +1292,9 @@ const SKIN_PRESETS = [
   },
   {
     id: 'hjaelper', name: 'Kollegakassen', emoji: '🤝',
-    ruleTagline: 'Gentagne fejl i opgaverne noteres af holdlederen.', unit: 'noter',
+    ruleTagline: 'Kom med en påstand om en kollega — holdlederen afgør.', unit: 'noter',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
-    smaatText: 'Gentagne fejl, bedømt af holdlederen',
+    smaatText: 'Påstande om kolleger, bedømt af holdlederen',
     gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Kollegafælden' },
     allowedGames: ['complainer'],
   },
@@ -1397,13 +1397,24 @@ const THEME_COPY = {
     emptyBodyList: 'Så snart en løgn afsløres, vises regnskabet her.',
   },
   hjaelper: {
-    feedLabel: 'Note-feed',
-    pendingVerb: 'noteret',
-    mainBtnText: '🤝 Noter en fejl…', sheetTitle: 'Hvem lavede fejlen? 🤝',
-    sheetHint: 'Peg på personen, og skriv præcis hvad fejlen bestod i — ellers giver noten ingen mening.',
-    sheetPlaceholder: 'F.eks. "glemte sikkerhedstjek på udstyret..." (påkrævet)', listLabel: 'Noteliste',
-    emptyTitle: 'Ingen noter endnu', emptyTitleList: 'Ingen noter registreret endnu',
-    emptyBodyList: 'Så snart der noteres en fejl, vises listen her.',
+    // Ændret fra "Noter en fejl" til påstands-sprog (produktejer-feedback,
+    // quizmaster-audit): den gamle "reager på en REEL arbejdsfejl"-framing
+    // krævede at der faktisk var sket noget forkert, FØR nogen kunne
+    // trykke — markant højere psykologisk drøvtærskel end de andre 8
+    // skins' "her skete der lige noget sjovt/irriterende", og modsat
+    // "glemte en runde" er en kollegas fejl sjælden OG socialt dyr at
+    // pege offentligt på. "Kom med en påstand" sænker barren til noget
+    // der kan siges i en sjovere tone — matcher desuden Kollegafældens
+    // egen påstands-tone (se COMPLAINER_PROMPTS_HJAELPER i
+    // api/_lib/complainer.js), i stedet for at føles som en anden,
+    // strengere mekanik ved siden af.
+    feedLabel: 'Påstand-feed',
+    pendingVerb: 'nævnt',
+    mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
+    sheetHint: 'Peg på personen, og skriv påstanden helt konkret — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "leverede uden at følge skabelonen..." (påkrævet)', listLabel: 'Påstandsliste',
+    emptyTitle: 'Ingen påstande endnu', emptyTitleList: 'Ingen påstande registreret endnu',
+    emptyBodyList: 'Så snart der kommer en påstand, vises listen her.',
   },
 };
 function themeCopy(){ return THEME_COPY[(state && state.themeId) || 'brok'] || THEME_COPY.brok; }

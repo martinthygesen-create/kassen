@@ -48,8 +48,22 @@ function beginComplainRound(state, roundNumber) {
   const c = state.complainer;
   c.round = roundNumber;
   const prompts = {};
+  // Fejl fundet ved gentagen bot-simulering (quizmaster-audit, se
+  // commit-historikken): pickPromptFor undgik kun genbrug for DENNE
+  // spiller selv (c.usedPromptIds[id]) — intet holdt styr på hvad de
+  // ANDRE spillere allerede havde fået I SAMME RUNDE. Ved normale
+  // familiestørrelser (5-6 spillere) landede 2+ spillere på bogstaveligt
+  // samme påstand i samme runde i 95-100% af runderne, selv i den
+  // STØRSTE pulje (brok, 20 prompts) — fordi situation+tier-matchning gør
+  // puljen PR. RUNDE reel lille, uanset totalpuljens størrelse. Løsningen
+  // er et ekstra, kun-denne-runde exclusion-set der fyldes op imens vi
+  // looper spillerne igennem, oveni den eksisterende per-spiller historik
+  // — samme gradvise fallback-kæde i pickPromptFor (forkert tier → enhver
+  // kategori → hele puljen) håndterer stadig et udtømt tilfælde elegant.
+  const usedThisRound = [];
   c.players.forEach(id => {
-    const prompt = pickPromptFor(id, c.situations[id], roundNumber, c.totalRounds, c.usedPromptIds[id] || [], state.themeId);
+    const excluded = (c.usedPromptIds[id] || []).concat(usedThisRound);
+    const prompt = pickPromptFor(id, c.situations[id], roundNumber, c.totalRounds, excluded, state.themeId);
     // Prompten der reelt VISES kombinerer arketypens promptHook med den
     // valgte situationelle prompt (se composePromptText i _lib/complainer.js)
     // — så en "passiv-aggressiv pilot" og en "udadvendt lærer" ikke længere
@@ -61,6 +75,7 @@ function beginComplainRound(state, roundNumber) {
     prompts[id] = { id: prompt.id, text: composedText, category: prompt.category, tier: prompt.tier };
     if (!c.usedPromptIds[id]) c.usedPromptIds[id] = [];
     c.usedPromptIds[id].push(prompt.id);
+    usedThisRound.push(prompt.id);
   });
   const order = shuffle(c.players);
   c.current = { type: 'complain', round: roundNumber, order, turnIndex: 0, speakerId: order[0], prompts };
