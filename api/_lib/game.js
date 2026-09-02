@@ -1012,10 +1012,22 @@ function generateTriviaQuestion(state) {
     }
   }
 
+  // FUND (quizmaster-audit): i et helt nyt/koldt rum (0 rigtige events) er
+  // `candidates` ALTID tom, uanset skin — inklusive Brokkekassen selv,
+  // testet direkte: 200/200 trivia-spørgsmål i et koldt rum blev den
+  // blanke "hvor mange medlemmer er der"-fallback, for alle 9 skins.
+  // Forskellen mellem skins i praksis er IKKE koden her, men hvor hurtigt
+  // hver skins rigtige udløser (se THEME_COPY/smaatText) fylder rummet med
+  // rigtige events — men koden selv beskyttede ikke imod den kolde
+  // periode for NOGEN skin, heller ikke referencen. Rettet ved at falde
+  // tilbage til den kuraterede, skin-farvede verdens-trivia-pulje (samme
+  // pulje `beginRound` selv bruger 35% af tiden, ALTID ≥20 valideret
+  // indhold pr. skin, se scripts/validate-trivia.js) i stedet for en
+  // indholdsløs optælling — så et koldt rum føles skin-relevant fra
+  // allerførste spil, uanset hvor sjældent den skins egen kasse-knap
+  // trykkes i virkeligheden.
   if (!candidates.length) {
-    const distractors = [String(members.length + 1), String(Math.max(1, members.length - 1)), String(members.length + 2)];
-    const { options, correctIndex } = buildOptions(String(members.length), [...new Set(distractors)]);
-    return { question: t.memberCountFallback, options, correctIndex };
+    return pickWorldTrivia(state);
   }
   return pickRandom(candidates)();
 }
