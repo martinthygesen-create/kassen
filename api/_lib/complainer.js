@@ -559,17 +559,44 @@ const COMPLAINER_ARCHETYPES_VENNE = [
       'Du kræver revanche med det samme.',
     ],
   },
+  // Quizmaster-audit (indholdsdybde): Vennekassen havde kun 6 arketyper/6
+  // prompts mod Bødekassens 8/11, selvom begge har fuld 3-spils-adgang —
+  // udvidet til samme dybde-niveau, samme skabelon (rolle+stil, 2-3
+  // eksplicitte instruktioner, promptHook der slutter på tankestreg).
+  {
+    id: 'oekonom_deleregning', name: 'Den nøjeregnende deleregnings-ekspert',
+    promptHook: 'Som en der altid regner ned til sidste krone —',
+    instructions: [
+      'Du husker præcis hvem der skylder hvad, ned til øren.',
+      'Du foreslår en app til at dele regningen "for retfærdighedens skyld".',
+      'Du bliver stille fornærmet hvis nogen runder op i din favør.',
+    ],
+  },
+  {
+    id: 'nostalgisk_fotograf', name: 'Den overivrige minde-fotograf',
+    promptHook: 'Som en der skal dokumentere hvert eneste øjeblik —',
+    instructions: [
+      'Du afbryder for det perfekte gruppebillede, hele tiden.',
+      'Du poster det i gruppechatten før aftenen overhovedet er slut.',
+      'Du bliver såret hvis nogen ikke vil være med på billedet.',
+    ],
+  },
 ];
 
 const COMPLAINER_SITUATIONS_VENNE = ['ven', 'fest', 'rejse', 'spil'];
 
 const COMPLAINER_PROMPTS_VENNE = [
   { id: 'fest1', category: 'fest', tier: 1, text: 'Du opdager at værten glemte at invitere dig til den fælles ferieplanlægning. Du brokker dig til en ven der ikke engang skal med. Hvad siger du?' },
+  { id: 'fest2', category: 'fest', tier: 3, text: 'Du opdager at resten af vennegruppen har haft en hyggeaften uden dig, som ingen nævnte bagefter. Du brokker dig til vennens søskende, som du knap kender. Hvad siger du?' },
   { id: 'rejse1', category: 'rejse', tier: 2, text: 'Vennegruppen kan ikke blive enige om rejsemål for tredje weekend i træk. Du brokker dig til din partner, som ikke er en del af vennegruppen. Hvad siger du?' },
+  { id: 'rejse2', category: 'rejse', tier: 3, text: 'Du opdager at to andre i vennegruppen allerede har booket flybilletter uden at spørge resten. Du brokker dig til en ven fra en helt anden vennekreds. Hvad siger du?' },
   { id: 'spil1', category: 'spil', tier: 1, text: 'En ven tager brætspilsaftenen alt for seriøst igen. Du brokker dig til en anden ven, der lige er ankommet. Hvad siger du?' },
+  { id: 'spil2', category: 'spil', tier: 2, text: 'En ven ændrer reglerne midt i spillet, "fordi det giver bedre mening nu". Du brokker dig til vennens kæreste, som ikke selv spillede med. Hvad siger du?' },
   { id: 'ven1', category: 'ven', tier: 1, text: 'En ven aflyser jeres faste aftale for tredje gang i træk. Du brokker dig til en kollega, som aldrig har mødt vedkommende. Hvad siger du?' },
   { id: 'ven2', category: 'ven', tier: 3, text: 'Du opdager at en ven har inviteret alle andre til noget, undtagen dig. Du brokker dig til vennens partner. Hvad siger du?' },
+  { id: 'ven3', category: 'ven', tier: 2, text: 'En ven låner dit værktøj/udstyr og afleverer det tilbage i stykker uden at nævne det selv. Du brokker dig til en fælles ven, som lige har hørt den halve historie. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 2, text: 'En ven brokker sig konstant over planlægning, men bidrager aldrig selv med noget. Du brokker dig om DET til en tredje ven. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 3, text: 'Du indser at du selv gjorde nøjagtig det du lige har brokket dig over hos en anden ven, for få uger siden. Du brokker dig om det til en ven der husker begge episoder. Hvad siger du?' },
 ];
 
 // Rosekassen — reward-polaritet, 5 arketyper, personaer der ROSER.
@@ -619,17 +646,53 @@ const COMPLAINER_ARCHETYPES_ROSE = [
       'Du krammer verbalt gennem ordene.',
     ],
   },
+  // Quizmaster-audit (indholdsdybde): Rosekassen havde kun 5 arketyper/6
+  // prompts, den tyndeste pulje af alle skins med fuld 3-spils-adgang.
+  // Udvidet til 8/11 — SAMME reward-only regel som resten af filen: intet
+  // her må antyde straf/anklage, kun forskellige STILARTER at rose i.
+  {
+    id: 'poetisk_ordkunstner', name: 'Den poetiske ros-digter',
+    promptHook: 'Som en der aldrig roser i almindelig prosa —',
+    instructions: [
+      'Du finder blomstrede, næsten overdrevne billedsprog.',
+      'Du holder en lille kunstpause før pointen.',
+      'Du virker selv rørt af dine egne ord.',
+    ],
+  },
+  {
+    id: 'lunefuld_humorist', name: 'Den lunefulde ros-humorist',
+    promptHook: 'Som en der roser bedst gennem en god drilleri —',
+    instructions: [
+      'Du pakker rosen ind i et kærligt drilleri først.',
+      'Du griner selv undervejs.',
+      'Du mener det oprigtigt, selvom tonen er let.',
+    ],
+  },
+  {
+    id: 'ceremoniel_hoejtidelig', name: 'Den højtidelige ros-ceremonimester',
+    promptHook: 'Som en der behandler enhver ros som en lille tale —',
+    instructions: [
+      'Du indleder med "jeg vil gerne sige noget vigtigt".',
+      'Du taler langsomt og med vægt på hvert ord.',
+      'Du afslutter altid med en lille skål eller klapsalve.',
+    ],
+  },
 ];
 
 const COMPLAINER_SITUATIONS_ROSE = ['ven', 'familie', 'arbejde', 'fremmed'];
 
 const COMPLAINER_PROMPTS_ROSE = [
   { id: 'ven1', category: 'ven', tier: 1, text: 'En ven overraskede hele gruppen med en gennemtænkt gave. Du roser vedkommende til en fælles ven, som ikke selv var med. Hvad siger du?' },
+  { id: 'ven3', category: 'ven', tier: 2, text: 'En ven huskede noget lille og vigtigt for dig, som du selv havde glemt. Du roser det til en fælles ven, som ikke aner hvor meget det betød. Hvad siger du?' },
   { id: 'familie1', category: 'familie', tier: 1, text: 'Din søster lavede en fantastisk middag til hele familien. Du roser hende til din mor, som ikke selv smagte den. Hvad siger du?' },
+  { id: 'familie2', category: 'familie', tier: 2, text: 'Din nevø/niece klarede noget svært for første gang, helt uden hjælp. Du roser det til en bedsteforælder, som ikke selv var til stede. Hvad siger du?' },
   { id: 'arbejde1', category: 'arbejde', tier: 2, text: 'En kollega reddede et vigtigt projekt i sidste øjeblik. Du roser vedkommende til en helt anden afdeling. Hvad siger du?' },
+  { id: 'arbejde2', category: 'arbejde', tier: 3, text: 'En kollega tog stille og roligt skylden for en fælles fejl, for at skåne resten af teamet. Du roser det til en leder, som ellers aldrig hører om den slags. Hvad siger du?' },
   { id: 'fremmed1', category: 'fremmed', tier: 1, text: 'En fremmed hjalp dig med noget helt uventet på gaden. Du roser oplevelsen til en ven over telefonen. Hvad siger du?' },
   { id: 'ven2', category: 'ven', tier: 3, text: 'En ven har ændret sig markant til det bedre det seneste år. Du roser forandringen direkte til vennen selv. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 2, text: 'Du bliver selv rost for noget, og indser at du sjældent giver samme ros videre. Du roser nu en anden for præcis det samme. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 3, text: 'Du indser at den du roser mindst, faktisk fortjener det mest. Du roser vedkommende for første gang i lang tid, til en fælles ven som lagde mærke til stilheden. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 1, text: 'Du hører en anden rose en tredje person varmt. Du supplerer med din egen ros af samme person, til den der startede det. Hvad siger du?' },
 ];
 
 // Drikkekassen — session-baseret, 6 arketyper, fest/drikkeleg-personaer.
@@ -688,17 +751,43 @@ const COMPLAINER_ARCHETYPES_DRIK = [
       'Du fortæller den samme historie igen.',
     ],
   },
+  // Quizmaster-audit (indholdsdybde): Drikkekassen havde kun 6 arketyper/6
+  // prompts, samme tynde niveau som Vennekassen/Rosekassen — udvidet til
+  // 8/11, samme skabelon.
+  {
+    id: 'shotansvarlig_ivrig', name: 'Den ivrige shot-ansvarlige',
+    promptHook: 'Som en der altid har det næste shot klar —',
+    instructions: [
+      'Du finder på en ny grund til et shot hvert femte minut.',
+      'Du bliver skuffet hvis stemningen dæmpes.',
+      'Du husker aldrig selv hvor mange du har taget.',
+    ],
+  },
+  {
+    id: 'kok_sent_paa_natten', name: 'Den sent-på-natten madlavende ven',
+    promptHook: 'Som en der ALTID ender med at lave mad klokken 3 —',
+    instructions: [
+      'Du insisterer på at alle skal smage din natmad.',
+      'Du bliver fornærmet hvis nogen takker nej til maden.',
+      'Du efterlader et rodet køkken uden at nævne det selv.',
+    ],
+  },
 ];
 
 const COMPLAINER_SITUATIONS_DRIK = ['fest', 'runde', 'spil', 'morgen'];
 
 const COMPLAINER_PROMPTS_DRIK = [
   { id: 'fest1', category: 'fest', tier: 1, text: 'Nogen spillede den samme sang tre gange i træk til festen. Du brokker dig til en gæst der lige er ankommet. Hvad siger du?' },
+  { id: 'fest3', category: 'fest', tier: 2, text: 'Nogen skruede op for musikken hver gang stemningen faldt til ro. Du brokker dig til en nabo der lige er kigget forbi. Hvad siger du?' },
   { id: 'runde1', category: 'runde', tier: 1, text: 'Du opdager at du har givet tre runder, og ingen andre har givet én. Du brokker dig til bartenderen, som bare ekspederer. Hvad siger du?' },
+  { id: 'runde2', category: 'runde', tier: 3, text: 'Du opdager at "vi deler bare til sidst" endte med at du betalte mest, igen. Du brokker dig til en helt fremmed ved baren. Hvad siger du?' },
   { id: 'spil1', category: 'spil', tier: 2, text: 'Nogen snød tydeligt i drikkelegen, men nægter det. Du brokker dig til en ven der ikke så det ske. Hvad siger du?' },
+  { id: 'spil2', category: 'spil', tier: 1, text: 'Nogen opfinder nye regler til drikkelegen midt i, som altid tilfældigvis gavner dem selv. Du brokker dig til en gæst der først lige er mødt op. Hvad siger du?' },
   { id: 'morgen1', category: 'morgen', tier: 2, text: 'Du vågner op og opdager at du lovede at arrangere næste fest. Du brokker dig til din partner, som advarede dig i forvejen. Hvad siger du?' },
+  { id: 'morgen2', category: 'morgen', tier: 3, text: 'Du finder ud af at du sang karaoke solo foran hele festen, og alle har det på video. Du brokker dig til den eneste der IKKE filmede det. Hvad siger du?' },
   { id: 'fest2', category: 'fest', tier: 3, text: 'Værten glemte at invitere dig til efterfesten. Du brokker dig til en fælles ven, som var der. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen brokker sig over at skulle give en runde, men accepterer altid andres. Du brokker dig om DET til en tredje gæst. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 2, text: 'Du indser at du selv gjorde nøjagtig det du plejer at brokke dig over andre for til fester. Du brokker dig om det til en gæst der husker begge aftener. Hvad siger du?' },
 ];
 
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
