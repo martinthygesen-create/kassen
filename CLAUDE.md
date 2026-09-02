@@ -74,3 +74,39 @@ denne ene branch, er disciplinen omkring `git fetch`/fast-forward FØR hver
 push ekstra vigtig — se den gentagne "stale lokal checkout"-problematik i
 commit-historikken. Altid: `git fetch origin <branch>` og sammenlign mod
 `origin/<branch>` før en push, aldrig antag at lokal HEAD er ajour.
+
+## Mini-spil-kvalitet: Brokspillet er referencestandarden ("Højeste validator")
+
+Efter en "quizmaster"-audit (gentagne bot-simulerede spil kørt direkte mod
+`api/_lib/*.js`-motorerne, ikke gæt eller kodelæsning alene — se
+commit-historikken omkring omskrivningen af Kollegakassens knap) er
+konklusionen: **Brokspillet (`api/_lib/game.js`/`gameFlow.js`) er
+arkitektonisk den mest robuste af de tre spil, og skal bruges som
+kvalitets-benchmark når nye spil/runde-typer bygges eller ændres.**
+
+Hvorfor Brokspillet er referencen:
+- Hver runde har enten ÉT delt indhold (alle ser samme quiplash-prompt/
+  trivia-spørgsmål/udsagn) eller frit tekst-input fra spilleren selv —
+  ALDRIG flere uafhængigt udtrukne pulje-elementer til flere forskellige
+  spillere i samme runde. Det gør Brokspillet strukturelt IMMUNT over for
+  en hel fejlklasse (se nedenfor).
+- Nødbremse-mønsteret (`BROKSPILLET_AUTO_MS`/`COMPLAINT_COUNTDOWN_MS` i
+  `gameFlow.js`) sikrer at ingen runde nogensinde kan gå i stå — genbrugt
+  identisk af MrBrok og Det Store Brokkeri, men først bevist robust her.
+
+**Konkret fejlklasse fundet og rettet i Det Store Brokkeri** (findes IKKE i
+Brokspillet eller MrBrok, netop pga. ovenstående): `pickPromptFor` i
+`complainer.js` uddelte påstande til hver spiller uafhængigt af hvad de
+ANDRE spillere i SAMME runde allerede havde fået — kun egen historik blev
+undgået. Ved normale familiestørrelser (5-6 spillere) fik 2+ spillere
+bogstaveligt samme påstand i samme runde i 95-100% af runderne, målt ved
+gentagen simulering, selv i den største indholdspulje (brok, 20 prompts).
+Rettet i `beginComplainRound` (complainerFlow.js) med et ekstra per-runde
+exclusion-set. **Enhver ny spilmekanik der uddeler individuelt indhold til
+flere spillere i samme runde SKAL eksplicit udelukke hvad andre spillere
+allerede har fået i den runde — antag det ikke er dækket af eksisterende
+per-spiller-historik alene.**
+
+MrBrok er også testet grundigt (gentagne bot-spil, alle skins, min./maks.
+spillerantal) og er solid — men er strukturelt immun over for samme
+fejlklasse af en anden grund: ét delt emne pr. spil, ikke pr. spiller.
