@@ -154,16 +154,12 @@ Ud over drikkekassen (ovenfor) er følgende også drøftet:
   `buildWheelChanceHtml`/`buildSlotCabinetHtml` i `index.html`); det der
   mangler er at gøre den til en selvstændig, genbrugelig komponent løsrevet
   fra Brokspillets egen rundetype — IKKE en helt ny komponent.
-- **Rygtebørsen** (idé, ikke udforsket endnu) — opstod fra en Sladrekassen-
-  gennemgang: kasse-knappen ("Nogen har sladret…") er bevidst REAKTIV, man
-  rapporterer et rygte der allerede er sket, og betaler intet selv (kun den
-  udpegede, bekræftede sladrehank betaler). Idéen er en AKTIV mekanik ved
-  siden af — man selv sætter et rygte i omløb/"handler" med rygter, i
-  stedet for kun at rapportere andres — vurderet potentielt sjovere end
-  selve rapporterings-knappen. Ikke tænkt igennem endnu (spilflow,
-  point/pris-model, hvordan det adskiller sig fra Sladrehanen/Sladrefælden
-  der allerede findes) — kræver et rigtigt design-gennemløb før noget
-  bygges, ikke bare denne note.
+- **Rygtebørsen** (idé, ikke udforsket) — en AKTIV rygte-mekanik (selv sætte
+  et rygte i omløb), i modsat til Sladrekassens nuværende REAKTIVE
+  rapportér-knap. Muligvis sjovere. Ikke designet endnu.
+- **Valgbar enhed pr. rum** (idé, ikke udforsket) — `state.unit` (€/kr/point)
+  er allerede generisk i koden, men fast pr. skin ved oprettelse. Kunne
+  gøres til et valg i step 3, ikke kun skin-forudbestemt.
 
 Fælles kerne der IKKE ændres på tværs af nogen af disse:
 `members[]`, `pending`, `votes[]`+`need`, `events[]`, `history[]`, `settle()`.

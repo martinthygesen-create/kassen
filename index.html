@@ -200,6 +200,7 @@
   .jar-svg{ width: min(72vw, 300px); height:auto; display:block; filter: drop-shadow(0 18px 24px rgba(0,0,0,0.35)); }
   .jar-total{ position:absolute; top:52%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
   .jar-total .amt{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:38px; color:var(--ink); line-height:1; }
+  .jar-total .amt .unit-word{ font-size:.42em; font-weight:700; vertical-align:middle; margin-left:1px; }
   .jar-total .lbl{ font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
 
   .tabs{ display:flex; gap:6px; padding:14px 20px 10px; }
@@ -981,6 +982,14 @@ function dayCount(){
   return Math.max(1, Math.floor((Date.now() - state.createdAt)/86400000) + 1);
 }
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+// Enheder som "point"/"noter" er ord, ikke korte symboler som "€"/"kr" —
+// i den store krukke-total (fast font-størrelse, designet til et 1-2
+// tegns symbol) fik et helt ord til at virke overfyldt/klemt. Ordet vises
+// derfor i en mindre skrift end selve tallet, symboler uændret.
+function amtHtml(total, unit){
+  const u = unit || '€';
+  return u.length > 2 ? `${total}<span class="unit-word">${escapeHtml(u)}</span>` : `${total}${escapeHtml(u)}`;
+}
 
 /* ============ API ============ */
 async function api(path, body){
@@ -1228,11 +1237,7 @@ function markAppPickScrollable(){
 const SKIN_PRESETS = [
   {
     id: 'brok', name: 'Brokkekassen', emoji: '🫙',
-    // "Brokker DU dig" var tvetydigt (kunne læses som at rapportøren selv
-    // betaler) — det faktiske flow (openBrokSheet) lader dig pege på et
-    // HVILKET SOM HELST medlem, typisk en anden. "nogen" i stedet for "du"
-    // fjerner tvetydigheden uden at ændre selve mekanikken eller tonen.
-    ruleTagline: 'Brokker nogen sig, koster det 1€.', unit: '€',
+    ruleTagline: 'Fælles brok over hverdagens irritationer.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
     gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Det Store Brokkeri' },
@@ -1240,7 +1245,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'bode', name: 'Bødekassen', emoji: '💸',
-    ruleTagline: 'Kom for sent, eller bryd en aftalt regel, og det koster en bøde.', unit: 'kr',
+    ruleTagline: 'Bøder for aftalte regler i gruppen.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: false,
     smaatText: 'Regelbrud, bekræftet af alle',
     gameNames: { spil: 'Bødespillet', mrbrok: 'Bødedetektiven', complainer: 'Bødefælden' },
@@ -1254,7 +1259,7 @@ const SKIN_PRESETS = [
     // sladder. "nogen"/"nogens" i stedet for "du"/"din" fjerner
     // tvetydigheden helt: det er den UDPEGEDE (og bekræftede) sladrehank,
     // aldrig rapportøren, der betaler.
-    ruleTagline: 'Sladrer nogen, koster det en krone.', unit: 'kr',
+    ruleTagline: 'Rygter og sladder ved bordet.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sladder, bekræftet af alle',
     gameNames: { spil: 'Sladrespillet', mrbrok: 'Sladrehanen', complainer: 'Sladrefælden' },
@@ -1262,7 +1267,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'venne', name: 'Vennekassen', emoji: '🧑‍🤝‍🧑',
-    ruleTagline: 'Brokker nogen sig over vennegruppen, koster det en krone.', unit: 'kr',
+    ruleTagline: 'Brok over vennegruppens skæve vaner.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
     gameNames: { spil: 'Vennespillet', mrbrok: 'Vennedetektiven', complainer: 'Vennefælden' },
@@ -1270,7 +1275,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'rose', name: 'Rosekassen', emoji: '🌹',
-    ruleTagline: 'Roser du nogen, tæller det i puljen.', unit: 'point',
+    ruleTagline: 'Ros og gode ord til hinanden.', unit: 'point',
     poolPolarity: 'reward', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Ros, bekræftet af alle',
     gameNames: { spil: 'Rosespillet', mrbrok: 'Rosedetektiven', complainer: 'Rosefælden' },
@@ -1278,7 +1283,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'drik', name: 'Drikkekassen', emoji: '🍻',
-    ruleTagline: 'Glemmer nogen sin runde, koster det en krone.', unit: 'kr',
+    ruleTagline: 'Glemte runder til fest og druk.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: false,
     smaatText: 'Rundefejl, bekræftet af alle',
     gameNames: { spil: 'Rundespillet', mrbrok: 'Rundedetektiven', complainer: 'Rundefælden' },
@@ -1286,7 +1291,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'konkurrence', name: 'Konkurrencekassen', emoji: '🏆',
-    ruleTagline: 'Vind en runde, og det tæller i puljen.', unit: 'point',
+    ruleTagline: 'Sejre og dyster mellem jer.', unit: 'point',
     poolPolarity: 'reward', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sejre, bekræftet af alle',
     gameNames: { spil: 'Konkurrencespillet', mrbrok: 'Konkurrencedetektiven', complainer: 'Konkurrencefælden' },
@@ -1296,7 +1301,7 @@ const SKIN_PRESETS = [
     id: 'logn', name: 'Løgnerkassen', emoji: '🎭',
     // Samme "du/din"-tvetydighed som Sladrekassen havde — rettet af samme
     // grund: openBrokSheet lader dig pege på et hvilket som helst medlem.
-    ruleTagline: 'Bliver nogens løgn afsløret, koster det en krone.', unit: 'kr',
+    ruleTagline: 'Hvem lyver — og bliver afsløret.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Løgne, afsløret ved afstemning',
     gameNames: { spil: 'Brokspillet', mrbrok: 'Løgnedetektiven', complainer: 'Løgnefælden' },
@@ -2163,7 +2168,7 @@ function showRoomIntroSplash(){
 
   const items = [];
   const gn = state.gameNames || {};
-  if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'brok dig, og det koster en krone i puljen'}`]);
+  if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'brok dig, og det koster 1€ i puljen'}`]);
   if(state.gameEnabled) items.push(['👉', gn.spil || 'Brokspillet', 'Hurtige quiz- og afstemningsrunder I spiller sammen']);
   if(state.mrbrokEnabled) items.push(['🕵️', gn.mrbrok || 'MrBrok', `Find den skjulte ${gn.mrbrok || 'MrBrok'}, før de andre bliver afsløret`]);
   if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', 'Vær i karakter — men ingen ved endnu hvem der er skyldig']);
@@ -2502,7 +2507,7 @@ function renderInner(){
     </header>
     <div class="jar-wrap" id="jarWrap" style="cursor:pointer;">
       ${jarSVG(fillPct)}
-      <div class="jar-total"><div class="amt">${total}${escapeHtml(state.unit || '€')}</div><div class="lbl">i puljen</div>${whatToBuy(total) ? `<div style="margin-top:4px; font-size:13.5px; font-weight:700; color:var(--ink); text-transform:none; letter-spacing:normal;">${whatToBuy(total)}</div>` : ''}</div>
+      <div class="jar-total"><div class="amt">${amtHtml(total, state.unit)}</div><div class="lbl">i puljen</div>${whatToBuy(total) ? `<div style="margin-top:4px; font-size:13.5px; font-weight:700; color:var(--ink); text-transform:none; letter-spacing:normal;">${whatToBuy(total)}</div>` : ''}</div>
     </div>
     ${state.goal && state.goal.trim() ? `<div style="text-align:center; font-size:12.5px; color:rgba(255,247,232,0.5); padding:2px 24px 0;">🎯 Potten går til: <span style="color:rgba(255,247,232,0.8); font-weight:600;">${escapeHtml(state.goal)}</span></div>` : ''}
     <div class="tabs">
