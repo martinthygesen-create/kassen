@@ -1321,7 +1321,10 @@ const SKIN_PRESETS = [
   },
   {
     id: 'hjaelper', name: 'Kollegakassen', emoji: '🤝',
-    ruleTagline: 'Kom med en påstand om en kollega — holdlederen afgør.', unit: 'noter',
+    // "noter" som enhed var uklart (bruger-feedback: "ved ikke engang hvad
+    // noter er") — "point" er allerede den etablerede, letforståelige
+    // enhed for ikke-penge-skins (Rose/Konkurrence bruger den samme).
+    ruleTagline: 'Kom med en påstand om en kollega — holdlederen afgør.', unit: 'point',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
     smaatText: 'Påstande om kolleger, bedømt af holdlederen',
     gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Kollegafælden' },
