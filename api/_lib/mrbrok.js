@@ -253,6 +253,48 @@ const MRBROK_CLUE_TIPS_DRIK = [
   'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
 ];
 
+// Konkurrencekassen — EGET indhold, IKKE en regex-omskrivning af brok-
+// puljens klage-emner (se commit-historikken/quizmaster-audit-fund:
+// CONTENT_BY_THEME's tidligere konkurrence-gren erstattede kun "brokker
+// dig over" med "praler af" i brok's egne SUR/VRED/TRÆT-personaer — gav
+// meningsløse emner som "Sur stewardesse — praler af besværlige
+// passagerer". Reward-polaritet kræver STOLTE/SELVSIKRE personaer, ikke
+// bare et andet verbum på en vred rolle).
+const MRBROK_TOPICS_KONKURRENCE = [
+  'Stolt sejrherre — praler af hvor overlegent du vandt sidste kamp',
+  'Selvsikker skakspiller — praler af hvor hurtigt du gennemskuede modstanderens træk',
+  'Kæphøj bowler — praler af den perfekte serie du lige har spillet',
+  'Sejrsikker quizdeltager — praler af hvor mange spørgsmål du kunne svare på uden at tænke',
+  'Triumferende løber — praler af den nye personlige rekord du satte',
+  'Selvglad kortspiller — praler af det geniale træk der vandt hele spillet',
+  'Storsnudet dartspiller — praler af den perfekte serie af bullseyes',
+  'Skrydende poolspiller — praler af hvor mange bolde du sank i træk',
+  'Overlegen skiløber — praler af hvor meget hurtigere du var end alle andre',
+  'Kompetitiv brætspilsspiller — praler af den strategi ingen så komme',
+  'Ivrig turneringsvinder — praler af pokalen du lige har vundet',
+  'Highfivende holdkaptajn — praler af det afgørende mål du selv scorede',
+  'Selvsikker forhandler — praler af den aftale du fik hjem billigere end alle andre',
+  'Sejrsvant tipskuponspiller — praler af den rigtige række du gættede',
+  'Stolt madlavningskonkurrent — praler af dommernes lovord om din ret',
+  'Kæphøj gamer — praler af den umulige boss du besejrede først',
+  'Overbevist auktionsvinder — praler af hvor billigt du fik det eftertragtede stykke',
+  'Triumferende cykelrytter — praler af hvor mange du overhalede på bakken',
+  'Selvglad quizvært — praler af hvor svært du kunne gøre spørgsmålene',
+  'Sejrsikker sportsforælder — praler af barnets sidste sejr, som var din egen fortjeneste',
+];
+
+const MRBROK_CLUE_TIPS_KONKURRENCE = [
+  'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
+  'Hold svaret kort — giv ikke det hele væk på én gang',
+  'Pral om en PERSON du slog, ikke bare selve sejren',
+  'Svar med en følelse ved det, ikke selve tingen',
+  'Vend spørgsmålet en anelse — svar med den sejr du helst selv ville prale af',
+  'Nævn hvor tit du plejer at vinde den slags',
+  'Beskriv hvordan du plejer at fejre en sejr',
+  'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
+  'Er du MrBrok: svar selvsikkert og vagt i stedet for at prøve at være præcis',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til MRBROK_TOPICS/
 // MRBROK_CLUE_TIPS ovenfor (ingen indholds-omskrivning, kun et lookup-lag
@@ -265,17 +307,12 @@ const CONTENT_BY_THEME = {
   // tema-afhængige, ikke "MrBrok" bogstaveligt, se planens punkt om at
   // spilnavne er brok-brandede og skal reskinnes pr. tema.
   bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Bødedetektiven' },
-  // Konkurrencekassen: SAMME roller/domæne som brok (bredt hverdagsdomæne,
-  // ikke et nyt emne), men "brokker dig over" omskrevet til "praler af" —
-  // reward-polaritet betyder man praler af sejre, ikke brokker sig over tab.
-  // IKKE en ordret genbrug (fangede af Dommerens lækage-tjek ved første
-  // forsøg, se commit-historikken) — kun selve VERBET er nyt, rollerne er
-  // stadig de samme brede hverdags-personaer.
+  // Konkurrencekassen: eget indhold (se MRBROK_TOPICS_KONKURRENCE's
+  // kommentar ovenfor for hvorfor — en tidligere regex-omskrivning af
+  // brok's egne vrede personaer gav meningsløse emner).
   konkurrence: {
-    mrbrokTopics: MRBROK_TOPICS.map(t => t.replace(/brokker dig over/g, 'praler af')),
-    mrbrokClueTips: MRBROK_CLUE_TIPS.map(t => t
-      .replace(/Klag over en PERSON i situationen, ikke bare selve tingen/, 'Pral om en PERSON i situationen, ikke bare selve tingen')
-      .replace(/Vend spørgsmålet en anelse — svar på det du helst vil brokke dig over/, 'Vend spørgsmålet en anelse — svar på det du helst selv vil prale af')),
+    mrbrokTopics: MRBROK_TOPICS_KONKURRENCE,
+    mrbrokClueTips: MRBROK_CLUE_TIPS_KONKURRENCE,
     gameName: 'Konkurrencedetektiven',
   },
   sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Sladrehanen' },

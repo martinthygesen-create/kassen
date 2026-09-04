@@ -12,18 +12,24 @@
 // selve spil-logikken (state-mutation, fase-overgange, pulje-matematik)
 // opfører sig identisk med hvad en rigtig klient ville udløse.
 //
-// DÆKNING LIGE NU (ærligt, ikke overdrevet):
+// DÆKNING LIGE NU (ærligt, ikke overdrevet — rettet, denne header var
+// forældet: den sagde MrBrok/Det Store Brokkeri-drivere "ikke bygget
+// endnu", men playtestMrBrok/playtestComplainer nedenfor ER fuldt
+// implementeret, inkl. EXPERIMENTAL "Udfordring"):
 //  ✅ Krukke-livscyklus: opret → join → anklage → bekræft (kvorum) → "Gør op"
 //  ✅ Brokspillet: én fuld runde, alle 6 undertyper (quiplash/truefalse/
 //     trivia/guessbrok/casinobrok/rose) håndteret generisk ud fra
 //     state.game.current.type/phase, samme logik som api/game.js's
 //     'submit'-handler.
-//  ❌ MrBrok/Det Store Brokkeri fulde runde-drivere — IKKE bygget endnu.
-//     Samme mønster (inspicér state.X.current.type/phase, kald samme
-//     resolve*-funktioner som api/mrbrok.js/api/complainer.js) er den
-//     oplagte næste udvidelse, men er bevidst ikke lavet i denne omgang
-//     for ikke at levere en overfladisk/utestet driver under dække af at
-//     være "færdig". Se TODO nederst i filen.
+//  ✅ MrBrok: én fuld runde (clue → vote → ... → steal → gameover),
+//     se playtestMrBrok nedenfor.
+//  ✅ Det Store Brokkeri: én fuld runde (complain → vote → bet → reveal →
+//     interrogation → guess → judge → gameover), inkl. EXPERIMENTAL
+//     "Udfordring", se playtestComplainer nedenfor.
+//  Alle tre spils drivere kører FULDAUTOMATISK (bots på alle sæder,
+//  ingen menneske-input) — for at reelt SPILLE MrBrok/Det Store Brokkeri
+//  selv, som et rigtigt menneske blandt 3 bot-modspillere, se i stedet
+//  scripts/play.js.
 //
 // BRUG:
 //   node scripts/playtest.js <themeId> [--fast]

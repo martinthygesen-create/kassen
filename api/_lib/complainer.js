@@ -790,6 +790,140 @@ const COMPLAINER_PROMPTS_DRIK = [
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du indser at du selv gjorde nøjagtig det du plejer at brokke dig over andre for til fester. Du brokker dig om det til en gæst der husker begge aftener. Hvad siger du?' },
 ];
 
+// Konkurrencekassen — EGET indhold, IKKE en regex-omskrivning af brok-
+// puljens klage-scener (se commit-historikken/quizmaster-audit-fund:
+// CONTENT_BY_THEME's tidligere konkurrence-gren erstattede kun ordet
+// "brokker dig til" med "praler du til" i brok's egne KLAGE-scenarier —
+// gav grammatisk forkerte sætninger ("Du praler du til...") og situationer
+// der stadig var klager, ikke sejre, fx "chefen beder dig blive en time
+// ekstra — du praler du til rengøringsassistenten" gav ingen mening som
+// praleri). Reward-polaritet betyder man praler af EGNE sejre, ikke
+// klager over andres opførsel — derfor egne situationer (sport/spil/
+// arbejde/familie/ven, ikke chef/nabo/familie/kollega/ven) og egne
+// arketyper (bragende leverings-stil, ikke brok-stil).
+const COMPLAINER_ARCHETYPES_KONKURRENCE = [
+  {
+    id: 'pilot', name: 'Den selvsikre pilot',
+    promptHook: 'Som en der er vant til at have styringen i luften —',
+    instructions: [
+      'Du er ikke i tvivl om at du gjorde det bedst.',
+      'Du er højrøstet og overdriver gerne dine bedrifter.',
+      'Smil bredt mens du fortæller det, som om det var oplagt.',
+    ],
+  },
+  {
+    id: 'kok', name: 'Den udadvendte kok',
+    promptHook: 'Med hele køkkenets fulde opmærksomhed som vane —',
+    instructions: [
+      'Du råber sejren ud med det samme — helt uden filter.',
+      'Overdriv følelserne teatralsk, gerne med håndbevægelser.',
+      'Du er dybt fornærmet hvis nogen ikke er lige så imponerede som dig selv.',
+    ],
+  },
+  {
+    id: 'nabo', name: 'Den beskedent-praleriske nabo',
+    promptHook: 'Som en der "bare lige nævner det i forbifarten" —',
+    instructions: [
+      'Sig "det var ikke noget særligt" — men fortæl det alligevel i detaljer.',
+      'Brug små hints og antydninger i stedet for at sige det ligeud.',
+      'Skift emne brat, som om du slet ikke selv lagde mærke til sejren.',
+    ],
+  },
+  {
+    id: 'foraelder', name: 'Den opofrende sportsforælder',
+    promptHook: 'Som en der altid har lagt alt til side for det her —',
+    instructions: [
+      'Det er dig der har trænet mest, nævn det, ubedt.',
+      'Sammenlign med alt det du "kunne" have gjort i stedet.',
+      'Afslut med et stolt suk og "men det var jo hele indsatsen værd".',
+    ],
+  },
+  {
+    id: 'projektleder', name: 'Den strategiske projektleder',
+    promptHook: 'Med et regneark der beviser det —',
+    instructions: [
+      'Send indirekte hip via "bare lige en detalje..." — aldrig direkte praleri.',
+      'Ros modstanderen først, fremhæv så din egen sejr med et "men".',
+      'Brug ordet "interessant" som skjult overlegenhed.',
+    ],
+  },
+  {
+    id: 'laerer', name: 'Den udadvendte lærer',
+    promptHook: 'Som en der er vant til at få hele lokalets opmærksomhed —',
+    instructions: [
+      'Du taler højt og bruger hele kroppen når du fortæller om sejren.',
+      'Inddrag "vi gjorde det sammen", men gør klart hvem der reelt bar det.',
+      'Du elsker en god pointe og gentager den gerne tre gange.',
+    ],
+  },
+  {
+    id: 'fitness', name: 'Den hårdtarbejdende fitnessinstruktør',
+    promptHook: 'Som en der altid er der klokken seks, også for sig selv —',
+    instructions: [
+      'Du har ALT arbejdet for det, og ingen forstår hvor hårdt det var.',
+      'Nævn hvor tidligt du stod op for at nå det.',
+      'Antyd at ingen andre ville have klaret det samme.',
+    ],
+  },
+  {
+    id: 'taxachauffoer', name: 'Den afdæmpet-praleriske taxachauffør',
+    promptHook: 'Som en der ser alt fra bagsædet, men gerne fortæller det —',
+    instructions: [
+      'Fortæl det roligt og underspillet, som om det var indlysende.',
+      'Brug en tør, selvsikker tone — aldrig råb.',
+      'Lad en lang pause tale for dig efter pointen.',
+    ],
+  },
+  {
+    id: 'influencer', name: 'Den polerede influencer',
+    promptHook: 'Med et smil klar til kameraet, uanset hvad —',
+    instructions: [
+      'Pak alt ind i taknemmelighed — "helt vildt heldig, men også bare hårdt arbejde".',
+      'Vær sødt selvpromoverende — "haha nej men altså" mens du praler.',
+      'Understreg at "jeg siger det jo bare fordi I spurgte".',
+    ],
+  },
+  {
+    id: 'haandvaerker', name: 'Den ligeud-praleriske håndværker',
+    promptHook: 'Som en der siger tingene ligeud, håndværker-stil —',
+    instructions: [
+      'Du praler højt og direkte, uden omsvøb.',
+      'Brug konkrete, fysiske eksempler — "det tog MIG kun halvdelen af tiden".',
+      'Du er stolt af at sige tingene ligeud — "nogen må jo sige det".',
+    ],
+  },
+];
+
+const COMPLAINER_SITUATIONS_KONKURRENCE = ['sport', 'spil', 'arbejde', 'familie', 'ven'];
+
+const COMPLAINER_PROMPTS_KONKURRENCE = [
+  // --- sport ---
+  { id: 'sport1', category: 'sport', tier: 1, text: 'Du vinder den uofficielle løbetur mod din kollega på vej til bussen. Du praler af det til den fremmede i køen bagved, som slet ikke aner hvad der lige skete. Hvad siger du?' },
+  { id: 'sport2', category: 'sport', tier: 2, text: 'Du slår hele familien i minigolf for tredje gang i træk. Du praler af det til naboen over hækken, som ikke engang vidste I havde spillet. Hvad siger du?' },
+  { id: 'sport3', category: 'sport', tier: 3, text: 'Du vinder årets padel-turnering i klubben, efter at have tabt de sidste tre år. Du praler af det til din gamle træner, som engang sagde du ikke havde talentet. Hvad siger du?' },
+  // --- spil ---
+  { id: 'spil1', category: 'spil', tier: 1, text: 'Du vinder Ludo mod hele familien tre gange i træk juleaften. Du praler af det til postbuddet dagen efter, som bare afleverer en pakke. Hvad siger du?' },
+  { id: 'spil2', category: 'spil', tier: 2, text: 'Du gætter alle svarene rigtigt til quizzen, mens dit hold ellers plejer at tabe. Du praler af det til din frisør, mens du sidder fastspændt i stolen. Hvad siger du?' },
+  { id: 'spil3', category: 'spil', tier: 3, text: 'Du slår din svoger i poker for første gang nogensinde, efter års drilleri. Du praler af det til din bedste ven over telefonen, som egentlig ringede om noget helt andet. Hvad siger du?' },
+  // --- arbejde ---
+  { id: 'arbejde1', category: 'arbejde', tier: 1, text: 'Du lander den største aftale i afdelingen dette kvartal. Du praler af det til rengøringsassistenten, som er ved at låse af og bare vil hjem. Hvad siger du?' },
+  { id: 'arbejde2', category: 'arbejde', tier: 2, text: 'Din chef roser dit projekt foran hele mødelokalet. Du praler af det til din partner bagefter, som bare spurgte hvordan dagen gik. Hvad siger du?' },
+  { id: 'arbejde3', category: 'arbejde', tier: 3, text: 'Du får den forfremmelse, du selv har knoklet for i to år. Du praler af det til receptionisten, som knap nok kender dig. Hvad siger du?' },
+  // --- familie ---
+  { id: 'familie1', category: 'familie', tier: 1, text: 'Dit hold vinder familiens årlige stafet til sommerfesten. Du praler af det til en kollega, som ikke engang kender resten af familien. Hvad siger du?' },
+  { id: 'familie2', category: 'familie', tier: 2, text: 'Dit barn scorer det afgørende mål, og du var den der trænede med hende/ham hver dag. Du praler af det til din mor, som altid ender med at tage din brors parti. Hvad siger du?' },
+  { id: 'familie3', category: 'familie', tier: 3, text: 'Du vinder årets julequiz mod hele familien for tredje år i træk. Du praler af det til din svoger, som du ellers aldrig taler privat med. Hvad siger du?' },
+  // --- ven ---
+  { id: 'ven1', category: 'ven', tier: 1, text: 'Du slår din bedste ven i den evige diskussion om hvem der løber hurtigst — sort på hvidt, med en app til at bevise det. Du praler af det til en kollega, som aldrig har mødt vedkommende. Hvad siger du?' },
+  { id: 'ven2', category: 'ven', tier: 2, text: 'Du vinder væddemålet, I lavede for tre måneder siden, som ingen troede du kunne vinde. Du praler af det til din frisør, mens du sidder fastspændt i stolen. Hvad siger du?' },
+  { id: 'ven3', category: 'ven', tier: 3, text: 'Du bliver kåret som årets rejsefælle af vennegruppen efter at have planlagt hele turen. Du praler af det til vennens kæreste, som du normalt aldrig taler alene med. Hvad siger du?' },
+  // --- relational (bruges af alle, uanset situation) ---
+  { id: 'rel1', category: 'relational', tier: 1, text: 'Dine børn spørger hvem der er bedst til computerspil i familien, og alle peger på dig. Du praler af det til en kollega uden børn. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 2, text: 'Nogen praler af en lille sejr, mens du selv lige har vundet noget meget større. Du praler videre til din partner om det, bagefter, om hvor lidt folk forstår hvad en RIGTIG sejr er. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 3, text: 'Du plejer at prale af dine sejre — men din partner peger på, at du glemte at nævne modstanderens dårlige dag. Du praler til din bedste ven over at blive kaldt en dårlig vinder, af at vinde. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 3, text: 'En du står tæt på ville blive overrasket, hvis de hørte hvor meget du reelt praler af sejren, når de ikke er der. Du praler om netop den sejr til en fælles ven. Hvad siger du?' },
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
 // situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
@@ -810,14 +944,13 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_BODE,
     gameName: 'Bødefælden',
   },
-  // Konkurrencekassen: samme situationer/arketyper som brok (arketyperne
-  // beskriver LEVERINGSSTIL, ikke selve emnet — ingen af dem nævner "brok"),
-  // men prompts omskrevet fra "brokker dig til" til "praler du til" —
-  // reward-polaritet betyder man praler af sejre, ikke klager over tab.
+  // Konkurrencekassen: eget indhold (se COMPLAINER_ARCHETYPES_KONKURRENCE's
+  // kommentar ovenfor for hvorfor — en tidligere regex-omskrivning af
+  // brok's egne klage-scener gav grammatisk forkerte, meningsløse sætninger).
   konkurrence: {
-    archetypes: COMPLAINER_ARCHETYPES,
-    situations: COMPLAINER_SITUATIONS,
-    prompts: COMPLAINER_PROMPTS.map(p => ({ ...p, text: p.text.replace(/[Dd]u brokker dig( videre)? til/g, m => m.replace('brokker dig', 'praler du')) })),
+    archetypes: COMPLAINER_ARCHETYPES_KONKURRENCE,
+    situations: COMPLAINER_SITUATIONS_KONKURRENCE,
+    prompts: COMPLAINER_PROMPTS_KONKURRENCE,
     gameName: 'Konkurrencefælden',
   },
   sladre: {
