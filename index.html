@@ -822,7 +822,10 @@ const TREATS = [
   { cost: 3,  label: 'øl 🍺' },
   { cost: 2,  label: 'is 🍦' },
 ];
-function whatToBuy(total){
+function whatToBuy(total, unit){
+  // Kun meningsfuldt for rigtige penge — "= 3× is" giver ingen mening for
+  // en "tår"-Drikkekasse eller point-baserede skins.
+  if(unit && unit !== '€') return null;
   if(total <= 0) return null;
   const t = TREATS.find(t => total >= t.cost);
   if(!t) return null;
@@ -986,6 +989,7 @@ function escapeHtml(s){ const d = document.createElement('div'); d.textContent =
 // i den store krukke-total (fast font-størrelse, designet til et 1-2
 // tegns symbol) fik et helt ord til at virke overfyldt/klemt. Ordet vises
 // derfor i en mindre skrift end selve tallet, symboler uændret.
+function unitEmoji(unit){ return unit === 'tår' ? '🍺' : '💶'; }
 function amtHtml(total, unit){
   const u = unit || '€';
   return u.length > 2 ? `${total}<span class="unit-word">${escapeHtml(u)}</span>` : `${total}${escapeHtml(u)}`;
@@ -1284,6 +1288,14 @@ const SKIN_PRESETS = [
   {
     id: 'drik', name: 'Drikkekassen', emoji: '🍻',
     ruleTagline: 'Glemte runder til fest og druk.', unit: '€',
+    // Bruger-feedback: en "drikkekasse" der opkræver PENGE er et tema-
+    // mismatch — eneste af de 9 skins med det problem (se undersøgelsen:
+    // bøde er penge per definition, rose/konkurrence/kollega er allerede
+    // ikke-penge). Selve kasse-mekanikken (bekræft-af-gruppen, historik,
+    // gør op) er allerede enheds-agnostisk — kun værtens VALG ved
+    // oprettelse manglede. `unitOptions` gør Step 3 tilbyde et valg;
+    // andre skins har ingen `unitOptions` og viser derfor ingen vælger.
+    unitOptions: [{ value: '€', label: '💶 Penge' }, { value: 'tår', label: '🍺 Tår' }],
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: false,
     smaatText: 'Rundefejl, bekræftet af alle',
     gameNames: { spil: 'Rundespillet', mrbrok: 'Rundedetektiven', complainer: 'Rundefælden' },
@@ -1786,6 +1798,18 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
         <div class="app-pick-scroll-hint right">›</div>
       </div>
     </div>
+    ${skin.unitOptions ? `
+    <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvad koster det?</label>
+      <div class="app-pick-row wrap-pick-row" id="unitPickRow" style="margin:10px 0 4px;">
+        ${skin.unitOptions.map((o,i)=>`
+        <div class="onboard-pick toggle-pick app-pick${i===0?' selected':''}" data-unit="${escapeHtml(o.value)}" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">${escapeHtml(o.label)}</div>
+        </div>`).join('')}
+      </div>
+      <p class="hint" style="margin:0; font-size:11.5px; color:rgba(255,247,232,0.58); text-align:center;">Tårer drikkes undervejs — kassen holder bare styr på hvem der skylder hvad.</p>
+    </div>
+    ` : ''}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
       <div class="onboard-card" style="padding:14px;">
         <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Hvor længe</label>
@@ -1832,7 +1856,7 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
       el.classList.toggle('selected');
     };
   });
-  ['rhythmPickRow','accessPickRow'].forEach(id=>{
+  ['rhythmPickRow','accessPickRow','unitPickRow'].forEach(id=>{
     document.querySelectorAll(`#${id} .onboard-pick`).forEach(el=>{
       el.onclick = ()=>{
         document.querySelectorAll(`#${id} .onboard-pick`).forEach(o=>o.classList.remove('selected'));
@@ -1896,10 +1920,12 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
       const dailyRhythm = selectedRhythmEl ? selectedRhythmEl.dataset.dailyRhythm === '1' : skin.dailyRhythm;
       const selectedAccessEl = document.querySelector('#accessPickRow .onboard-pick.selected');
       const accessModel = (selectedAccessEl && selectedAccessEl.dataset.accessModel) || 'open';
+      const selectedUnitEl = document.querySelector('#unitPickRow .onboard-pick.selected');
+      const unit = (selectedUnitEl && selectedUnitEl.dataset.unit) || skin.unit;
       const r = await api('room', {
         kasseEnabled, gameEnabled, mrbrokEnabled, complainerEnabled,
         themeId: skin.id, themeName: groupName, ruleTagline: skin.ruleTagline,
-        unit: skin.unit, poolPolarity: skin.poolPolarity,
+        unit, poolPolarity: skin.poolPolarity,
         confirmationModel, dailyRhythm, accessModel,
       });
       roomId = r.roomId;
@@ -2507,7 +2533,7 @@ function renderInner(){
     </header>
     <div class="jar-wrap" id="jarWrap" style="cursor:pointer;">
       ${jarSVG(fillPct)}
-      <div class="jar-total"><div class="amt">${amtHtml(total, state.unit)}</div><div class="lbl">i puljen</div>${whatToBuy(total) ? `<div style="margin-top:4px; font-size:13.5px; font-weight:700; color:var(--ink); text-transform:none; letter-spacing:normal;">${whatToBuy(total)}</div>` : ''}</div>
+      <div class="jar-total"><div class="amt">${amtHtml(total, state.unit)}</div><div class="lbl">i puljen</div>${whatToBuy(total, state.unit) ? `<div style="margin-top:4px; font-size:13.5px; font-weight:700; color:var(--ink); text-transform:none; letter-spacing:normal;">${whatToBuy(total, state.unit)}</div>` : ''}</div>
     </div>
     ${state.goal && state.goal.trim() ? `<div style="text-align:center; font-size:12.5px; color:rgba(255,247,232,0.5); padding:2px 24px 0;">🎯 Potten går til: <span style="color:rgba(255,247,232,0.8); font-weight:600;">${escapeHtml(state.goal)}</span></div>` : ''}
     <div class="tabs">
@@ -3562,7 +3588,7 @@ function gameLobbyHtml(){
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Spil om</label>
       <div class="segmented" style="margin-bottom:14px;">
         <div class="seg ${gameWager!=='euro'?'active':''}" data-wager="fun">🏅 Æren</div>
-        <div class="seg ${gameWager==='euro'?'active':''}" data-wager="euro">💶 1${escapeHtml(state.unit || '€')} i kassen</div>
+        <div class="seg ${gameWager==='euro'?'active':''}" data-wager="euro">${unitEmoji(state.unit)} 1${escapeHtml(state.unit || '€')} i kassen</div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Antal runder</label>
       <div class="segmented" style="margin-bottom:0;">
@@ -4785,7 +4811,7 @@ function mrbrokLobbyHtml(){
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Spil om</label>
       <div class="segmented" style="margin-bottom:14px;">
         <div class="seg ${mrbrokWager!=='euro'?'active':''}" data-mrbrok-wager="fun">🏅 Æren</div>
-        <div class="seg ${mrbrokWager==='euro'?'active':''}" data-mrbrok-wager="euro">💶 1${escapeHtml(state.unit || '€')} i kassen</div>
+        <div class="seg ${mrbrokWager==='euro'?'active':''}" data-mrbrok-wager="euro">${unitEmoji(state.unit)} 1${escapeHtml(state.unit || '€')} i kassen</div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.7); display:flex; align-items:center; justify-content:space-between;"><span>Runder før første afstemning</span><span style="opacity:.7; font-weight:400; text-transform:none; letter-spacing:normal;">mere tid til at snuse rundt</span></label>
       ${(()=>{
@@ -5525,7 +5551,7 @@ function complainerLobbyHtml(){
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Spil om</label>
       <div class="segmented" style="margin-bottom:14px;">
         <div class="seg ${complainerWager!=='euro'?'active':''}" data-complainer-wager="fun">🏅 Æren</div>
-        <div class="seg ${complainerWager==='euro'?'active':''}" data-complainer-wager="euro">💶 1${escapeHtml(state.unit || '€')} i kassen</div>
+        <div class="seg ${complainerWager==='euro'?'active':''}" data-complainer-wager="euro">${unitEmoji(state.unit)} 1${escapeHtml(state.unit || '€')} i kassen</div>
       </div>
       <label class="field-label" style="color:rgba(255,247,232,0.7);">Antal opbygningsrunder</label>
       <div class="segmented" style="margin-bottom:0;">
