@@ -1228,7 +1228,11 @@ function markAppPickScrollable(){
 const SKIN_PRESETS = [
   {
     id: 'brok', name: 'Brokkekassen', emoji: '🫙',
-    ruleTagline: 'Brokker du dig, koster det 1€.', unit: '€',
+    // "Brokker DU dig" var tvetydigt (kunne læses som at rapportøren selv
+    // betaler) — det faktiske flow (openBrokSheet) lader dig pege på et
+    // HVILKET SOM HELST medlem, typisk en anden. "nogen" i stedet for "du"
+    // fjerner tvetydigheden uden at ændre selve mekanikken eller tonen.
+    ruleTagline: 'Brokker nogen sig, koster det 1€.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
     gameNames: { spil: 'Brokspillet', mrbrok: 'MrBrok', complainer: 'Det Store Brokkeri' },
@@ -1244,13 +1248,13 @@ const SKIN_PRESETS = [
   },
   {
     id: 'sladre', name: 'Sladrekassen', emoji: '🗣️',
-    // Rettet (bruger-feedback): "Sladrer du om nogen, koster det en krone"
-    // kunne læses som om RAPPORTØREN (den der trykker) betaler — det gør
-    // de aldrig (se api/brok.js: memberId, den udpegede, betaler; actorId,
-    // rapportøren, betaler intet). Omskrevet til samme entydige, passive
-    // mønster som Løgnerkassens "Bliver din løgn afsløret" — gør klart at
-    // det er DEN BEKRÆFTEDE sladrehank, ikke læseren, der rammes.
-    ruleTagline: 'Bliver din sladder opdaget, koster det en krone.', unit: 'kr',
+    // Rettet TO gange (bruger-feedback): første forsøg ("Bliver din
+    // sladder opdaget...") brugte stadig "din" — men openBrokSheet lader
+    // dig pege på ET HVILKET SOM HELST medlem, ikke kun bekende egen
+    // sladder. "nogen"/"nogens" i stedet for "du"/"din" fjerner
+    // tvetydigheden helt: det er den UDPEGEDE (og bekræftede) sladrehank,
+    // aldrig rapportøren, der betaler.
+    ruleTagline: 'Sladrer nogen, koster det en krone.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sladder, bekræftet af alle',
     gameNames: { spil: 'Sladrespillet', mrbrok: 'Sladrehanen', complainer: 'Sladrefælden' },
@@ -1258,7 +1262,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'venne', name: 'Vennekassen', emoji: '🧑‍🤝‍🧑',
-    ruleTagline: 'Brokker du dig over vennegruppen, koster det en krone.', unit: 'kr',
+    ruleTagline: 'Brokker nogen sig over vennegruppen, koster det en krone.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
     gameNames: { spil: 'Vennespillet', mrbrok: 'Vennedetektiven', complainer: 'Vennefælden' },
@@ -1274,7 +1278,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'drik', name: 'Drikkekassen', emoji: '🍻',
-    ruleTagline: 'Glemmer du din runde, koster det en krone.', unit: 'kr',
+    ruleTagline: 'Glemmer nogen sin runde, koster det en krone.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: false,
     smaatText: 'Rundefejl, bekræftet af alle',
     gameNames: { spil: 'Rundespillet', mrbrok: 'Rundedetektiven', complainer: 'Rundefælden' },
@@ -1290,7 +1294,9 @@ const SKIN_PRESETS = [
   },
   {
     id: 'logn', name: 'Løgnerkassen', emoji: '🎭',
-    ruleTagline: 'Bliver din løgn afsløret, koster det en krone.', unit: 'kr',
+    // Samme "du/din"-tvetydighed som Sladrekassen havde — rettet af samme
+    // grund: openBrokSheet lader dig pege på et hvilket som helst medlem.
+    ruleTagline: 'Bliver nogens løgn afsløret, koster det en krone.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Løgne, afsløret ved afstemning',
     gameNames: { spil: 'Brokspillet', mrbrok: 'Løgnedetektiven', complainer: 'Løgnefælden' },
@@ -1348,7 +1354,11 @@ const THEME_COPY = {
   sladre: {
     feedLabel: 'Sladre-feed',
     pendingVerb: 'hængt ud',
-    mainBtnText: '🗣️ Der går et rygte…', sheetTitle: 'Hvem sladrede? 🗣️',
+    // "Der går et rygte…" lød som starten på et rygte, ikke en rapport om
+    // et der allerede er sket — matcher ikke resten af familiens mønster
+    // ("Nogen brokker sig…", "Nogen glemte en runde…"). Rettet til samme
+    // klare fortids-rapportering (bruger-feedback).
+    mainBtnText: '🗣️ Nogen har sladret…', sheetTitle: 'Hvem sladrede? 🗣️',
     sheetHint: 'Peg på sladrehanken, og skriv præcis hvad de sladrede om — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "hvem der spiste den sidste kage..." (påkrævet)', listLabel: 'Sladrelisten',
     emptyTitle: 'Ingen sladder endnu', emptyTitleList: 'Ingen sladder registreret endnu',
