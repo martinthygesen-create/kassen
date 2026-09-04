@@ -911,7 +911,7 @@ function shareAppUrl(){
 }
 async function doShareApp(){
   const url = shareAppUrl();
-  const text = 'Vi bruger en app der hedder Kassen — fælles regnskab + indbyggede spil, i mange temaer. Dette er IKKE en invitation til vores eget rum — tryk for at oprette jeres helt eget:';
+  const text = 'Få en på kassen 🍯 — vi bruger appen "Kassen": fælles pulje + indbyggede spil, i det tema I selv vælger (brok, bøder, sladder, ros og flere). Ikke en invitation til vores rum, bare et praj — tryk for at lave jeres helt eget:';
   if(navigator.share){
     try{ await navigator.share({ title:'Prøv Kassen', text, url }); return; }
     catch(e){ if(e && e.name === 'AbortError') return; }
@@ -1891,6 +1891,28 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
   };
 }
 
+// "Dine kasser"-listen viste kun rummets kode + eget navn i det pågældende
+// rum — ingen status på selve kassen. Henter hvert rums LIVE state i
+// baggrunden (ikke noget der er cachet lokalt, kun {name, ts} findes i
+// bk_myRooms) og opdaterer den enkelte rækkes tekst direkte, i stedet for
+// at blokere hele listens visning på et net-kald — man ser altså listen
+// med det samme, og status "drypper ind" lige bagefter. Fejler ét rum
+// (fx slettet siden sidst), rammer det kun DEN række, ikke resten af
+// listen.
+async function loadMyRoomsStatus(roomIds){
+  roomIds.forEach(async rid=>{
+    const el = document.getElementById('roomStatus-' + rid);
+    if(!el) return;
+    try{
+      const { state: s } = await api('state?room=' + encodeURIComponent(rid));
+      const skin = SKIN_PRESETS.find(sk => sk.id === s.themeId);
+      const emoji = (skin && skin.emoji) || '🫙';
+      const count = (s.members || []).length;
+      const nyEl = document.getElementById('roomStatus-' + rid);
+      if(nyEl) nyEl.textContent = `${emoji} ${s.themeName || 'Kassen'} · ${count} ${count === 1 ? 'deltager' : 'deltagere'}`;
+    }catch(e){ /* rum kan være slettet siden sidst — lad den oprindelige tekst stå */ }
+  });
+}
 function renderCreateOrJoin(errorMsg){
   const myRooms = getMyRooms();
   const roomIds = Object.keys(myRooms).filter(rid => rid !== roomId).sort((a,b)=>myRooms[b].ts - myRooms[a].ts);
@@ -1900,7 +1922,7 @@ function renderCreateOrJoin(errorMsg){
       ${roomIds.map(rid => `
         <div class="bal-row" style="margin-bottom:6px; cursor:pointer;" data-goto-room="${rid}">
           <div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(myRooms[rid].name)}</div>
-          <div class="feed-body"><div class="bal-name">${escapeHtml(rid)}</div><div style="font-size:12px; color:rgba(255,247,232,0.55);">som ${escapeHtml(myRooms[rid].name)}</div></div>
+          <div class="feed-body"><div class="bal-name">${escapeHtml(rid)}</div><div id="roomStatus-${escapeHtml(rid)}" style="font-size:12px; color:rgba(255,247,232,0.55);">som ${escapeHtml(myRooms[rid].name)}</div></div>
         </div>
       `).join('')}
     </div>
@@ -1922,12 +1944,15 @@ function renderCreateOrJoin(errorMsg){
         </div>
         ${myRoomsList}
         ${homeScreenTip(false)}
+        <button class="sheet-btn ghost" id="lobbyShareAppBtn" style="margin-top:14px; color:rgba(255,247,232,0.6); font-size:12.5px;">🚀 Anbefal Kassen til andre</button>
       </div>
     </div>
   `;
   document.querySelectorAll('[data-goto-room]').forEach(el=>{
     el.onclick = ()=>switchToRoom(el.dataset.gotoRoom);
   });
+  document.getElementById('lobbyShareAppBtn').onclick = doShareApp;
+  if(roomIds.length) loadMyRoomsStatus(roomIds);
   renderCreateFlowStep1();
   const joinInput = document.getElementById('joinInput');
   const goJoin = async ()=>{
