@@ -911,7 +911,7 @@ function shareAppUrl(){
 }
 async function doShareApp(){
   const url = shareAppUrl();
-  const text = 'Få en på kassen 🍯 — vi spiller selv \'Kassen\': brok, bøder, sladder, ros og flere, mellem venner. Måske synes du også det er sjovt. Klar anbefaling herfra (ikke en invitation til vores rum) — tryk for at lave jeres helt eget:';
+  const text = 'Få en på kassen 🍯 — vi spiller selv \'Kassen\': brok, bøder, sladder, ros og flere, mellem venner. Måske synes du også det er sjovt. Klar anbefaling herfra — tryk her for at lave din/jeres helt egen kasse';
   if(navigator.share){
     try{ await navigator.share({ title:'Prøv Kassen', text, url }); return; }
     catch(e){ if(e && e.name === 'AbortError') return; }
