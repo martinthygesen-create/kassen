@@ -1244,7 +1244,13 @@ const SKIN_PRESETS = [
   },
   {
     id: 'sladre', name: 'Sladrekassen', emoji: '🗣️',
-    ruleTagline: 'Sladrer du om nogen, koster det en krone.', unit: 'kr',
+    // Rettet (bruger-feedback): "Sladrer du om nogen, koster det en krone"
+    // kunne læses som om RAPPORTØREN (den der trykker) betaler — det gør
+    // de aldrig (se api/brok.js: memberId, den udpegede, betaler; actorId,
+    // rapportøren, betaler intet). Omskrevet til samme entydige, passive
+    // mønster som Løgnerkassens "Bliver din løgn afsløret" — gør klart at
+    // det er DEN BEKRÆFTEDE sladrehank, ikke læseren, der rammes.
+    ruleTagline: 'Bliver din sladder opdaget, koster det en krone.', unit: 'kr',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sladder, bekræftet af alle',
     gameNames: { spil: 'Sladrespillet', mrbrok: 'Sladrehanen', complainer: 'Sladrefælden' },
