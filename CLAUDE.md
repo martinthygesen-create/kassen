@@ -2,6 +2,28 @@
 
 Instruktioner og kontekst til fremtidige Claude Code-sessioner på dette repo.
 
+## ULTRA VIGTIGT: to repos, kun ét må committes til
+
+Der findes to ægte, separate GitHub-repos (bekræftet af Martin direkte,
+ikke en antagelse):
+
+- **`martinthygesen-create/kassen`** (DETTE repo, branch `main`) — det
+  AKTIVE repo. Alt nyt arbejde, alle commits, al push skal ske HER.
+  Oprettet som en bevidst kopi af brokkekassen for at bygge multi-skin-
+  platformen (se seneste commit-historik: "Kopi af Brokkekassen som
+  udgangspunkt for Kasse-motor-generaliseringen") — det er ikke en fejl
+  eller et uheld, det er det tilsigtede arbejds-repo.
+- **`martinthygesen-create/brokkekassen`** (branch
+  `claude/brokkekassen-famille-setup-ixh41o`) — kun brugt som TEMPLATE/
+  udgangspunkt dengang. **Der må ALDRIG committes eller pushes til dette
+  repo**, medmindre Martin eksplicit skriver at en given opgave er "på
+  brokkekassen" — uden den eksplicitte tilladelse, rør det slet ikke.
+
+Denne regel gælder for enhver session, uanset hvilket af de to repos den
+har adgang til eller er startet i. Hvis du er i tvivl om hvilket repo du
+står i, kør `git remote get-url origin` og bekræft det ender på
+`/kassen`, ikke `/brokkekassen`, før du committer noget som helst.
+
 ## Projektet
 
 Brokkekassen er en dansk familie-ferie-PWA med et fælles regnskab ("krukken")
@@ -63,11 +85,15 @@ fremtidige "skins" og hvad der stadig mangler.
 
 ## Én branch, ingen preview
 
-Der køres bevidst med ÉN branch (`claude/brokkekassen-famille-setup-ixh41o`)
-som også er prod-branchen — intet preview-setup i Vercel. Nyt arbejde
-(inklusive The Big Complainer) skal derfor også committes direkte til denne
-branch, IKKE en ny feature-branch — det er en bevidst simplicitets-
+Der køres bevidst med ÉN branch — `main` i DETTE repo (`kassen`, se
+"ULTRA VIGTIGT"-afsnittet øverst) — som også er prod-branchen — intet
+preview-setup i Vercel. Nyt arbejde skal derfor også committes direkte
+til `main`, IKKE en ny feature-branch — det er en bevidst simplicitets-
 beslutning, ikke en forglemmelse.
+
+(Branchnavnet `claude/brokkekassen-famille-setup-ixh41o` som måske står
+andre steder/i ældre historik refererer til det ANDET repo,
+`brokkekassen` — ikke til dette repo. Forveksl dem ikke.)
 
 Da flere Claude Code-sessioner kan arbejde på repoet samtidig på præcis
 denne ene branch, er disciplinen omkring `git fetch`/fast-forward FØR hver
