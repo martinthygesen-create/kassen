@@ -1385,6 +1385,7 @@ const THEME_COPY = {
   brok: {
     feedLabel: 'Brok-feed',
     pendingVerb: 'anklaget',
+    quotePrefix: 'brokkede sig over ',
     mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
     sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "over prisen på jetski..." (påkrævet)', listLabel: 'Broklisten',
@@ -1394,6 +1395,7 @@ const THEME_COPY = {
   bode: {
     feedLabel: 'Bøde-feed',
     pendingVerb: 'meldt',
+    quotePrefix: 'blev meldt: ',
     mainBtnText: '💸 Nogen har dummet sig…', sheetTitle: 'Hvem brød en regel? 💸',
     sheetHint: 'Peg på synderen, og skriv præcis hvilken regel der blev brudt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "kom 20 minutter for sent..." (påkrævet)', listLabel: 'Bødelisten',
@@ -1407,6 +1409,7 @@ const THEME_COPY = {
     // et der allerede er sket — matcher ikke resten af familiens mønster
     // ("Nogen brokker sig…", "Nogen glemte en runde…"). Rettet til samme
     // klare fortids-rapportering (bruger-feedback).
+    quotePrefix: 'sladrede om ',
     mainBtnText: '🗣️ Nogen har sladret…', sheetTitle: 'Hvem sladrede? 🗣️',
     sheetHint: 'Peg på sladrehanken, og skriv præcis hvad de sladrede om — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "hvem der spiste den sidste kage..." (påkrævet)', listLabel: 'Sladrelisten',
@@ -1416,6 +1419,7 @@ const THEME_COPY = {
   venne: {
     feedLabel: 'Brok-feed',
     pendingVerb: 'anklaget',
+    quotePrefix: 'brokkede sig over ',
     mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
     sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "over hvem der bestemmer planerne..." (påkrævet)', listLabel: 'Broklisten',
@@ -1427,6 +1431,7 @@ const THEME_COPY = {
     pendingVerb: 'indstillet',
     // Modsat polaritet (reward, ikke punishment) — sheetet skal IKKE lyde
     // anklagende, "synderen" ville være direkte forkert her.
+    quotePrefix: 'blev rost ',
     mainBtnText: '🌹 Ros nogen…', sheetTitle: 'Hvem skal roses? 🌹',
     sheetHint: 'Peg på personen, og skriv præcis hvad de gjorde godt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "for at bære al bagagen..." (påkrævet)', listLabel: 'Roselisten',
@@ -1436,6 +1441,7 @@ const THEME_COPY = {
   drik: {
     feedLabel: 'Runde-feed',
     pendingVerb: 'meldt',
+    quotePrefix: 'blev meldt: ',
     mainBtnText: '🍻 Nogen glemte en runde…', sheetTitle: 'Hvem glemte runden? 🍻',
     sheetHint: 'Peg på synderen, og skriv præcis hvad der gik galt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "glemte at det var min tur..." (påkrævet)', listLabel: 'Rundelisten',
@@ -1446,6 +1452,7 @@ const THEME_COPY = {
     feedLabel: 'Sejrs-feed',
     pendingVerb: 'indstillet',
     // Modsat polaritet (reward) — samme princip som Rosekassen.
+    quotePrefix: '',
     mainBtnText: '🏆 Registrer en sejr…', sheetTitle: 'Hvem vandt? 🏆',
     sheetHint: 'Peg på vinderen, og skriv præcis hvad de vandt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "vandt kortspillet..." (påkrævet)', listLabel: 'Sejrslisten',
@@ -1455,6 +1462,7 @@ const THEME_COPY = {
   logn: {
     feedLabel: 'Løgne-feed',
     pendingVerb: 'anklaget',
+    quotePrefix: 'løj: ',
     mainBtnText: '🎭 Afslør en løgn…', sheetTitle: 'Hvem løj? 🎭',
     sheetHint: 'Peg på løgneren, og skriv præcis hvad løgnen gik ud på — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "påstod at have mødt en kendis..." (påkrævet)', listLabel: 'Løgnelisten',
@@ -1475,6 +1483,7 @@ const THEME_COPY = {
     // strengere mekanik ved siden af.
     feedLabel: 'Påstand-feed',
     pendingVerb: 'nævnt',
+    quotePrefix: '',
     mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
     sheetHint: 'Peg på personen, og skriv påstanden helt konkret — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "leverede uden at følge skabelonen..." (påkrævet)', listLabel: 'Påstandsliste',
@@ -6293,7 +6302,14 @@ function feedItemHtml(e, old){
   // "brokkede sig over" foran citatet læste det let som et citat SKREVET
   // AF personen, ikke en beskrivelse af hvad de blev overhørt sige — reelt
   // stor forskel på hvem der "skrev" vs. hvem der blev anklaget.
-  const complaintPrefix = !e.gameLoss ? 'brokkede sig over ' : '';
+  //
+  // Fejl fundet ved live test (Martin, Bødekassen): denne prefix var
+  // HÅRDKODET til "brokkede sig over" uanset skin — så selv i Bødekassen
+  // stod der "Bot Cille brokkede sig over 'Du misser vores aftale'", og i
+  // Rosekassen/Konkurrencekassen blev sætningen decideret ugrammatisk (fx
+  // "brokkede sig over 'for at bære al bagagen'"). Læser nu THEME_COPY's
+  // eget quotePrefix pr. skin i stedet.
+  const complaintPrefix = e.gameLoss ? '' : themeCopy().quotePrefix;
   if(e.acquitted){
     return `<div class="feed-item" style="opacity:${old ? .6 : .78};">
       <div class="avatar">${initials(name)}</div>
