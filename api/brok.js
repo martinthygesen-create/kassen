@@ -74,9 +74,6 @@ module.exports = async (req, res) => {
     if (!cleanMessage) return res.status(400).json({ error: 'skriv hvad de brokkede sig over — ellers ved ingen hvad de stemmer om' });
     if (!state.members.find(m => m.id === memberId)) return res.status(400).json({ error: 'ukendt medlem' });
     if (state.closed) return res.status(400).json({ error: 'brokkekassen er lukket' });
-    // "Tilgængelighedsvindue" (se planen): værten har sat rummet på pause —
-    // blokerer kun NYE anklager, rører aldrig allerede ventende afstemninger.
-    if (state.pausedByHost) return res.status(400).json({ error: 'sat på pause af værten lige nu — prøv igen senere' });
     if (state.pendingList.filter(p => p.memberId === memberId).length >= 2) {
       return res.status(409).json({ error: 'der er allerede 2 afstemninger i gang om denne person — vent til en af dem er afgjort' });
     }

@@ -158,24 +158,16 @@ module.exports = async (req, res) => {
     }
 
     // Kasse-motor-generalisering, teknisk hærdning (fundet under et
-    // autonomt teknisk rette-loop, ikke gættet på forhånd): disse tre
+    // autonomt teknisk rette-loop, ikke gættet på forhånd): disse
     // handlinger bruger mutateState (CAS-beskyttet), IKKE den delte
     // top-af-funktionen `state`-variabel resten af filen bruger — et
-    // dobbeltklik på "Godkend"/"Pause" (eller to admin-faner) kunne
-    // ellers race og miste en samtidig ændring, samme klasse fejl som
-    // api/room.js's join-handler havde (se dens commit-historik).
-    if (action === 'togglePause') {
-      // "Tilgængelighedsvindue" (se KASSEMOTORPLAN.md's "Motor-variabler"-
-      // afsnit): admin/cohost kan slå ny-anklage-oprettelse fra midlertidigt
-      // (fx "ikke under møder"/"ikke under undervisning") uden at røre
-      // allerede ventende afstemninger eller lukke rummet.
-      const mutated = await mutateState(roomId, async (fresh) => {
-        if (!hasAdminAccess(fresh, actorId)) throw new ApiError(403, 'kun den der oprettede brokkekassen (eller en medvært) kan sætte på pause');
-        fresh.pausedByHost = !fresh.pausedByHost;
-      });
-      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
-      return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
-    }
+    // dobbeltklik på "Godkend" (eller to admin-faner) kunne ellers race og
+    // miste en samtidig ændring, samme klasse fejl som api/room.js's
+    // join-handler havde (se dens commit-historik).
+    // ("Sæt på pause"-funktionen ('togglePause') er fjernet igen — Martins
+    // UX-fund: uklar use case ("fx under møder"), og en admin der glemte at
+    // slå den fra igen kunne stå med en tilsyneladende død knap i dagevis
+    // uden at vide hvorfor. Se pausedByHost i _lib/store.js.)
 
     if (action === 'approveMember') {
       // Kasse-motor-generalisering, operationelt "adgang"-valg: flytter en
@@ -212,8 +204,8 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'ukendt handling' });
   } catch (e) {
     // e.status kommer fra ApiError (kastet inde i mutateState-mutatorer
-    // ovenfor, se togglePause/approveMember/rejectMember) — uden dette
-    // ville en 403/404-valideringsfejl fejlagtigt returneres som 500.
+    // ovenfor, se approveMember/rejectMember) — uden dette ville en
+    // 403/404-valideringsfejl fejlagtigt returneres som 500.
     res.status(e.status || 500).json({ error: e.message });
   }
 };

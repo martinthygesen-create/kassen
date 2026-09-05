@@ -2601,13 +2601,11 @@ function renderInner(){
     <div class="bottombar">
       ${state.closed
         ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">🔒 ${escapeHtml(state.themeName || 'Brokkekassen')} er lukket</button>`
-        : state.pausedByHost
-        ? `<button class="btn-brok" id="btnBrok" disabled style="opacity:.6;">⏸️ På pause lige nu</button>`
         : `<button class="btn-brok" id="btnBrok">${escapeHtml(themeCopy().mainBtnText)}</button>`}
     </div>
   `;
   document.querySelectorAll('.tab').forEach(t=>{ t.onclick = ()=>{ activeTab = t.dataset.tab; renderMain(); document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active', x===t)); }; });
-  if(!state.closed && !state.pausedByHost) document.getElementById('btnBrok').onclick = openBrokSheet;
+  if(!state.closed) document.getElementById('btnBrok').onclick = openBrokSheet;
   document.getElementById('btnAppMenu').onclick = openAppMenuSheet;
   const jarWrap = document.getElementById('jarWrap');
   if(jarWrap) jarWrap.onclick = bounceJar;
@@ -6834,10 +6832,13 @@ function openAdminMenuSheet(){
   // teksten op OVER/IND I den runde knap ovenover (piller har ikke ekstra
   // luft ved bunden, så en negativ margin lagde teksten oveni knappens
   // farvede baggrund i stedet for under den).
-  const hintStyle = 'font-size:11.5px; color:rgba(5,32,36,0.45); margin:6px 4px 6px;';
+  // Martins UX-fund: 11.5px/0.45-opaciteten var lysere/mindre end sheetets
+  // egen standard-hint (.sheet p.hint, 13px/0.55) — dobbelt sværere at
+  // læse end nødvendigt. Hævet til noget der stadig er tydeligt mindre end
+  // brødtekst, men rent faktisk læsbart.
+  const hintStyle = 'font-size:12.5px; color:rgba(5,32,36,0.62); margin:6px 4px 6px;';
   openSheet(`
     <h2>Admin ⚙️</h2>
-    <p class="hint">Kun du styrer puljen og historikken herfra.</p>
 
     ${(state.accessModel === 'approval' && state.pendingMembers && state.pendingMembers.length) ? `
       <div class="divider">ventende medlemmer</div>
@@ -6856,41 +6857,36 @@ function openAdminMenuSheet(){
     ${state.gameEnabled ? `<button class="sheet-btn admin" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
     ${state.mrbrokEnabled ? `<button class="sheet-btn admin" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
     ${state.complainerEnabled ? `<button class="sheet-btn admin" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
-    <p class="hint" style="${hintStyle}">Start/afslut et spil, nulstil highscore og "🤖 Test-spil med 3 bots" ligger under hvert spils egen admin — uanset hvilken fane du står på lige nu.</p>
+    <p class="hint" style="${hintStyle}">Bot-test, genstart og highscore ligger under hvert spils egen admin.</p>
     ` : ''}
 
     <div class="divider">admin</div>
-    <button class="sheet-btn primary" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
-    <p class="hint" style="${hintStyle}">Blokerer kun NYE anklager mens den er slået til — rører ikke allerede ventende afstemninger.</p>
     <button class="sheet-btn primary" id="adminGoalBtn">🎯 Sæt mål for potten</button>
     <button class="sheet-btn primary" id="adminBroadcastBtn">📣 Send besked til alle</button>
     <button class="sheet-btn primary" id="adminSettleBtn">💶 Gør op (tøm puljen)</button>
-    <p class="hint" style="${hintStyle}">Arkiverer og tømmer puljen. Kan fortrydes bagefter.</p>
+    <p class="hint" style="${hintStyle}">Kan fortrydes bagefter.</p>
 
     <div class="divider">anbefal appen</div>
     <button class="sheet-btn primary" id="adminShareAppBtn">🚀 Anbefal Kassen til andre</button>
-    <p class="hint" style="${hintStyle}">Deler et link til APPEN — ikke jeres rum. Modtageren opretter sit eget, helt separate rum og kommer ikke ind hos jer.</p>
+    <p class="hint" style="${hintStyle}">Deler et link til APPEN, ikke jeres rum — modtageren opretter sit eget.</p>
 
     <div class="divider">test &amp; mindre ændringer</div>
     ${state.events.length ? `<button class="sheet-btn test" id="adminRemoveEventBtn">🫤 Markér mistænkt snyd</button>` : ''}
-    ${state.dailyRhythm ? `
-    <button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om</button>
-    <p class="hint" style="${hintStyle}">Trækker dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om blandt de rigtige medlemmer — rører ikke streaks.</p>
-    ` : ''}
+    ${state.dailyRhythm ? `<button class="sheet-btn test" id="adminRedrawFreeBrokBtn">🎲 Træk dagens ${state.poolPolarity === 'reward' ? 'bonus-chance' : 'gratis omgang'} om</button>` : ''}
     ${state.history.length ? `<button class="sheet-btn test" id="adminUndoBtn">↩️ Fortryd seneste opgørelse</button>` : ''}
 
     <div class="divider">kan ikke fortrydes</div>
     <button class="sheet-btn danger" id="adminResetBtn">🧹 Nulstil alt</button>
-    <p class="hint" style="${hintStyle}">Sletter regnskab og historik. Rummet består.</p>
+    <p class="hint" style="${hintStyle}">Kun regnskab/historik — rummet består.</p>
     ${state.dailyRhythm ? `
     <button class="sheet-btn danger" id="adminFinalCloseBtn">🔒 Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid</button>
-    <p class="hint" style="${hintStyle}">Arkiverer og lukker for nyt brok. Historik bevares.</p>
+    <p class="hint" style="${hintStyle}">Historik bevares.</p>
     ` : `
     <button class="sheet-btn danger" id="adminFinalCloseBtn">🏆 Afslut Spil &amp; Kår Vinder</button>
-    <p class="hint" style="${hintStyle}">Kårer vinderen ud fra det samlede regnskab og lukker for altid. Kan ikke fortrydes.</p>
+    <p class="hint" style="${hintStyle}">Kårer vinderen ud fra det samlede regnskab. Kan ikke fortrydes.</p>
     `}
     <button class="sheet-btn danger" id="adminDeleteRoomBtn">🗑️ Slet dette rum permanent</button>
-    <p class="hint" style="${hintStyle}">Sletter alt med det samme. Ingen fortrydelse.</p>
+    <p class="hint" style="${hintStyle}">Med det samme. Ingen fortrydelse.</p>
 
     <button class="sheet-btn ghost" id="adminMenuCloseBtn">Luk menu</button>
     <p class="hint" style="text-align:center; font-size:10.5px; opacity:.4; margin-top:6px;">🔧 ${pushDebugInfo()} · ${BUILD_TAG}</p>
@@ -6901,15 +6897,6 @@ function openAdminMenuSheet(){
     if(gotoMrbrokAdminBtn) gotoMrbrokAdminBtn.onclick = ()=>{ closeSheet(); setTimeout(openMrbrokAdminMenuSheet, 230); };
     const gotoComplainerAdminBtn = document.getElementById('adminGotoComplainerAdminBtn');
     if(gotoComplainerAdminBtn) gotoComplainerAdminBtn.onclick = ()=>{ closeSheet(); setTimeout(openComplainerAdminMenuSheet, 230); };
-    document.getElementById('adminTogglePauseBtn').onclick = async ()=>{
-      try{
-        const r = await api('admin', { action: 'togglePause', roomId, actorId: profile.memberId });
-        state = r.state;
-        closeSheet();
-        toast(state.pausedByHost ? '⏸️ Sat på pause' : '▶️ Pause slået fra');
-        render();
-      }catch(e){ toast(e.message); }
-    };
     document.getElementById('adminGoalBtn').onclick = ()=>{ closeSheet(); setTimeout(openGoalSheet, 230); };
     document.getElementById('adminBroadcastBtn').onclick = ()=>{ closeSheet(); setTimeout(openBroadcastSheet, 230); };
     document.getElementById('adminSettleBtn').onclick = ()=>{ closeSheet(); setTimeout(openSettleSheet, 230); };
