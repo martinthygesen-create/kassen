@@ -21,6 +21,7 @@
     --cream:#FFF7E8; --ink:#052024; --ink-soft:#0b3a3f;
     --noir:#0A1416; --noir-deep:#050B0C; /* MrBrok-nuance — mørkt "efterforskningslokale", stadig i teal-familien i stedet for en fremmed farve */
     --ember:#FF7A3D; --ember-dark:#C4491B; --ember-noir:#2A0F08; --ember-noir-deep:#180804; /* Det Store Brokkeri-nuance — varm rust/ember, "kogende over" i stedet for MrBroks kølige efterforskningslokale */
+    --admin:#6B5CA5; --admin-dark:#4E4380; /* Admin-accent (Martins UX-fund: "hvad er der for alle, og hvad er admin" — knapper/menu-rækker kun admin kan bruge skal skille sig ud fra det almindelige --sea, som ALLE medlemmer også ser, fx ved en anklage). Bevidst en fjerde, ellers ubrugt farve — ikke --sea (bruges af alle), ikke --coral (betyder "kan ikke fortrydes", ikke "kun admin"), ikke --coin (generel highlight-accent alle steder). */
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -512,6 +513,8 @@
   .sheet-btn.danger{background:var(--coral); color:#fff;}
   .sheet-btn.gold{background:linear-gradient(160deg, var(--coin), var(--coin-dark)); color:var(--ink);}
   .sheet-btn.test{background:rgba(5,32,36,0.14); color:var(--ink); font-weight:700;}
+  /* Kun admin kan trykke denne — se --admin's kommentar ovenfor i :root. */
+  .sheet-btn.admin{background:var(--admin); color:#fff;}
 
   /* Grupperet handlings-liste i sheets (fx ☰-menuen) — en samlet kortflade
      med ikon-chip + label pr. række, i stedet for løstflydende ghost-knapper
@@ -522,6 +525,11 @@
   .menu-row-icon{ width:32px; height:32px; border-radius:10px; background:rgba(5,32,36,0.06); display:flex; align-items:center; justify-content:center; font-size:15px; flex:0 0 auto; }
   .menu-row-label{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14.5px; color:var(--ink); flex:1; }
   .menu-row-chevron{ color:rgba(5,32,36,0.25); font-size:14px; }
+  /* Admin-only række imellem almindelige rækker i samme liste (fx ☰-menuens
+     "Admin for X" ved siden af "Del link"/"Skift/forlad rum", som ALLE
+     medlemmer ser) — se --admin's kommentar i :root. */
+  .menu-row.admin .menu-row-icon{ background:rgba(107,92,165,0.15); }
+  .menu-row.admin .menu-row-label{ color:var(--admin-dark); }
 
   .vote-progress{ display:flex; align-items:center; gap:10px; margin:6px 0 16px; font-size:13.5px; font-weight:600; color:rgba(5,32,36,0.6); }
   .vote-progress .bar{flex:1; height:8px; background:rgba(5,32,36,0.1); border-radius:10px; overflow:hidden;}
@@ -2256,7 +2264,15 @@ function showRoomIntroSplash(){
 // store.js) tæller for 2 i stedet for 1 — modstykket til "free" (som
 // tæller 0). Ingen hændelse er nogensinde begge dele.
 function eventWeight(e){ if(e.voided) return 0; if(e.free) return 0; if(e.double) return 2; return 1; }
-function totalPool(){ return state.events.reduce((sum,e)=>sum+eventWeight(e), 0); }
+// Bots tæller ALDRIG med i puljetotalen — samme princip som balances()/
+// todayBalances() nedenfor (bots er usynlige i alle penge-tal), nu udvidet
+// hertil siden en bot kan peges på i openBrokSheet (se dens kommentar).
+// Uden dette ville en bekræftet bot-anklage (kun mulig via host-approval,
+// hvor anklagerens egen stemme alene bekræfter) lægges til totalPool()
+// uden at optræde på nogens balance-linje — en usynlig, ikke-forklaret
+// forskel mellem puljetotal og summen af de viste balancer.
+function isBotEvent(e){ const m = state.members.find(x=>x.id===e.memberId); return !!(m && m.isBot); }
+function totalPool(){ return state.events.reduce((sum,e)=>sum+(isBotEvent(e)?0:eventWeight(e)), 0); }
 // Alle nuværende (endnu ikke afregnede) brok — kan sagtens strække sig over flere dage.
 function balances(){
   const map = {}; state.members.filter(m=>!m.isBot).forEach(m=>map[m.id]=0);
@@ -2624,7 +2640,7 @@ function openAppMenuSheet(){
     ${isAdmin() ? `
       <div class="divider">admin</div>
       <div class="menu-row-list">
-        <div class="menu-row" id="menuAdminBtn"><div class="menu-row-icon">⚙️</div><div class="menu-row-label">Admin for ${activeAppDisplayName()}</div><span class="menu-row-chevron">›</span></div>
+        <div class="menu-row admin" id="menuAdminBtn"><div class="menu-row-icon">⚙️</div><div class="menu-row-label">Admin for ${activeAppDisplayName()}</div><span class="menu-row-chevron">›</span></div>
       </div>
     ` : ''}
   `, ()=>{
@@ -6531,7 +6547,14 @@ function openShareSheet(){
 let draftMessage = '';
 function openBrokSheet(){
   const copy = themeCopy();
-  const chips = state.members.filter(m=>!m.isBot).map(m=>`<div class="name-pill" data-id="${m.id}">${escapeHtml(m.name)}</div>`).join('');
+  // Bot-testspillere (tilføjet via "Test-spil med 3 bots") blev tidligere
+  // filtreret helt væk her — de kan aldrig STEMME (se store.js's
+  // healPendingVotes), men der er ingen grund til at de heller ikke kan
+  // PEGES PÅ: en admin der har tilføjet bots for at teste alene, står
+  // ellers uden nogen at anklage overhovedet (Martins fund). Se
+  // isBotEvent/totalPool nedenfor for hvorfor en bekræftet bot-anklage
+  // ikke lurer i puljetotalen bagefter.
+  const chips = state.members.map(m=>`<div class="name-pill" data-id="${m.id}">${escapeHtml(m.name)}</div>`).join('');
   let selectedId = null;
   openSheet(`
     <h2>${escapeHtml(copy.sheetTitle)}</h2>
@@ -6811,18 +6834,18 @@ function openAdminMenuSheet(){
 
     ${(state.gameEnabled || state.mrbrokEnabled || state.complainerEnabled) ? `
     <div class="divider">spil-admin (bl.a. test-spil med 3 bots)</div>
-    ${state.gameEnabled ? `<button class="sheet-btn primary" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
-    ${state.mrbrokEnabled ? `<button class="sheet-btn primary" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
-    ${state.complainerEnabled ? `<button class="sheet-btn primary" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
+    ${state.gameEnabled ? `<button class="sheet-btn admin" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
+    ${state.mrbrokEnabled ? `<button class="sheet-btn admin" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
+    ${state.complainerEnabled ? `<button class="sheet-btn admin" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
     <p class="hint" style="${hintStyle}">Start/afslut et spil, nulstil highscore og "🤖 Test-spil med 3 bots" ligger under hvert spils egen admin — uanset hvilken fane du står på lige nu.</p>
     ` : ''}
 
     <div class="divider">admin</div>
-    <button class="sheet-btn primary" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
+    <button class="sheet-btn admin" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
     <p class="hint" style="${hintStyle}">Blokerer kun NYE anklager mens den er slået til — rører ikke allerede ventende afstemninger.</p>
-    <button class="sheet-btn primary" id="adminGoalBtn">🎯 Sæt mål for potten</button>
-    <button class="sheet-btn primary" id="adminBroadcastBtn">📣 Send besked til alle</button>
-    <button class="sheet-btn primary" id="adminSettleBtn">💶 Gør op (tøm puljen)</button>
+    <button class="sheet-btn admin" id="adminGoalBtn">🎯 Sæt mål for potten</button>
+    <button class="sheet-btn admin" id="adminBroadcastBtn">📣 Send besked til alle</button>
+    <button class="sheet-btn admin" id="adminSettleBtn">💶 Gør op (tøm puljen)</button>
     <p class="hint" style="${hintStyle}">Arkiverer og tømmer puljen. Kan fortrydes bagefter.</p>
 
     <div class="divider">anbefal appen</div>
@@ -6985,7 +7008,7 @@ function openGoalSheet(){
     <h2>Sæt mål for potten 🎯</h2>
     <p class="hint">Kort fri tekst der vises for alle under krukken. Fx "Fælles middag sidste aften". Kan ændres når som helst.</p>
     <input type="text" id="goalInput" maxlength="100" placeholder="Fx: Fælles middag sidste aften" value="${escapeHtml(state.goal||'')}" />
-    <button class="sheet-btn primary" id="doGoal">Gem</button>
+    <button class="sheet-btn admin" id="doGoal">Gem</button>
     <button class="sheet-btn ghost" id="cancelGoal">Annuller</button>
   `, ()=>{
     document.getElementById('cancelGoal').onclick = closeSheet;
@@ -7002,7 +7025,7 @@ function openBroadcastSheet(){
     <h2>Send besked til alle 📣</h2>
     <p class="hint">Sendes som en rigtig push-notifikation til alle der har slået notifikationer til (🔔).</p>
     <textarea id="broadcastInput" rows="3" maxlength="200" placeholder="Fx: Kære alle – nu kører det! Husk at registrere jeres hændelser 😉"></textarea>
-    <button class="sheet-btn primary" id="doBroadcast">Send</button>
+    <button class="sheet-btn admin" id="doBroadcast">Send</button>
     <button class="sheet-btn ghost" id="cancelBroadcast">Annuller</button>
   `, ()=>{
     document.getElementById('cancelBroadcast').onclick = closeSheet;

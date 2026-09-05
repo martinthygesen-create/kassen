@@ -66,13 +66,21 @@ function makeBotState(themeId, botNames) {
 }
 
 // --- Del 1: krukke-livscyklus ---
+// BEVIDST IKKE makeBotState her, i modsætning til de tre spil-drivere
+// nedenfor: krukke/anklage-flowet er selve penge-regnskabet, og isBot
+// betyder nu (se store.js's isBotEvent) "tæller ALDRIG med i puljetotalen"
+// — så bot-flagede medlemmer ville give en 0-puljetotal efter "Gør op",
+// uanset hvor mange bekræftede anklager der reelt var. Bruger derfor
+// almindelige (isBot:false) medlemmer, som en RIGTIG familie ville være.
 async function playtestKrukke(themeId, botNames) {
   log('--- Krukke-livscyklus ---');
-  const state = makeBotState(themeId, botNames);
+  const state = store.emptyState();
+  state.themeId = themeId;
+  state.members = botNames.map(name => ({ id: store.uid(), name, isBot: false }));
   const [admin, accused, third] = state.members;
 
   // Anklage + bekræftelse (kvorum, samme logik som api/brok.js's default-gren)
-  const need = store.neededVotes(state.members.filter(m => !m.isBot).length || state.members.length);
+  const need = store.neededVotes(state.members.filter(m => !m.isBot).length);
   const pending = {
     id: store.uid(), memberId: accused.id, message: 'Testhændelse fra playtest',
     votes: [], openedAt: Date.now(), need,

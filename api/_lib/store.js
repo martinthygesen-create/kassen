@@ -192,8 +192,20 @@ const MILESTONE_STEP = 10; // fejrer hver 10€ i den aktive pulje
 // Har puljen lige rundet et nyt 10€-mærke? Returnerer det nye mærke (eller
 // null), og opdaterer state så det samme mærke ikke fejres to gange. Nulstilles
 // ved "Gør op" (se settleRound), så en ny runde igen kan fejre fra 10€.
+// Bots kan nu peges på i en anklage (index.html's openBrokSheet, se dens
+// kommentar — de kan stadig aldrig STEMME, kun være "synderen" for
+// test-formål) — men skal ALDRIG tælle med i noget penge-tal, samme
+// princip som resten af filen (fx updateStreaksAndDrawLottery's
+// realMembers). Uden dette ville en bekræftet bot-anklage (kun mulig ved
+// host-approval, hvor anklagerens egen stemme alene bekræfter) snige sig
+// ind i puljetotalen uden at optræde på nogens balance-linje.
+function isBotEvent(state, e) {
+  const m = state.members.find(x => x.id === e.memberId);
+  return !!(m && m.isBot);
+}
+
 function checkPoolMilestone(state) {
-  const total = state.events.reduce((sum, e) => sum + (e.voided ? 0 : e.free ? 0 : e.double ? 2 : 1), 0);
+  const total = state.events.reduce((sum, e) => sum + (isBotEvent(state, e) ? 0 : (e.voided ? 0 : e.free ? 0 : e.double ? 2 : 1)), 0);
   const milestone = Math.floor(total / MILESTONE_STEP) * MILESTONE_STEP;
   if (milestone > 0 && milestone > (state.lastMilestoneAt || 0)) {
     state.lastMilestoneAt = milestone;
@@ -301,7 +313,7 @@ function settleRound(state) {
   state.history.push({
     startedAt: state.createdAt,
     closedAt: Date.now(),
-    total: state.events.reduce((sum, e) => sum + weight(e), 0),
+    total: state.events.reduce((sum, e) => sum + (isBotEvent(state, e) ? 0 : weight(e)), 0),
     totals,
     events: state.events,
   });
