@@ -268,23 +268,32 @@ const COMPLAINER_ARCHETYPES_BODE = [
 // (COMPLAINER_SITUATIONS), tilpasset en bøde/regelbrud-kontekst.
 const COMPLAINER_SITUATIONS_BODE = ['hold', 'arbejde', 'forening', 'familie'];
 
-// Fase 5 bevis-tema: samme fire-delt scenarie-skabelon som
-// COMPLAINER_PROMPTS ovenfor (udløsende hændelse + personlig grund +
-// specifikt publikum + spørgsmål) — anvendt på "fik en bøde/blev taget i
-// et regelbrud" i stedet for "brokkede sig over noget". 11 prompts (mod
-// originalens 19) — BEVIDST en mindre v1-pulje, udvid før rigtig levering.
+// Quizmaster-audit-fund (Martins live test: "Alle spil handler om brok —
+// og ikke, i det her tilfælde, en grund til at få en bøde eller gøre noget
+// forkert"): disse prompts brugte tidligere ORDRET "Du brokker dig til X"
+// fra brok-skabelonen, selvom arketyperne ovenfor (COMPLAINER_ARCHETYPES_
+// BODE) allerede ER en bortforklarings-/undskyldnings-mekanik, ikke en
+// klage-mekanik ("Du har ALTID en logisk forklaring parat", "Bliv let
+// fornærmet hvis nogen tvivler på undskyldningen" osv.) — samme rettelse
+// som MrBrok's bode-variant allerede fik (MRBROK_CLUE_TIPS_BODE's
+// "Undskyld dig med en PERSON..."). Situationerne (fik en bøde/blev taget
+// i et regelbrud) var allerede rigtige, kun REAKTIONS-verbet var forkert.
+// Rettet til "Du undskylder dig til X" for de scenarier hvor DU selv blev
+// taget i noget — rel1 beholdt bevidst "brokker dig", da den handler om
+// at brokke sig over en ANDENS uretfærdige forskelsbehandling, ikke om at
+// undskylde sig selv.
 const COMPLAINER_PROMPTS_BODE = [
-  { id: 'hold1', category: 'hold', tier: 1, text: 'Du får en bøde for at komme ti minutter for sent til træning igen. Du brokker dig til en holdkammerat der lige er ankommet til tiden. Hvad siger du?' },
-  { id: 'hold2', category: 'hold', tier: 2, text: 'Træneren indfører en ny bøde for glemte sko, efter du selv har glemt dine to gange. Du brokker dig til klubbens materialemand, som bare vil have styr på tingene. Hvad siger du?' },
-  { id: 'hold3', category: 'hold', tier: 3, text: 'Holdkaptajnen offentliggør bødelisten i gruppechatten med dit navn øverst. Du brokker dig til din partner, som ikke aner noget om holdets interne regler. Hvad siger du?' },
-  { id: 'arbejde1', category: 'arbejde', tier: 1, text: 'Du bliver noteret for at komme for sent til morgenmødet for tredje gang denne måned. Du brokker dig til receptionisten, som lige er mødt selv. Hvad siger du?' },
-  { id: 'arbejde2', category: 'arbejde', tier: 2, text: 'Chefen indfører en bøde-kasse for mobiltelefoner der ringer under møder — og din ringer først. Du brokker dig til en kollega fra en helt anden afdeling. Hvad siger du?' },
-  { id: 'forening1', category: 'forening', tier: 1, text: 'Du glemmer at betale kontingent til tiden, og kassereren sender en påmindelse til hele bestyrelsen. Du brokker dig til din nabo, som ikke engang er medlem. Hvad siger du?' },
-  { id: 'forening2', category: 'forening', tier: 3, text: 'Bestyrelsen vedtager en ny bøde for udeblivelse fra generalforsamlingen — lige efter du selv meldte afbud. Du brokker dig til et helt nyt medlem, som knap nok kender reglerne endnu. Hvad siger du?' },
-  { id: 'familie1', category: 'familie', tier: 1, text: 'Du glemmer at hente børnene til tiden, og din partner indfører en "hjemme-bødekasse" på stedet. Du brokker dig til din mor over telefonen. Hvad siger du?' },
+  { id: 'hold1', category: 'hold', tier: 1, text: 'Du får en bøde for at komme ti minutter for sent til træning igen. Du undskylder dig til en holdkammerat der lige er ankommet til tiden. Hvad siger du?' },
+  { id: 'hold2', category: 'hold', tier: 2, text: 'Træneren indfører en ny bøde for glemte sko, efter du selv har glemt dine to gange. Du undskylder dig til klubbens materialemand, som bare vil have styr på tingene. Hvad siger du?' },
+  { id: 'hold3', category: 'hold', tier: 3, text: 'Holdkaptajnen offentliggør bødelisten i gruppechatten med dit navn øverst. Du undskylder dig til din partner, som ikke aner noget om holdets interne regler. Hvad siger du?' },
+  { id: 'arbejde1', category: 'arbejde', tier: 1, text: 'Du bliver noteret for at komme for sent til morgenmødet for tredje gang denne måned. Du undskylder dig til receptionisten, som lige er mødt selv. Hvad siger du?' },
+  { id: 'arbejde2', category: 'arbejde', tier: 2, text: 'Chefen indfører en bøde-kasse for mobiltelefoner der ringer under møder — og din ringer først. Du undskylder dig til en kollega fra en helt anden afdeling. Hvad siger du?' },
+  { id: 'forening1', category: 'forening', tier: 1, text: 'Du glemmer at betale kontingent til tiden, og kassereren sender en påmindelse til hele bestyrelsen. Du undskylder dig til din nabo, som ikke engang er medlem. Hvad siger du?' },
+  { id: 'forening2', category: 'forening', tier: 3, text: 'Bestyrelsen vedtager en ny bøde for udeblivelse fra generalforsamlingen — lige efter du selv meldte afbud. Du undskylder dig til et helt nyt medlem, som knap nok kender reglerne endnu. Hvad siger du?' },
+  { id: 'familie1', category: 'familie', tier: 1, text: 'Du glemmer at hente børnene til tiden, og din partner indfører en "hjemme-bødekasse" på stedet. Du undskylder dig til din mor over telefonen. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen andre får en bøde for præcis det du selv gjorde sidste uge uden konsekvens. Du brokker dig til en helt udenforstående ven om uretfærdigheden. Hvad siger du?' },
-  { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en bøde du "glemte" at betale for tre måneder siden. Du brokker dig til din bedste ven om at blive holdt op imod noget så gammelt. Hvad siger du?' },
-  { id: 'rel3', category: 'relational', tier: 3, text: 'Du opdager at du selv har foreslået den bøderegel, du nu brokker dig mest over. Du brokker dig til din partner om hvor urimeligt dit eget forslag har vist sig at være. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en bøde du "glemte" at betale for tre måneder siden. Du undskylder dig til din bedste ven, som lige nævnte det. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 3, text: 'Du opdager at du selv har foreslået den bøderegel, du nu selv er blevet ramt af. Du undskylder dig til din partner, mens du prøver at forklare hvorfor DIN sag er anderledes. Hvad siger du?' },
 ];
 
 // Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se

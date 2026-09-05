@@ -1141,7 +1141,14 @@ const DECOY_BROK = [
 // literal ovenfor — DECOY_BROK er en const der endnu ikke er initialiseret
 // på det tidspunkt filen når dertil (temporal dead zone).
 CONTENT_BY_THEME.brok.decoyBrok = DECOY_BROK;
-CONTENT_BY_THEME.konkurrence.decoyBrok = DECOY_BROK;
+// Quizmaster-audit-fund (scripts/audit-theme-fit.js): stod tidligere som
+// DECOY_BROK (Brokkassens egne ferie-klage-decoys, "Der var kun ét ledigt
+// toilet..." — 100% ordret genbrug), selvom DECOY_KONKURRENCE allerede var
+// skrevet og klar ovenfor, bare aldrig faktisk koblet på. "Hvilket er
+// ægte?"-runden beder spilleren skrive en ægte SEJRS-praleri i karakter —
+// blandet med rene ferie-klager ville decoys stikke øjeblikkeligt ud som
+// forkerte, og ødelægge selve gættet.
+CONTENT_BY_THEME.konkurrence.decoyBrok = DECOY_KONKURRENCE;
 
 // Rigtige, tidligere loggede brok fra selve Brokkekassen (hvis den er i
 // brug) blandes ind som decoys sammen med den generiske liste ovenfor —
