@@ -991,6 +991,15 @@ function getQuestionTemplates(themeId) {
   return QUESTION_TEMPLATES_BY_THEME[themeId] || QUESTION_TEMPLATES_BY_THEME.brok;
 }
 
+// Færre end dette antal rigtige hændelser, og "hvem har flest/færrest"
+// giver ikke rigtig mening endnu — med fx kun 1 registreret hændelse er
+// "flest" trivielt den ene person mod alle andres 0, ingen reel gætte-
+// udfordring (Martins fund, live test af Bødekassen). Falder i stedet
+// tilbage til verdens-trivia-puljen (samme pulje generateTriviaQuestion
+// allerede faldt tilbage til ved 0 hændelser, se kommentaren nedenfor) —
+// gælder alle skins ens, da dette er delt motor-logik.
+const MIN_EVENTS_FOR_ROOM_TRIVIA = 3;
+
 // Genererer et multiple-choice trivia-spørgsmål ud fra rummets EGNE rigtige
 // brok-data — binder spillet sammen med selve Brokkekassen.
 function generateTriviaQuestion(state) {
@@ -1004,7 +1013,7 @@ function generateTriviaQuestion(state) {
 
   const candidates = [];
 
-  if (totalCount > 0 && members.length >= 2) {
+  if (totalCount >= MIN_EVENTS_FOR_ROOM_TRIVIA && members.length >= 2) {
     const mostId = members.slice().sort((a, b) => counts[b.id] - counts[a.id])[0].id;
     candidates.push(() => {
       const correct = members.find(m => m.id === mostId).name;
@@ -1057,7 +1066,7 @@ function generateTriviaQuestion(state) {
   // tælles stadig korrekt med i counts/totalCount ovenfor, hvor
   // straf-mekanikken hører hjemme).
   const brokEvents = allEvents.filter(e => e.message && e.message.trim() && !e.gameLoss && members.find(m => m.id === e.memberId));
-  if (brokEvents.length && members.length >= 3) {
+  if (brokEvents.length >= MIN_EVENTS_FOR_ROOM_TRIVIA && members.length >= 3) {
     candidates.push(() => {
       const ev = pickRandom(brokEvents);
       const correct = members.find(m => m.id === ev.memberId);
@@ -1085,10 +1094,11 @@ function generateTriviaQuestion(state) {
     }
   }
 
-  // FUND (quizmaster-audit): i et helt nyt/koldt rum (0 rigtige events) er
-  // `candidates` ALTID tom, uanset skin — inklusive Brokkekassen selv,
-  // testet direkte: 200/200 trivia-spørgsmål i et koldt rum blev den
-  // blanke "hvor mange medlemmer er der"-fallback, for alle 9 skins.
+  // FUND (quizmaster-audit): i et helt nyt/koldt rum (under
+  // MIN_EVENTS_FOR_ROOM_TRIVIA rigtige events) er `candidates` ALTID tom,
+  // uanset skin — inklusive Brokkekassen selv, testet direkte: 200/200
+  // trivia-spørgsmål i et koldt rum blev den blanke "hvor mange medlemmer
+  // er der"-fallback, for alle 9 skins.
   // Forskellen mellem skins i praksis er IKKE koden her, men hvor hurtigt
   // hver skins rigtige udløser (se THEME_COPY/smaatText) fylder rummet med
   // rigtige events — men koden selv beskyttede ikke imod den kolde
