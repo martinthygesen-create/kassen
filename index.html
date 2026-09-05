@@ -1181,13 +1181,39 @@ function leaveRoom(){
   closeSheet();
   renderCreateOrJoin();
 }
+// "Skift/forlad rum"-sheetet tilbød tidligere KUN "forlad helt" eller
+// "annuller" — men langt det hyppigste ærinde her er formentlig bare at
+// SKIFTE til et af ens andre rum (samme familie har ofte flere kasser i
+// gang), ikke at forlade nogen af dem. Genbruger samme "Dine kasser"-liste
+// og switchToRoom som lobbyens renderCreateOrJoin (Martins observation) —
+// ingen ny lager-mekanik, kun samme liste vist ét sted mere.
 function openLeaveRoomSheet(){
+  const myRooms = getMyRooms();
+  const roomIds = Object.keys(myRooms).filter(rid => rid !== roomId).sort((a,b)=>myRooms[b].ts - myRooms[a].ts);
+  const myRoomsList = roomIds.length ? `
+    <div class="divider">skift til et af dine andre rum</div>
+    <div class="onboard-card" style="padding:8px;">
+      ${roomIds.map(rid => `
+        <div class="bal-row" style="margin-bottom:6px; cursor:pointer;" data-goto-room="${rid}">
+          <div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(myRooms[rid].name)}</div>
+          <div class="feed-body"><div class="bal-name">${escapeHtml(rid)}</div><div id="roomStatus-${escapeHtml(rid)}" style="font-size:12px; color:rgba(5,32,36,0.55);">som ${escapeHtml(myRooms[rid].name)}</div></div>
+          <span class="menu-row-chevron">›</span>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
   openSheet(`
-    <h2>Forlad dette rum 🚪</h2>
+    <h2>Skift/forlad rum 🚪</h2>
+    ${myRoomsList}
+    <div class="divider">forlad dette rum</div>
     <p class="hint">Du er stadig medlem — kom tilbage når som helst med koden <b>${roomId}</b>, eller vælg det fra "Dine kasser" næste gang. Denne enhed åbner det bare ikke automatisk mere.</p>
     <button class="sheet-btn danger" id="doLeave">Ja, forlad rummet</button>
     <button class="sheet-btn ghost" id="cancelLeave">Annuller</button>
   `, ()=>{
+    document.querySelectorAll('[data-goto-room]').forEach(el=>{
+      el.onclick = ()=>{ closeSheet(); switchToRoom(el.dataset.gotoRoom); };
+    });
+    if(roomIds.length) loadMyRoomsStatus(roomIds);
     document.getElementById('cancelLeave').onclick = closeSheet;
     document.getElementById('doLeave').onclick = leaveRoom;
   });
@@ -6783,6 +6809,14 @@ function openAdminMenuSheet(){
       `).join('')}
     ` : ''}
 
+    ${(state.gameEnabled || state.mrbrokEnabled || state.complainerEnabled) ? `
+    <div class="divider">spil-admin (bl.a. test-spil med 3 bots)</div>
+    ${state.gameEnabled ? `<button class="sheet-btn primary" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
+    ${state.mrbrokEnabled ? `<button class="sheet-btn primary" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
+    ${state.complainerEnabled ? `<button class="sheet-btn primary" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
+    <p class="hint" style="${hintStyle}">Start/afslut et spil, nulstil highscore og "🤖 Test-spil med 3 bots" ligger under hvert spils egen admin — uanset hvilken fane du står på lige nu.</p>
+    ` : ''}
+
     <div class="divider">admin</div>
     <button class="sheet-btn primary" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
     <p class="hint" style="${hintStyle}">Blokerer kun NYE anklager mens den er slået til — rører ikke allerede ventende afstemninger.</p>
@@ -6819,6 +6853,12 @@ function openAdminMenuSheet(){
     <button class="sheet-btn ghost" id="adminMenuCloseBtn">Luk menu</button>
     <p class="hint" style="text-align:center; font-size:10.5px; opacity:.4; margin-top:6px;">🔧 ${pushDebugInfo()} · ${BUILD_TAG}</p>
   `, ()=>{
+    const gotoGameAdminBtn = document.getElementById('adminGotoGameAdminBtn');
+    if(gotoGameAdminBtn) gotoGameAdminBtn.onclick = ()=>{ closeSheet(); setTimeout(openGameAdminMenuSheet, 230); };
+    const gotoMrbrokAdminBtn = document.getElementById('adminGotoMrbrokAdminBtn');
+    if(gotoMrbrokAdminBtn) gotoMrbrokAdminBtn.onclick = ()=>{ closeSheet(); setTimeout(openMrbrokAdminMenuSheet, 230); };
+    const gotoComplainerAdminBtn = document.getElementById('adminGotoComplainerAdminBtn');
+    if(gotoComplainerAdminBtn) gotoComplainerAdminBtn.onclick = ()=>{ closeSheet(); setTimeout(openComplainerAdminMenuSheet, 230); };
     document.getElementById('adminTogglePauseBtn').onclick = async ()=>{
       try{
         const r = await api('admin', { action: 'togglePause', roomId, actorId: profile.memberId });
