@@ -21,7 +21,7 @@
     --cream:#FFF7E8; --ink:#052024; --ink-soft:#0b3a3f;
     --noir:#0A1416; --noir-deep:#050B0C; /* MrBrok-nuance — mørkt "efterforskningslokale", stadig i teal-familien i stedet for en fremmed farve */
     --ember:#FF7A3D; --ember-dark:#C4491B; --ember-noir:#2A0F08; --ember-noir-deep:#180804; /* Det Store Brokkeri-nuance — varm rust/ember, "kogende over" i stedet for MrBroks kølige efterforskningslokale */
-    --admin:#6B5CA5; --admin-dark:#4E4380; /* KUN til de midlertidige "🤖 Test-spil med 3 bots"-knapper (Martins præcisering: resten af admin skal forblive almindelig --sea/--coral — "grønt og orange" — kun disse tre dev-testknapper, én pr. spiltype, skal skille sig ekstra ud fra de rigtige admin-handlinger ved siden af). Var kortvarigt brugt bredere på ALLE admin-knapper, rettet tilbage. */
+    --admin:#6B5CA5; --admin-dark:#4E4380; /* Alt der har med BOT-TESTVÆRKTØJET at gøre (Martins præcisering): de 3 "🤖 Test-spil med 3 bots"-knapper OG de 3 genvejsknapper i den generelle admin-menu der fører derhen ("👉 [Spil]-admin" osv.) — bevidst samme farve, så det er let at få øje på og fjerne igen som helhed, når test-værktøjet en dag ikke skal være der mere. Resten af admin forbliver almindelig --sea/--coral. */
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -6853,9 +6853,9 @@ function openAdminMenuSheet(){
 
     ${(state.gameEnabled || state.mrbrokEnabled || state.complainerEnabled) ? `
     <div class="divider">spil-admin (bl.a. test-spil med 3 bots)</div>
-    ${state.gameEnabled ? `<button class="sheet-btn primary" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
-    ${state.mrbrokEnabled ? `<button class="sheet-btn primary" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
-    ${state.complainerEnabled ? `<button class="sheet-btn primary" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
+    ${state.gameEnabled ? `<button class="sheet-btn admin" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
+    ${state.mrbrokEnabled ? `<button class="sheet-btn admin" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
+    ${state.complainerEnabled ? `<button class="sheet-btn admin" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
     <p class="hint" style="${hintStyle}">Start/afslut et spil, nulstil highscore og "🤖 Test-spil med 3 bots" ligger under hvert spils egen admin — uanset hvilken fane du står på lige nu.</p>
     ` : ''}
 
