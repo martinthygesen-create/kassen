@@ -1385,7 +1385,7 @@ const THEME_COPY = {
   brok: {
     feedLabel: 'Brok-feed',
     pendingVerb: 'anklaget',
-    quotePrefix: 'brokkede sig over ',
+    quotePrefix: 'brokkede sig over ', guessbrokExample: 'Morgenmaden lukkede fem minutter for tidligt',
     mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
     sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "over prisen på jetski..." (påkrævet)', listLabel: 'Broklisten',
@@ -1395,7 +1395,7 @@ const THEME_COPY = {
   bode: {
     feedLabel: 'Bøde-feed',
     pendingVerb: 'meldt',
-    quotePrefix: 'blev meldt: ',
+    quotePrefix: 'blev meldt: ', guessbrokExample: 'Kørte 130 i en 50-zone for at nå bussen',
     mainBtnText: '💸 Nogen har dummet sig…', sheetTitle: 'Hvem brød en regel? 💸',
     sheetHint: 'Peg på synderen, og skriv præcis hvilken regel der blev brudt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "kom 20 minutter for sent..." (påkrævet)', listLabel: 'Bødelisten',
@@ -1409,7 +1409,7 @@ const THEME_COPY = {
     // et der allerede er sket — matcher ikke resten af familiens mønster
     // ("Nogen brokker sig…", "Nogen glemte en runde…"). Rettet til samme
     // klare fortids-rapportering (bruger-feedback).
-    quotePrefix: 'sladrede om ',
+    quotePrefix: 'sladrede om ', guessbrokExample: 'Hørte at nabo nummer 12 skal skilles',
     mainBtnText: '🗣️ Nogen har sladret…', sheetTitle: 'Hvem sladrede? 🗣️',
     sheetHint: 'Peg på sladrehanken, og skriv præcis hvad de sladrede om — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "hvem der spiste den sidste kage..." (påkrævet)', listLabel: 'Sladrelisten',
@@ -1419,7 +1419,7 @@ const THEME_COPY = {
   venne: {
     feedLabel: 'Brok-feed',
     pendingVerb: 'anklaget',
-    quotePrefix: 'brokkede sig over ',
+    quotePrefix: 'brokkede sig over ', guessbrokExample: 'Booked hele sommerhuset uden at spørge nogen',
     mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
     sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "over hvem der bestemmer planerne..." (påkrævet)', listLabel: 'Broklisten',
@@ -1431,7 +1431,7 @@ const THEME_COPY = {
     pendingVerb: 'indstillet',
     // Modsat polaritet (reward, ikke punishment) — sheetet skal IKKE lyde
     // anklagende, "synderen" ville være direkte forkert her.
-    quotePrefix: 'blev rost ',
+    quotePrefix: 'blev rost ', guessbrokExample: 'Gav sin sidste is væk til den der tabte sin',
     mainBtnText: '🌹 Ros nogen…', sheetTitle: 'Hvem skal roses? 🌹',
     sheetHint: 'Peg på personen, og skriv præcis hvad de gjorde godt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "for at bære al bagagen..." (påkrævet)', listLabel: 'Roselisten',
@@ -1441,7 +1441,7 @@ const THEME_COPY = {
   drik: {
     feedLabel: 'Runde-feed',
     pendingVerb: 'meldt',
-    quotePrefix: 'blev meldt: ',
+    quotePrefix: 'blev meldt: ', guessbrokExample: 'Drak sin øl gennem et sugerør for at vinde et væddemål',
     mainBtnText: '🍻 Nogen glemte en runde…', sheetTitle: 'Hvem glemte runden? 🍻',
     sheetHint: 'Peg på synderen, og skriv præcis hvad der gik galt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "glemte at det var min tur..." (påkrævet)', listLabel: 'Rundelisten',
@@ -1452,7 +1452,7 @@ const THEME_COPY = {
     feedLabel: 'Sejrs-feed',
     pendingVerb: 'indstillet',
     // Modsat polaritet (reward) — samme princip som Rosekassen.
-    quotePrefix: '',
+    quotePrefix: '', guessbrokExample: 'Vandt hele kortspillet uden at kigge på kortene',
     mainBtnText: '🏆 Registrer en sejr…', sheetTitle: 'Hvem vandt? 🏆',
     sheetHint: 'Peg på vinderen, og skriv præcis hvad de vandt — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "vandt kortspillet..." (påkrævet)', listLabel: 'Sejrslisten',
@@ -1462,7 +1462,7 @@ const THEME_COPY = {
   logn: {
     feedLabel: 'Løgne-feed',
     pendingVerb: 'anklaget',
-    quotePrefix: 'løj: ',
+    quotePrefix: 'løj: ', guessbrokExample: 'Påstod at have mødt en berømthed i lufthavnen',
     mainBtnText: '🎭 Afslør en løgn…', sheetTitle: 'Hvem løj? 🎭',
     sheetHint: 'Peg på løgneren, og skriv præcis hvad løgnen gik ud på — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "påstod at have mødt en kendis..." (påkrævet)', listLabel: 'Løgnelisten',
@@ -1483,7 +1483,7 @@ const THEME_COPY = {
     // strengere mekanik ved siden af.
     feedLabel: 'Påstand-feed',
     pendingVerb: 'nævnt',
-    quotePrefix: '',
+    quotePrefix: '', guessbrokExample: 'Leverede rapporten en hel dag før deadline',
     mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
     sheetHint: 'Peg på personen, og skriv påstanden helt konkret — ellers ved ingen hvad de stemmer om.',
     sheetPlaceholder: 'F.eks. "leverede uden at følge skabelonen..." (påkrævet)', listLabel: 'Påstandsliste',
@@ -3856,7 +3856,7 @@ function guessBrokHtml(g, cur){
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎯 Det er dig der skriver!</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card" id="gameCard">
         <p style="font-weight:800; margin:0 0 8px; font-size:16px;">✍️ Skriv et <u>ægte</u> indlæg</p>
-        <p class="hint" style="margin:0 0 10px; color:rgba(255,247,232,0.55);">F.eks.: <i>"Morgenmaden lukkede fem minutter for tidligt"</i> — kort og konkret.</p>
+        <p class="hint" style="margin:0 0 10px; color:rgba(255,247,232,0.55);">F.eks.: <i>"${escapeHtml(themeCopy().guessbrokExample)}"</i> — kort og konkret.</p>
         <textarea id="gbStatement" rows="2" maxlength="120" placeholder="Skriv dit rigtige indlæg her..."></textarea>
         <button class="game-btn" id="gbSubmitBtn" style="margin-top:12px;" disabled>🚀 Send</button>
       </div>
@@ -3882,7 +3882,7 @@ function guessBrokHtml(g, cur){
     }).join('');
     return `
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · ${badgeLabel}</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
-      <p style="font-weight:800; margin:0 0 10px; font-size:16px;">${isAuthor ? '👀 Sådan ser de andre det' : `🕵️ Gæt: hvilket er ${escapeHtml(author?author.name:'?')}s ægte brok?`}</p>
+      <p style="font-weight:800; margin:0 0 10px; font-size:16px;">${isAuthor ? '👀 Sådan ser de andre det' : `🕵️ Gæt: hvilket er ${escapeHtml(author?author.name:'?')}s ægte indlæg?`}</p>
       ${opts}
       ${gameProgressHtml(guessedCount, eligible, 'har gættet')}
       ${(hasGuessed || isAuthor) ? `<div class="waiting-pill"><span class="waiting-dot"></span> Venter på de andre...</div>` : ''}
@@ -3893,7 +3893,7 @@ function guessBrokHtml(g, cur){
   return `
     <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · Resultat</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
     <div class="game-card" id="gameCard" style="text-align:center;">
-      <p class="hint" style="color:rgba(255,247,232,0.6);">${escapeHtml(author?author.name:'?')}s ægte brok var:</p>
+      <p class="hint" style="color:rgba(255,247,232,0.6);">${escapeHtml(author?author.name:'?')}s ægte indlæg var:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);">✅ "${escapeHtml((cur.options||[])[cur.correctIndex] || '')}"</p>
       <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt (+1)' : 'Ingen gættede rigtigt.'}</p>
       ${cur.authorWon ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">😏 ${escapeHtml(author?author.name:'?')} narrede alle (+1)</p>` : ''}
