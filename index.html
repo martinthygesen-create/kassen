@@ -489,7 +489,7 @@
   .sheet-backdrop.show .sheet{transform:translateY(0);}
   .sheet-handle{ width:40px;height:5px;background:rgba(5,32,36,0.18);border-radius:10px; margin:8px auto 14px; }
   .sheet h2{font-size:20px; margin:0 0 4px; font-weight:800;}
-  .sheet p.hint{font-size:13px; color:rgba(5,32,36,0.55); margin:0 0 16px;}
+  .sheet p.hint{font-size:13px; color:rgba(5,32,36,0.65); margin:0 0 16px;}
 
   .name-grid{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
   .name-pill{ padding:10px 16px; border-radius:100px; border:2px solid rgba(5,32,36,0.12); background:#fff; color:var(--ink); font-weight:700; font-size:14.5px; cursor:pointer; }
@@ -625,7 +625,7 @@
      knapperne fra forskellige sektioner så ud til at flyde sammen uden nogen
      synlig adskillelse. Denne override retter farverne når .divider sidder
      inde i en .sheet. */
-  .sheet .divider{ color:rgba(5,32,36,0.4); }
+  .sheet .divider{ color:rgba(5,32,36,0.62); }
   .sheet .divider::before, .sheet .divider::after{ background:rgba(5,32,36,0.14); }
 
   /* top var oprindeligt en fast 16px, hvilket overlappede header-titlen.
@@ -2723,7 +2723,7 @@ function openGameAdminMenuSheet(){
     ${blockedByOther ? `<button class="sheet-btn danger" id="gameAdminEndOtherBtn">🛑 Afslut ${escapeHtml(mrbrokName)}</button>` : ''}
     ${hasHighscore ? `<button class="sheet-btn danger" id="gameAdminResetStatsBtn">🏆 Nulstil highscore</button>` : ''}
     <button class="sheet-btn ghost" id="gameAdminCloseBtn">Luk menu</button>
-    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.5; margin-top:6px;">${BUILD_TAG}</p>
+    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.75; margin-top:6px;">${BUILD_TAG}</p>
   `, ()=>{
     document.getElementById('gameAdminTestChanceBtn').onclick = ()=>{ closeSheet(); setTimeout(openChanceTestSheet, 230); };
     document.getElementById('gameAdminTestWheelBtn').onclick = ()=>{ closeSheet(); setTimeout(openWheelTestSheet, 230); };
@@ -4450,7 +4450,7 @@ function openMrbrokAdminMenuSheet(){
     ${active ? `<button class="sheet-btn danger" id="mrbrokAdminRestartBtn">🛑 Afslut ${escapeHtml(mrbrokName)}</button>` : ''}
     ${blockedByOther ? `<button class="sheet-btn danger" id="mrbrokAdminEndOtherBtn">🛑 Afslut ${escapeHtml(spilName)}</button>` : ''}
     <button class="sheet-btn ghost" id="mrbrokAdminCloseBtn">Luk menu</button>
-    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.5; margin-top:6px;">${BUILD_TAG}</p>
+    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.75; margin-top:6px;">${BUILD_TAG}</p>
   `, ()=>{
     const botBtn = document.getElementById('mrbrokAdminBotTestBtn');
     if(botBtn) botBtn.onclick = ()=> startBotTestGame('mrbrok');
@@ -5261,7 +5261,7 @@ function openComplainerAdminMenuSheet(){
     ${active ? `<button class="sheet-btn danger" id="complainerAdminRestartBtn">🛑 Afslut ${escapeHtml(complainerName)}</button>` : ''}
     ${blockedByOther ? `<button class="sheet-btn danger" id="complainerAdminEndOtherBtn">🛑 Afslut ${escapeHtml(blockedName)}</button>` : ''}
     <button class="sheet-btn ghost" id="complainerAdminCloseBtn">Luk menu</button>
-    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.5; margin-top:6px;">${BUILD_TAG}</p>
+    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.75; margin-top:6px;">${BUILD_TAG}</p>
   `, ()=>{
     const botBtn = document.getElementById('complainerAdminBotTestBtn');
     if(botBtn) botBtn.onclick = ()=> startBotTestGame('complainer');
@@ -6836,7 +6836,7 @@ function openAdminMenuSheet(){
   // egen standard-hint (.sheet p.hint, 13px/0.55) — dobbelt sværere at
   // læse end nødvendigt. Hævet til noget der stadig er tydeligt mindre end
   // brødtekst, men rent faktisk læsbart.
-  const hintStyle = 'font-size:12.5px; color:rgba(5,32,36,0.62); margin:6px 4px 6px;';
+  const hintStyle = 'font-size:12.5px; color:rgba(5,32,36,0.65); margin:6px 4px 6px;';
   openSheet(`
     <h2>Admin ⚙️</h2>
 
@@ -6889,7 +6889,7 @@ function openAdminMenuSheet(){
     <p class="hint" style="${hintStyle}">Med det samme. Ingen fortrydelse.</p>
 
     <button class="sheet-btn ghost" id="adminMenuCloseBtn">Luk menu</button>
-    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.4; margin-top:6px;">🔧 ${pushDebugInfo()} · ${BUILD_TAG}</p>
+    <p class="hint" style="text-align:center; font-size:10.5px; opacity:.75; margin-top:6px;">🔧 ${pushDebugInfo()} · ${BUILD_TAG}</p>
   `, ()=>{
     const gotoGameAdminBtn = document.getElementById('adminGotoGameAdminBtn');
     if(gotoGameAdminBtn) gotoGameAdminBtn.onclick = ()=>{ closeSheet(); setTimeout(openGameAdminMenuSheet, 230); };
