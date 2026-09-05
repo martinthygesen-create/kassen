@@ -21,7 +21,7 @@
     --cream:#FFF7E8; --ink:#052024; --ink-soft:#0b3a3f;
     --noir:#0A1416; --noir-deep:#050B0C; /* MrBrok-nuance — mørkt "efterforskningslokale", stadig i teal-familien i stedet for en fremmed farve */
     --ember:#FF7A3D; --ember-dark:#C4491B; --ember-noir:#2A0F08; --ember-noir-deep:#180804; /* Det Store Brokkeri-nuance — varm rust/ember, "kogende over" i stedet for MrBroks kølige efterforskningslokale */
-    --admin:#6B5CA5; --admin-dark:#4E4380; /* Admin-accent (Martins UX-fund: "hvad er der for alle, og hvad er admin" — knapper/menu-rækker kun admin kan bruge skal skille sig ud fra det almindelige --sea, som ALLE medlemmer også ser, fx ved en anklage). Bevidst en fjerde, ellers ubrugt farve — ikke --sea (bruges af alle), ikke --coral (betyder "kan ikke fortrydes", ikke "kun admin"), ikke --coin (generel highlight-accent alle steder). */
+    --admin:#6B5CA5; --admin-dark:#4E4380; /* KUN til de midlertidige "🤖 Test-spil med 3 bots"-knapper (Martins præcisering: resten af admin skal forblive almindelig --sea/--coral — "grønt og orange" — kun disse tre dev-testknapper, én pr. spiltype, skal skille sig ekstra ud fra de rigtige admin-handlinger ved siden af). Var kortvarigt brugt bredere på ALLE admin-knapper, rettet tilbage. */
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -513,7 +513,7 @@
   .sheet-btn.danger{background:var(--coral); color:#fff;}
   .sheet-btn.gold{background:linear-gradient(160deg, var(--coin), var(--coin-dark)); color:var(--ink);}
   .sheet-btn.test{background:rgba(5,32,36,0.14); color:var(--ink); font-weight:700;}
-  /* Kun admin kan trykke denne — se --admin's kommentar ovenfor i :root. */
+  /* KUN "🤖 Test-spil med 3 bots" — se --admin's kommentar ovenfor i :root. */
   .sheet-btn.admin{background:var(--admin); color:#fff;}
 
   /* Grupperet handlings-liste i sheets (fx ☰-menuen) — en samlet kortflade
@@ -525,11 +525,6 @@
   .menu-row-icon{ width:32px; height:32px; border-radius:10px; background:rgba(5,32,36,0.06); display:flex; align-items:center; justify-content:center; font-size:15px; flex:0 0 auto; }
   .menu-row-label{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14.5px; color:var(--ink); flex:1; }
   .menu-row-chevron{ color:rgba(5,32,36,0.25); font-size:14px; }
-  /* Admin-only række imellem almindelige rækker i samme liste (fx ☰-menuens
-     "Admin for X" ved siden af "Del link"/"Skift/forlad rum", som ALLE
-     medlemmer ser) — se --admin's kommentar i :root. */
-  .menu-row.admin .menu-row-icon{ background:rgba(107,92,165,0.15); }
-  .menu-row.admin .menu-row-label{ color:var(--admin-dark); }
 
   .vote-progress{ display:flex; align-items:center; gap:10px; margin:6px 0 16px; font-size:13.5px; font-weight:600; color:rgba(5,32,36,0.6); }
   .vote-progress .bar{flex:1; height:8px; background:rgba(5,32,36,0.1); border-radius:10px; overflow:hidden;}
@@ -2640,7 +2635,7 @@ function openAppMenuSheet(){
     ${isAdmin() ? `
       <div class="divider">admin</div>
       <div class="menu-row-list">
-        <div class="menu-row admin" id="menuAdminBtn"><div class="menu-row-icon">⚙️</div><div class="menu-row-label">Admin for ${activeAppDisplayName()}</div><span class="menu-row-chevron">›</span></div>
+        <div class="menu-row" id="menuAdminBtn"><div class="menu-row-icon">⚙️</div><div class="menu-row-label">Admin for ${activeAppDisplayName()}</div><span class="menu-row-chevron">›</span></div>
       </div>
     ` : ''}
   `, ()=>{
@@ -2708,7 +2703,7 @@ function openGameAdminMenuSheet(){
     <button class="sheet-btn test" id="gameAdminTestChanceBtn">🎲 Test Chancen</button>
     <button class="sheet-btn test" id="gameAdminTestWheelBtn">🎡 Test hjulet</button>
     <button class="sheet-btn test" id="gameAdminTestSlotBtn">🎰 Test spillemaskinen</button>
-    ${active || blockedByOther ? '' : `<button class="sheet-btn test" id="gameAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
+    ${active || blockedByOther ? '' : `<button class="sheet-btn admin" id="gameAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
     ${active ? `<button class="sheet-btn danger" id="gameAdminRestartBtn">🛑 Afslut ${escapeHtml(spilName)}</button>` : ''}
     ${blockedByOther ? `<button class="sheet-btn danger" id="gameAdminEndOtherBtn">🛑 Afslut ${escapeHtml(mrbrokName)}</button>` : ''}
     ${hasHighscore ? `<button class="sheet-btn danger" id="gameAdminResetStatsBtn">🏆 Nulstil highscore</button>` : ''}
@@ -4436,7 +4431,7 @@ function openMrbrokAdminMenuSheet(){
   openSheet(`
     <h2>${escapeHtml(mrbrokName)}-admin ⚙️</h2>
     <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? `${escapeHtml(spilName)} er i gang lige nu — afslut det for at kunne starte ${escapeHtml(mrbrokName)}.` : 'Der er ikke noget spil i gang lige nu.')}</p>
-    ${active || blockedByOther ? '' : `<button class="sheet-btn test" id="mrbrokAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
+    ${active || blockedByOther ? '' : `<button class="sheet-btn admin" id="mrbrokAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
     ${active ? `<button class="sheet-btn danger" id="mrbrokAdminRestartBtn">🛑 Afslut ${escapeHtml(mrbrokName)}</button>` : ''}
     ${blockedByOther ? `<button class="sheet-btn danger" id="mrbrokAdminEndOtherBtn">🛑 Afslut ${escapeHtml(spilName)}</button>` : ''}
     <button class="sheet-btn ghost" id="mrbrokAdminCloseBtn">Luk menu</button>
@@ -5247,7 +5242,7 @@ function openComplainerAdminMenuSheet(){
   openSheet(`
     <h2>${escapeHtml(complainerName)}-admin ⚙️</h2>
     <p class="hint">${active ? 'Der er et spil i gang lige nu.' : (blockedByOther ? `${escapeHtml(blockedName)} er i gang lige nu — afslut det for at kunne starte ${escapeHtml(complainerName)}.` : 'Der er ikke noget spil i gang lige nu.')}</p>
-    ${active || blockedByOther ? '' : `<button class="sheet-btn test" id="complainerAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
+    ${active || blockedByOther ? '' : `<button class="sheet-btn admin" id="complainerAdminBotTestBtn">🤖 Test-spil med 3 bots</button>`}
     ${active ? `<button class="sheet-btn danger" id="complainerAdminRestartBtn">🛑 Afslut ${escapeHtml(complainerName)}</button>` : ''}
     ${blockedByOther ? `<button class="sheet-btn danger" id="complainerAdminEndOtherBtn">🛑 Afslut ${escapeHtml(blockedName)}</button>` : ''}
     <button class="sheet-btn ghost" id="complainerAdminCloseBtn">Luk menu</button>
@@ -6834,18 +6829,18 @@ function openAdminMenuSheet(){
 
     ${(state.gameEnabled || state.mrbrokEnabled || state.complainerEnabled) ? `
     <div class="divider">spil-admin (bl.a. test-spil med 3 bots)</div>
-    ${state.gameEnabled ? `<button class="sheet-btn admin" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
-    ${state.mrbrokEnabled ? `<button class="sheet-btn admin" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
-    ${state.complainerEnabled ? `<button class="sheet-btn admin" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
+    ${state.gameEnabled ? `<button class="sheet-btn primary" id="adminGotoGameAdminBtn">👉 ${escapeHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet')}-admin</button>` : ''}
+    ${state.mrbrokEnabled ? `<button class="sheet-btn primary" id="adminGotoMrbrokAdminBtn">🕵️ ${escapeHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok')}-admin</button>` : ''}
+    ${state.complainerEnabled ? `<button class="sheet-btn primary" id="adminGotoComplainerAdminBtn">🪤 ${escapeHtml((state.gameNames && state.gameNames.complainer) || 'Det Store Brokkeri')}-admin</button>` : ''}
     <p class="hint" style="${hintStyle}">Start/afslut et spil, nulstil highscore og "🤖 Test-spil med 3 bots" ligger under hvert spils egen admin — uanset hvilken fane du står på lige nu.</p>
     ` : ''}
 
     <div class="divider">admin</div>
-    <button class="sheet-btn admin" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
+    <button class="sheet-btn primary" id="adminTogglePauseBtn">${state.pausedByHost ? '▶️ Genoptag (slå pause fra)' : '⏸️ Sæt på pause (fx under møder)'}</button>
     <p class="hint" style="${hintStyle}">Blokerer kun NYE anklager mens den er slået til — rører ikke allerede ventende afstemninger.</p>
-    <button class="sheet-btn admin" id="adminGoalBtn">🎯 Sæt mål for potten</button>
-    <button class="sheet-btn admin" id="adminBroadcastBtn">📣 Send besked til alle</button>
-    <button class="sheet-btn admin" id="adminSettleBtn">💶 Gør op (tøm puljen)</button>
+    <button class="sheet-btn primary" id="adminGoalBtn">🎯 Sæt mål for potten</button>
+    <button class="sheet-btn primary" id="adminBroadcastBtn">📣 Send besked til alle</button>
+    <button class="sheet-btn primary" id="adminSettleBtn">💶 Gør op (tøm puljen)</button>
     <p class="hint" style="${hintStyle}">Arkiverer og tømmer puljen. Kan fortrydes bagefter.</p>
 
     <div class="divider">anbefal appen</div>
@@ -7008,7 +7003,7 @@ function openGoalSheet(){
     <h2>Sæt mål for potten 🎯</h2>
     <p class="hint">Kort fri tekst der vises for alle under krukken. Fx "Fælles middag sidste aften". Kan ændres når som helst.</p>
     <input type="text" id="goalInput" maxlength="100" placeholder="Fx: Fælles middag sidste aften" value="${escapeHtml(state.goal||'')}" />
-    <button class="sheet-btn admin" id="doGoal">Gem</button>
+    <button class="sheet-btn primary" id="doGoal">Gem</button>
     <button class="sheet-btn ghost" id="cancelGoal">Annuller</button>
   `, ()=>{
     document.getElementById('cancelGoal').onclick = closeSheet;
@@ -7025,7 +7020,7 @@ function openBroadcastSheet(){
     <h2>Send besked til alle 📣</h2>
     <p class="hint">Sendes som en rigtig push-notifikation til alle der har slået notifikationer til (🔔).</p>
     <textarea id="broadcastInput" rows="3" maxlength="200" placeholder="Fx: Kære alle – nu kører det! Husk at registrere jeres hændelser 😉"></textarea>
-    <button class="sheet-btn admin" id="doBroadcast">Send</button>
+    <button class="sheet-btn primary" id="doBroadcast">Send</button>
     <button class="sheet-btn ghost" id="cancelBroadcast">Annuller</button>
   `, ()=>{
     document.getElementById('cancelBroadcast').onclick = closeSheet;
