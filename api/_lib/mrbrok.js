@@ -303,10 +303,12 @@ const MRBROK_CLUE_TIPS_KONKURRENCE = [
 // aldrig et rum uden kurateret indhold endnu.
 const CONTENT_BY_THEME = {
   brok: { mrbrokTopics: MRBROK_TOPICS, mrbrokClueTips: MRBROK_CLUE_TIPS, gameName: 'MrBrok' },
-  // Fase 5 bevis-tema. gameName "Bødedetektiven" — spilnavne er
-  // tema-afhængige, ikke "MrBrok" bogstaveligt, se planens punkt om at
-  // spilnavne er brok-brandede og skal reskinnes pr. tema.
-  bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Bødedetektiven' },
+  // Omdøbt fra "Bødedetektiven" til "Mr. Bøde" (Martins beslutning, live
+  // UX-gennemgang): "detektiven" beskriver reelt de ANDRE spillere (dem der
+  // efterforsker), ikke den skjulte selv — "Mr. Bøde" er i stedet en
+  // direkte parallel til selve "MrBrok" (Mr. + temaets substantiv), samme
+  // opbygning, øjeblikkeligt genkendeligt som bøde-udgaven af samme spil.
+  bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Mr. Bøde' },
   // Konkurrencekassen: eget indhold (se MRBROK_TOPICS_KONKURRENCE's
   // kommentar ovenfor for hvorfor — en tidligere regex-omskrivning af
   // brok's egne vrede personaer gav meningsløse emner).

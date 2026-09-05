@@ -551,7 +551,7 @@ function healPendingVotes(state) {
 }
 
 // Kasse-motor-generalisering, Fase 4: spilnavne er tema-afhængige (fx
-// "Bødedetektiven" i stedet for "MrBrok"), se planens punkt om at
+// "Mr. Bøde" i stedet for "MrBrok"), se planens punkt om at
 // spilnavne er brok-brandede og skal reskinnes pr. tema — klienten skal
 // aldrig selv duplikere denne opslags-logik (index.html:1688-fundet fra
 // UI-audit-bilaget). Ukendt/manglende tema falder tilbage til 'brok's
