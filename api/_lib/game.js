@@ -222,17 +222,46 @@ const QUIPLASH_DECOYS_BODE = [
 // ikke websøgning til at verificere flere end de mest velkendte,
 // bredt dokumenterede eksempler her. Udvid KUN med fakta der er
 // dobbelttjekket, ikke bare opdigtet i samme stil — se Dommerens Del B.
+// Quizmaster-audit-fund (Martins live test: "Bødespillet bruger Brokspillet
+// trivia — why?"): denne pulje delte tidligere sig selv med WORLD_TRIVIA via
+// THEME_TRIVIA's tags:['brok','bode'] — men WORLD_TRIVIA er reelt "berømte
+// virksomheder der fik massivt BROK fra kunder" (ordet "brok" optræder
+// bogstaveligt i de fleste af dens spørgsmål), ikke "afgifter/bøder/
+// regelbrud". Den påståede "afgift/regel-overlap"-begrundelse holdt ikke i
+// praksis. Udvidet til egen, selvstændig pulje (fine/bøde/regelbrud-domænet)
+// — se THEME_TRIVIA nedenfor, som IKKE længere tagger denne med 'brok'.
 const WORLD_TRIVIA_BODE = [
   { question: 'Singapore er verdenskendt for at forbyde import og salg af hvad, med høje bøder til følge?', correct: 'Tyggegummi', distractors: ['Balloner', 'Legetøjsvåben', 'Kunstige blomster'] },
   { question: 'I flere lande, bl.a. Schweiz og Finland, beregnes en fartbøde ikke kun ud fra hastigheden, men også ud fra hvad?', correct: 'Din indkomst', distractors: ['Din alder', 'Bilens farve', 'Årstiden'] },
   { question: 'Flere storbyer, bl.a. Venedig, har indført bøder for at gøre hvad på de mest berømte pladser?', correct: 'Fodre duer', distractors: ['Tage billeder', 'Sidde på trapperne', 'Spise is'] },
+  { question: 'Singapore er, ud over tyggegummiforbuddet, også kendt for meget høje bøder for hvad?', correct: 'At smide affald på gaden (henkastning af affald)', distractors: ['At cykle på fortovet', 'At spise offentligt', 'At bruge paraply indendørs'] },
+  { question: 'New York indførte i 1978 en af verdens første love om, at hundeejere SKAL gøre hvad, med bøde til følge hvis ikke?', correct: 'Samle deres hunds efterladenskaber op', distractors: ['Holde hunden i snor i alle parker', 'Registrere hunden årligt', 'Bære pose synligt til enhver tid'] },
+  { question: 'I langt de fleste lande i verden i dag kan man få en bøde for at køre bil uden at gøre hvad?', correct: 'Bruge sikkerhedssele', distractors: ['Have musik tændt', 'Have en ren bil', 'Have vindueskosten med'] },
+  { question: 'Automatiske fotovogne/fartkameraer bruges i dag i de fleste lande primært til at udstede bøder for hvad?', correct: 'For høj hastighed', distractors: ['Ulovlig parkering', 'Kørsel uden lys', 'Manglende blinklys'] },
+  { question: 'I mange amerikanske storbyer, bl.a. Los Angeles, er "jaywalking" bødebelagt. Hvad betyder det?', correct: 'At krydse gaden uden for et fodgængerfelt', distractors: ['At cykle på vejen', 'At holde ulovligt i vejkanten', 'At gå tur med hund uden snor'] },
+  { question: 'I flere europæiske lande, bl.a. Tyskland, kan husstande faktisk få en bøde for hvad?', correct: 'Forkert sortering af affald/genbrug', distractors: ['At have for lidt affald', 'At bruge for meget vand', 'At have en have der er for stor'] },
+  { question: 'I mange lande kan man få en bøde for støj efter et bestemt klokkeslæt om aftenen. Hvad kaldes disse regler typisk?', correct: 'Nattero/"quiet hours"', distractors: ['Udgangsforbud', 'Brandregler', 'Byggetilladelser'] },
+  { question: 'Virksomheder kan i mange lande få store bøder, hvis de bryder hvilken slags regler på arbejdspladsen?', correct: 'Arbejdsmiljø- og sikkerhedsregler', distractors: ['Marketingregler', 'Ferieregler for ansatte', 'Kantine-hygiejneregler alene'] },
+  { question: 'I mange lande fordobles en fartbøde typisk, hvis man kører for stærkt forbi hvad?', correct: 'En skole', distractors: ['En kirke', 'Et posthus', 'Et supermarked'] },
+  { question: 'Flere lande har indført en afgift/bøde-lignende gebyr for at mindske forbruget af hvad i butikker?', correct: 'Gratis plastikposer', distractors: ['Plastikflasker med pant', 'Al emballage generelt', 'Kun plastiksugerør'] },
+  { question: 'I mange lande er det bødebelagt at gøre hvad uden for selve nytårsperioden?', correct: 'Affyre fyrværkeri', distractors: ['Tænde bål i haven', 'Holde fest efter midnat', 'Grille på altanen'] },
+  { question: 'En af de mest almindelige trafikbøder i verden i dag gives for hvad?', correct: 'At bruge håndholdt mobiltelefon under kørsel', distractors: ['At køre med åbent vindue', 'At have en hund løs i bilen', 'At lytte til radio for højt'] },
+  { question: 'I mange lande, bl.a. Danmark, kan man få en bøde for at gøre hvad uden gyldigt fisketegn?', correct: 'Fiske i søer, åer eller havet', distractors: ['Sejle en jolle', 'Bade i havet', 'Gå tur langs kysten'] },
+  { question: 'Næsten alle lande har markant højere bøder for at parkere ulovligt hvor, sammenlignet med almindelig fejlparkering?', correct: 'På en handicapplads', distractors: ['Tæt på et lyskryds', 'Om natten', 'Med visne blomster i bilen'] },
+  { question: 'Butikker og barer kan i mange lande få en bøde, hvis de sælger alkohol til hvem?', correct: 'Mindreårige', distractors: ['Turister', 'Kunder uden kvittering', 'Ansatte'] },
+  { question: 'I mange storbyer kan man få en bøde, hvis brandvæsenet rykker ud forgæves pga. hvad?', correct: 'En falsk brandalarm', distractors: ['For sen anmeldelse', 'En defekt røgdetektor', 'Naboklager over lugt'] },
+  { question: 'En berømt sag i Schweiz gav i 2010 en af verdens dyreste fartbøder nogensinde, fordi bøden dér beregnes ud fra hvad?', correct: 'Bilistens formue/indkomst', distractors: ['Antallet af tidligere bøder', 'Bilens hestekræfter alene', 'Vejens hastighedsgrænse alene'] },
 ];
 
 // Fase 5 bevis-tema: samme forsigtighed som WORLD_TRIVIA_BODE ovenfor —
-// kun velkendte, dobbelttjekkede fakta, bevidst holdt til 2 stykker.
+// kun velkendte, dobbelttjekkede fakta.
 const WORLD_TRUEFALSE_BODE = [
   { statement: 'I Singapore er det ulovligt at importere og sælge tyggegummi, med bøder for overtrædelse.', isTrue: true },
   { statement: 'I flere lande, bl.a. Schweiz og Finland, beregnes fartbøder ud fra din indkomst, så en høj indkomst kan give en langt større bøde for samme overtrædelse.', isTrue: true },
+  { statement: 'New York var en af de første storbyer i verden til at lovgive om, at hundeejere skal samle deres hunds efterladenskaber op.', isTrue: true },
+  { statement: 'De fleste lande giver LAVERE fartbøder ved vejarbejde, for ikke at stresse bilisterne unødigt.', isTrue: false },
+  { statement: 'Singapores bøder for gentagen henkastning af affald kan indebære samfundstjeneste, ikke kun en pengebøde.', isTrue: true },
+  { statement: 'I de fleste lande er det billigere at vente med at betale en fartbøde end at betale den med det samme.', isTrue: false },
 ];
 
 // Fase 5 bevis-tema: samme funktion som DECOY_BROK — hverdags "bøde-
@@ -424,26 +453,26 @@ const DECOY_DRIK = [
 // skins er KUN tilladt hvor der er naturligt tematisk overlap (præcis de
 // grupper protokollen selv definerer):
 //   - Socialt/sjovt overlap: drik + venne + sladre
-//   - Afgift/regel-overlap:  bode + brok
 //   - Sandhed/afsløring:     sladre + logn
+// RETTET (quizmaster-audit-fund, Martins live test — "Bødespillet bruger
+// Brokspillet trivia, why?"): der stod tidligere også et "afgift/regel-
+// overlap: bode + brok" her, som delte WORLD_TRIVIA (bogstaveligt om
+// "brok"/offentlig kunde-utilfredshed) ind i Bødespillet. Holdt IKKE i
+// praksis — samme STRICT BOUNDARY-princip som rose/konkurrence gælder nu
+// også bode: egen, isoleret pulje, intet lån fra brok.
 // STRICT BOUNDARY: rose og konkurrence (rene reward-polaritet-skins) får
 // ALDRIG negativt/straf-vinklet indhold fra brok/bode — de har hver deres
-// egen, isolerede pulje. hjaelper (professionel/holdleder-tone, ikke
-// uformel "brok") er også bevidst isoleret — intet naturligt tematisk
-// overlap med de øvrige er nævnt i protokollen.
+// egen, isolerede pulje. bode (se ovenfor), og hjaelper (professionel/
+// holdleder-tone, ikke uformel "brok") er af samme grund også isolerede.
 // De ÆLDRE WORLD_TRIVIA_BODE/SLADRE/VENNE/ROSE/DRIK-arrays ovenfor holdes
 // UÆNDREDE (bruges stadig direkte af CONTENT_BY_THEME.bode/sladre/venne/
 // rose/drik's `worldTrueFalse`-felt), men deres `worldTrivia`-felt erstattes
 // nedenfor af getTriviaForSkin(id) — selve spørgsmålsbanken er nu HER.
 const THEME_TRIVIA = [
-  // --- BROK (egen pulje, delt med BODE — afgift/regel-overlap) ---
-  // Genbruger den eksisterende, allerede dobbelttjekkede WORLD_TRIVIA
-  // ordret (30 stk, langt over minimum) — kun tags tilføjet, ingen
-  // indholds-ændring.
-  ...WORLD_TRIVIA.map(item => ({ ...item, tags: ['brok', 'bode'] })),
-  // BODE's egne 3 (fra WORLD_TRIVIA_BODE) hører naturligt hjemme i samme
-  // delte pulje — tilgængelige for begge, samme overlap-regel.
-  ...WORLD_TRIVIA_BODE.map(item => ({ ...item, tags: ['bode', 'brok'] })),
+  // --- BROK (egen, isoleret pulje — se STRICT BOUNDARY ovenfor) ---
+  ...WORLD_TRIVIA.map(item => ({ ...item, tags: ['brok'] })),
+  // --- BØDE (egen, isoleret pulje — se WORLD_TRIVIA_BODE's kommentar) ---
+  ...WORLD_TRIVIA_BODE.map(item => ({ ...item, tags: ['bode'] })),
 
   // --- SOCIALT/SJOVT (drik + venne + sladre) ---
   { question: 'Ifølge antropologen Robin Dunbar er der en øvre grænse for hvor mange stabile venskaber en person typisk kan opretholde. Cirka hvor mange?', correct: 'Omkring 150', distractors: ['Omkring 15', 'Omkring 1.500', 'Omkring 5'], tags: ['drik', 'venne', 'sladre'] },
