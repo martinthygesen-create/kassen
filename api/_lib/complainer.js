@@ -996,7 +996,7 @@ const CONTENT_BY_THEME = {
     archetypes: COMPLAINER_ARCHETYPES_DRIK,
     situations: COMPLAINER_SITUATIONS_DRIK,
     prompts: COMPLAINER_PROMPTS_DRIK,
-    gameName: 'Rundefælden',
+    gameName: 'Skålefælden',
   },
 };
 function getThemeContent(themeId) {

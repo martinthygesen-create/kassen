@@ -758,7 +758,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('drik'),
     worldTrueFalse: WORLD_TRUEFALSE_DRIK,
     decoyBrok: DECOY_DRIK,
-    gameName: 'Rundespillet',
+    gameName: 'Skålespillet',
   },
   // Konkurrencekassen — poolPolarity:'reward'-motoren. Genbrugte tidligere
   // brok-indholdet UÆNDRET ("kun gameName er nyt") — RETTET her (Trivia-

@@ -325,7 +325,7 @@ const CONTENT_BY_THEME = {
   logn: { mrbrokTopics: MRBROK_TOPICS_LOGN, mrbrokClueTips: MRBROK_CLUE_TIPS_LOGN, gameName: 'Mr. Løgn' },
   venne: { mrbrokTopics: MRBROK_TOPICS_VENNE, mrbrokClueTips: MRBROK_CLUE_TIPS_VENNE, gameName: 'Mr. Amigo' },
   rose: { mrbrokTopics: MRBROK_TOPICS_ROSE, mrbrokClueTips: MRBROK_CLUE_TIPS_ROSE, gameName: 'Mr. Ros' },
-  drik: { mrbrokTopics: MRBROK_TOPICS_DRIK, mrbrokClueTips: MRBROK_CLUE_TIPS_DRIK, gameName: 'Rundedetektiven' },
+  drik: { mrbrokTopics: MRBROK_TOPICS_DRIK, mrbrokClueTips: MRBROK_CLUE_TIPS_DRIK, gameName: 'Mr. Skål' },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
