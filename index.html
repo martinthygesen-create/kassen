@@ -2311,7 +2311,15 @@ async function startBotTestGame(kind){
   const playerIds = [profile.memberId, ...botIds];
   botAutoplay = true;
   botTestStartedAt = Date.now();
-  if(kind === 'game') await gameApi('start', { wager:'fun', playerIds, totalRounds:5 });
+  // 16 i stedet for 5 (Martins fund: en kort bot-test viste sjældent alle
+  // tre "Chancen"-visninger — muldvarp/hjul/spillemaskine). Casinobrok er
+  // GARANTERET at optræde inden runde 6 (kun én gang pr. spil, se
+  // ONCE_PER_GAME_TYPES i game.js), men de to andre visninger kræver en
+  // reel uafgjort quiplash-afstemning (se resolveQuiplashVote i
+  // gameFlow.js) — ikke noget runde-antallet alene kan GARANTERE, kun gøre
+  // markant mere sandsynligt. 16 runder giver ~4 uafhængige quiplash-
+  // forsøg (mod ~1 ved 5 runder) til at ramme de resterende to visninger.
+  if(kind === 'game') await gameApi('start', { wager:'fun', playerIds, totalRounds:16 });
   else if(kind === 'mrbrok') await mrbrokApi('start', { wager:'fun', playerIds, warmupRounds:2 });
   else await complainerApi('start', { wager:'fun', playerIds, totalRounds:3 });
   toast('🤖 Bots spiller automatisk — du styrer kun din egen tur');

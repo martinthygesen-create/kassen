@@ -317,8 +317,16 @@ const QUIPLASH_DECOYS_SLADRE = [
 const WORLD_TRIVIA_SLADRE = [
   { question: 'Det engelske ord "gossip" (sladder) stammer fra det angelsaksiske "godsibb". Hvad betegnede det oprindeligt?', correct: 'En gudforælder eller nær ven', distractors: ['En kongelig budbringer', 'En kirkelig embedsmand', 'En markedssælger'] },
 ];
+// Udvidet fra 1 til 6 (Martins fund: kun ÉT udsagn, altid sandt, betyder
+// runden altid viser nøjagtig det samme og altid er "sandt" ved gentagen
+// spil) — nu en reel blanding af sandt/falsk.
 const WORLD_TRUEFALSE_SLADRE = [
   { statement: 'Ordet "gossip" kommer oprindeligt fra et gammelengelsk udtryk for en gudforælder eller nær ven, ikke fra et udtryk for at "snakke meget".', isTrue: true },
+  { statement: 'Rygter spredes i store grupper statistisk set efter samme mønster som en smitsom sygdom.', isTrue: true },
+  { statement: 'Ifølge sprogforskere handler op mod 65% af al menneskelig samtale reelt om andre mennesker.', isTrue: true },
+  { statement: 'Det er videnskabeligt bevist at sladder altid er usandt.', isTrue: false },
+  { statement: 'Det danske ord "bagtale" betyder oprindeligt at tale PÅ nogens vegne, ikke bag deres ryg.', isTrue: false },
+  { statement: 'Rygter i store organisationer opstår ofte netop hvor den officielle information mangler eller er uklar.', isTrue: true },
 ];
 
 const DECOY_SLADRE = [
@@ -356,8 +364,14 @@ const QUIPLASH_DECOYS_VENNE = [
 const WORLD_TRIVIA_VENNE = [
   { question: 'Ifølge en kendt teori af antropologen Robin Dunbar er der en øvre grænse for hvor mange stabile venskaber en person typisk kan opretholde. Cirka hvor mange?', correct: 'Omkring 150', distractors: ['Omkring 15', 'Omkring 1.500', 'Omkring 5'] },
 ];
+// Udvidet fra 1 til 6, samme grund som Sladrekassen ovenfor.
 const WORLD_TRUEFALSE_VENNE = [
   { statement: 'Ifølge antropologen Robin Dunbar kan mennesker typisk kun opretholde omkring 150 stabile sociale relationer ad gangen — kendt som "Dunbars tal".', isTrue: true },
+  { statement: 'Ifølge en kendt teori kræver det typisk omkring 200 timers samvær, før en bekendt bliver til en "god ven".', isTrue: true },
+  { statement: 'De fleste voksne bruger ifølge undersøgelser over 20 timer om ugen sammen med venner.', isTrue: false },
+  { statement: 'Spotlight-effekten betegner at man tror andre lægger langt mere mærke til ens pinlige fejltrin, end de faktisk gør.', isTrue: true },
+  { statement: 'Ordet "kammerat" stammer oprindeligt fra et ord der betød en handelspartner.', isTrue: false },
+  { statement: 'Venskaber opstår ifølge forskning ofte hurtigere, hvis man oplever noget udfordrende sammen, ikke kun hyggeligt.', isTrue: true },
 ];
 const DECOY_VENNE = [
   'Glemte at svare i gruppechatten i tre dage',
@@ -394,8 +408,14 @@ const QUIPLASH_DECOYS_ROSE = [
 const WORLD_TRIVIA_ROSE = [
   { question: 'Forskning i positiv psykologi (bl.a. af John Gottman) peger på et bestemt forhold mellem positive og negative kommentarer, der kendetegner stærke parforhold. Hvad kaldes det populært?', correct: 'Gottman-forholdet (ca. 5:1 positivt/negativt)', distractors: ['50/50-reglen', 'Guldne snit-reglen', '90/10-reglen'] },
 ];
+// Udvidet fra 1 til 6, samme grund som Sladrekassen ovenfor.
 const WORLD_TRUEFALSE_ROSE = [
   { statement: 'Forskeren John Gottman har foreslået at stærke parforhold typisk har omkring fem positive interaktioner for hver negativ.', isTrue: true },
+  { statement: 'Ifølge forskning har det at GIVE ros en positiv effekt kun for modtageren, ikke for giveren selv.', isTrue: false },
+  { statement: 'Halo-effekten betegner at én positiv egenskab hos nogen får os til automatisk at antage flere gode ting om personen.', isTrue: true },
+  { statement: 'En konkret, specifik kompliment om en handling er ifølge trivselsforskning generelt MINDRE virkningsfuld end en vag, generel kompliment.', isTrue: false },
+  { statement: 'Traditionen med at give en "guldstjerne" som anerkendelse stammer fra lærere der belønnede elevers gode arbejde.', isTrue: true },
+  { statement: 'Taknemmeligheds-dagbøger (at skrive gode ting ned hver dag) er en kendt øvelse inden for positiv psykologi.', isTrue: true },
 ];
 const DECOY_ROSE = [
   'Roste en kollega for en detalje ingen andre lagde mærke til',
@@ -432,8 +452,14 @@ const QUIPLASH_DECOYS_DRIK = [
 const WORLD_TRIVIA_DRIK = [
   { question: 'Den skandinaviske skåltradition med at sige "skål" stammer sprogligt fra hvilket ord?', correct: 'Det gamle ord for drikkekar/bæger', distractors: ['Et gammelt krigsråb', 'Et ord for held', 'Navnet på en vikingekonge'] },
 ];
+// Udvidet fra 1 til 6, samme grund som Sladrekassen ovenfor.
 const WORLD_TRUEFALSE_DRIK = [
   { statement: 'Ordet "skål" som skåltale stammer sprogligt fra ordet for selve drikkekarret/bægeret man drak af.', isTrue: true },
+  { statement: 'Traditionen med at støde glas sammen ved en skål menes historisk at stamme fra et ønske om at vise tillid, ved at lade lidt drik sprøjte over i hinandens glas.', isTrue: true },
+  { statement: 'Det klassiske spil "Ring of Fire"/"Kongespillet" spilles typisk med en terning, ikke et almindeligt spil kort.', isTrue: false },
+  { statement: 'Ifølge klassisk etikette bør man altid se de andre i øjnene, når man skåler.', isTrue: true },
+  { statement: 'Selskabsspillet Twister blev oprindeligt udelukkende markedsført som et rent træningsredskab for børn.', isTrue: false },
+  { statement: 'Udtrykket "at gå bankerot" i et festspil stammer sprogligt fra italiensk og betød oprindeligt at bryde sin handelsbænk i stykker.', isTrue: true },
 ];
 const DECOY_DRIK = [
   'Glemte sin runde for tredje gang på en aften',
@@ -622,8 +648,14 @@ const QUIPLASH_DECOYS_KONKURRENCE = [
   'At huske hver eneste sejr i mindste detalje',
   'At påstå det var "ren strategi", når det var ren tilfældighed',
 ];
+// Udvidet fra 1 til 6, samme grund som Sladrekassen ovenfor.
 const WORLD_TRUEFALSE_KONKURRENCE = [
   { statement: 'Ved de olympiske lege i antikkens Grækenland fik vinderen en krans af oliegrene i stedet for en medalje.', isTrue: true },
+  { statement: 'Udtrykket "underdog" bruges om en deltager der forventes at vinde sikkert.', isTrue: false },
+  { statement: '"Photo finish" i sport opstod fordi et løb var for tæt til at afgøre med det blotte øje.', isTrue: true },
+  { statement: 'En "alle-mod-alle"-turnering (round robin) betyder at kun de to bedste hold mødes til sidst.', isTrue: false },
+  { statement: 'Ifølge sportspsykologer præsterer man ofte bedst i "flow", en tilstand hvor opgaven hverken er for let eller for svær.', isTrue: true },
+  { statement: 'Et handicap-system i sport bruges typisk til at gøre en konkurrence MERE ulige mellem stærke og svage deltagere.', isTrue: false },
 ];
 const DECOY_KONKURRENCE = [
   'Vandt tre runder i træk og krævede revanche alligevel',
@@ -661,8 +693,14 @@ const QUIPLASH_DECOYS_LOGN = [
   'At sige man "næsten" nåede det',
   'At love at huske det denne gang',
 ];
+// Udvidet fra 1 til 6, samme grund som Sladrekassen ovenfor.
 const WORLD_TRUEFALSE_LOGN = [
   { statement: 'En løgnedetektor (polygraf) måler ikke løgn direkte, men fysiske stressreaktioner som puls og sved.', isTrue: true },
+  { statement: 'Historien om Pinocchios voksende næse, når han lyver, stammer oprindeligt fra Italien.', isTrue: true },
+  { statement: 'Ifølge adfærdsforskning er det at undgå øjenkontakt et pålideligt, videnskabeligt bevist tegn på løgn.', isTrue: false },
+  { statement: 'Sande historier er ifølge kriminalpsykologer typisk MERE konsistente ved gentagne genfortællinger end opdigtede historier.', isTrue: true },
+  { statement: 'Det danske udtryk "løgn har korte ben" betyder at løgnere typisk er dårlige løbere.', isTrue: false },
+  { statement: 'Ifølge en kendt Harvard-undersøgelse aktiverer det at holde en løgn hemmelig ofte de samme hjerneområder som fysisk smerte.', isTrue: true },
 ];
 const DECOY_LOGN = [
   'Sagde "jeg var lige på vej" en time for tidligt',
@@ -695,8 +733,14 @@ const QUIPLASH_DECOYS_HJAELPER = [
   'Meldte opgaven færdig en time for tidligt',
   'Stolede på hukommelsen i stedet for tjeklisten',
 ];
+// Udvidet fra 1 til 6, samme grund som Sladrekassen ovenfor.
 const WORLD_TRUEFALSE_HJAELPER = [
   { statement: 'Den kendte "tjekliste"-metode til at reducere fejl på hospitaler og i luftfarten blev populariseret af lægen og forfatteren Atul Gawande.', isTrue: true },
+  { statement: 'Toyotas berømte produktionssystem tillod enhver medarbejder at stoppe hele samlebåndet, hvis de så en fejl.', isTrue: true },
+  { statement: 'Det japanske begreb "Kaizen" betyder en stor, pludselig omvæltning af hele arbejdsprocessen på én gang.', isTrue: false },
+  { statement: '"Fire-øjne-princippet" i kvalitetssikring betyder at vigtigt arbejde skal tjekkes af mindst to personer.', isTrue: true },
+  { statement: 'Ifølge arbejdsmiljøforskning falder antallet af fejl typisk, når medarbejdere trygt kan melde fejl uden frygt for konsekvenser.', isTrue: true },
+  { statement: 'En "near miss" (nærved-hændelse) betegner en fejl der allerede er sket og ikke længere kan rettes.', isTrue: false },
 ];
 const DECOY_HJAELPER = [
   'Glemte at krydse af på tjeklisten',
