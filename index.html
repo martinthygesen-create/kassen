@@ -2980,7 +2980,7 @@ function renderGameScreen(){
   app.innerHTML = `
     <header class="theme-spil${isRose?' theme-rose':''}">
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>${titleHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet', ['spillet'])} 👉</span>
+        <span>${titleHtml((state.gameNames && state.gameNames.spil) || 'Brokspillet', ['spillet'])}</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
@@ -4521,7 +4521,7 @@ function renderMrbrokScreen(){
   app.innerHTML = `
     <header class="theme-mrbrok">
       <div class="title" style="font-size:30px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>${titleHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok', ['detektiven', 'hanen', 'brok'])} 🕵️</span>
+        <span>${titleHtml((state.gameNames && state.gameNames.mrbrok) || 'MrBrok', ['detektiven', 'hanen', 'brok'])}</span>
         <button id="btnAppMenu" title="Menu" aria-label="Menu" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,247,232,0.08); border:1px solid rgba(255,247,232,0.15); color:rgba(255,247,232,0.85); border-radius:100px; flex:0 0 auto;">☰</button>
       </div>
     </header>
