@@ -3964,7 +3964,7 @@ function casinobrokHtml(g, cur){
         ? `<div class="empty-state" style="padding:18px;"><span class="emoji">🛡️</span><b>Sikker gevinst!</b>+${mine.delta} point i banken, ingen risiko.</div>`
         : mine.won
           ? `<div class="empty-state" style="padding:18px;"><span class="emoji">🎉</span><b>Du ramte gevinsten!</b>+${mine.delta} point!</div>`
-          : `<div class="empty-state" style="padding:18px;"><span class="emoji">💀</span><b>Aber! Ingen gevinst denne gang.</b>${mine.delta} point.</div>`;
+          : `<div class="empty-state" style="padding:18px;"><span class="emoji">💀</span><b>Taber!</b>${mine.delta} point.</div>`;
     }
     return `
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🎰 BONUSRUNDE</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
@@ -3995,7 +3995,7 @@ function casinobrokHtml(g, cur){
     const rows = state.members.filter(m=>g.players.includes(m.id)).map(m=>{
       const b = cur.bets[m.id];
       if(!b) return '';
-      const label = b.choice === 'safe' ? '🛡️ Sikker gevinst' : (b.won ? '🎉 Ramte gevinsten' : '💀 Aber');
+      const label = b.choice === 'safe' ? '🛡️ Sikker gevinst' : (b.won ? '🎉 Ramte gevinsten' : '💀 Taber');
       const deltaText = b.delta > 0 ? `+${b.delta}` : `${b.delta}`;
       return `<div class="feed-item${b.delta>0?' quip-slot-win':''}" style="${b.delta>0?'border-color:var(--coin); background:rgba(255,201,60,0.16);':''}">
         <div class="avatar">${initials(m.name)}</div>
