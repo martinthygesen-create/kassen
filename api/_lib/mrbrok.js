@@ -311,16 +311,20 @@ const CONTENT_BY_THEME = {
   bode: { mrbrokTopics: MRBROK_TOPICS_BODE, mrbrokClueTips: MRBROK_CLUE_TIPS_BODE, gameName: 'Mr. Bøde' },
   // Konkurrencekassen: eget indhold (se MRBROK_TOPICS_KONKURRENCE's
   // kommentar ovenfor for hvorfor — en tidligere regex-omskrivning af
-  // brok's egne vrede personaer gav meningsløse emner).
+  // brok's egne vrede personaer gav meningsløse emner). gameName "Mr. Bet"
+  // (Martins navnevalg, samme "Mr. X"-omdøbning som Mr. Bøde/Mr. Løgn).
   konkurrence: {
     mrbrokTopics: MRBROK_TOPICS_KONKURRENCE,
     mrbrokClueTips: MRBROK_CLUE_TIPS_KONKURRENCE,
-    gameName: 'Konkurrencedetektiven',
+    gameName: 'Mr. Bet',
   },
-  sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Sladrehanen' },
-  logn: { mrbrokTopics: MRBROK_TOPICS_LOGN, mrbrokClueTips: MRBROK_CLUE_TIPS_LOGN, gameName: 'Løgnedetektiven' },
-  venne: { mrbrokTopics: MRBROK_TOPICS_VENNE, mrbrokClueTips: MRBROK_CLUE_TIPS_VENNE, gameName: 'Vennedetektiven' },
-  rose: { mrbrokTopics: MRBROK_TOPICS_ROSE, mrbrokClueTips: MRBROK_CLUE_TIPS_ROSE, gameName: 'Rosedetektiven' },
+  sladre: { mrbrokTopics: MRBROK_TOPICS_SLADRE, mrbrokClueTips: MRBROK_CLUE_TIPS_SLADRE, gameName: 'Mr. Sladrehank' },
+  // "Mr. X"-omdøbning (Martins navnevalg, se Mr. Bøde's kommentar ovenfor
+  // for baggrunden): Løgnedetektiven → Mr. Løgn, Vennedetektiven →
+  // Mr. Amigo, Rosedetektiven → Mr. Ros.
+  logn: { mrbrokTopics: MRBROK_TOPICS_LOGN, mrbrokClueTips: MRBROK_CLUE_TIPS_LOGN, gameName: 'Mr. Løgn' },
+  venne: { mrbrokTopics: MRBROK_TOPICS_VENNE, mrbrokClueTips: MRBROK_CLUE_TIPS_VENNE, gameName: 'Mr. Amigo' },
+  rose: { mrbrokTopics: MRBROK_TOPICS_ROSE, mrbrokClueTips: MRBROK_CLUE_TIPS_ROSE, gameName: 'Mr. Ros' },
   drik: { mrbrokTopics: MRBROK_TOPICS_DRIK, mrbrokClueTips: MRBROK_CLUE_TIPS_DRIK, gameName: 'Rundedetektiven' },
 };
 function getThemeContent(themeId) {

@@ -1295,7 +1295,7 @@ const SKIN_PRESETS = [
     ruleTagline: 'Rygter og sladder ved bordet.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sladder, bekræftet af alle',
-    gameNames: { spil: 'Sladrespillet', mrbrok: 'Sladrehanen', complainer: 'Sladrefælden' },
+    gameNames: { spil: 'Sladrespillet', mrbrok: 'Mr. Sladrehank', complainer: 'Sladrefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
@@ -1303,7 +1303,7 @@ const SKIN_PRESETS = [
     ruleTagline: 'Brok over vennegruppens skæve vaner.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
-    gameNames: { spil: 'Vennespillet', mrbrok: 'Vennedetektiven', complainer: 'Vennefælden' },
+    gameNames: { spil: 'Vennespillet', mrbrok: 'Mr. Amigo', complainer: 'Vennefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
@@ -1311,7 +1311,7 @@ const SKIN_PRESETS = [
     ruleTagline: 'Ros og gode ord til hinanden.', unit: 'point',
     poolPolarity: 'reward', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Ros, bekræftet af alle',
-    gameNames: { spil: 'Rosespillet', mrbrok: 'Rosedetektiven', complainer: 'Rosefælden' },
+    gameNames: { spil: 'Rosespillet', mrbrok: 'Mr. Ros', complainer: 'Rosefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
@@ -1335,7 +1335,7 @@ const SKIN_PRESETS = [
     ruleTagline: 'Sejre og dyster mellem jer.', unit: 'point',
     poolPolarity: 'reward', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sejre, bekræftet af alle',
-    gameNames: { spil: 'Konkurrencespillet', mrbrok: 'Konkurrencedetektiven', complainer: 'Konkurrencefælden' },
+    gameNames: { spil: 'Konkurrencespillet', mrbrok: 'Mr. Bet', complainer: 'Konkurrencefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
@@ -1345,7 +1345,7 @@ const SKIN_PRESETS = [
     ruleTagline: 'Hvem lyver — og bliver afsløret.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Løgne, afsløret ved afstemning',
-    gameNames: { spil: 'Brokspillet', mrbrok: 'Løgnedetektiven', complainer: 'Løgnefælden' },
+    gameNames: { spil: 'Brokspillet', mrbrok: 'Mr. Løgn', complainer: 'Løgnefælden' },
     allowedGames: ['mrbrok', 'complainer'],
   },
   {
@@ -4807,9 +4807,9 @@ function mrbrokLobbyHtml(){
   // hele instruktions-blokken hardcodede "MrBrok" og "brok" som verbum,
   // uafhængigt af skin — lækkede altså direkte ind i alle 8 andre skins'
   // MrBrok-lobby. gn.mrbrok er allerede den korrekt temaede spil-/rolle-
-  // betegnelse (fx "Sladrehanen") — samme ord bruges bevidst BÅDE som
+  // betegnelse (fx "Mr. Sladrehank") — samme ord bruges bevidst BÅDE som
   // spillets navn og den hemmelige rolles navn, præcis som "MrBrok" selv
-  // gør det i original-skinnet (find MrBrok = find Sladrehanen).
+  // gør det i original-skinnet (find MrBrok = find Mr. Sladrehank).
   const gn = state.gameNames || {};
   const mrbrokName = gn.mrbrok || 'MrBrok';
   const steps = [
