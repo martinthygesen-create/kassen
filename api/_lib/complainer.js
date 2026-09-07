@@ -1175,7 +1175,7 @@ const CONTENT_BY_THEME = {
     guiltyRoleLabel: 'Den Store Brokker',
     interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_VENNE,
   },
-  // Kendekassen (Opus-review) — to ADSKILTE themeId'er, genbruger
+  // Vennekassen (Opus-review) — to ADSKILTE themeId'er, genbruger
   // venne/hjaelper's eksisterende indhold uændret, kun gameName/tone er nyt.
   kende_venner: {
     archetypes: COMPLAINER_ARCHETYPES_VENNE,

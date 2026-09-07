@@ -573,7 +573,7 @@ function getGameNames(themeId) {
 // hægte `gameNames` på uanset hvilken af de to interne exit-veje
 // (mrbrok-inaktiv-tidligt-retur vs. den fulde sti) der rammes — selve
 // redaktions-logikken herunder (nu `redactStateForInner`) er UÆNDRET.
-// Kendekassens personlige lag (state.personalLayer, se action:'personal' i
+// Vennekassens personlige lag (state.personalLayer, se action:'personal' i
 // api/brok.js) er IKKE en enkelt rundes svar (som fx guessbrok's
 // cur.correctIndex, der ligesom resten af state.game bevidst sendes
 // uredigeret til alle, se redactStateForInner's kommentar nedenfor) — det er

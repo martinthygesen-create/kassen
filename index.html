@@ -1306,12 +1306,17 @@ const SKIN_PRESETS = [
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
-    id: 'venne', name: 'Vennekassen', emoji: '🧑‍🤝‍🧑',
+    // Navnet er bevidst "Vennekassen (klassisk)", IKKE bare "Vennekassen" —
+    // det ville kollidere med kende_venner nedenfor (som EFTER omdøbningen
+    // fra "Kendekassen" nu selv hedder "Vennekassen") i den ufiltrerede
+    // "Opret selv"-basisliste (se SKIN_PRESETS.map uden hiddenFromPicker-
+    // filter), hvor begge (og kende_kolleger) ellers ville vise samme navn.
+    id: 'venne', name: 'Vennekassen (klassisk)', emoji: '🧑‍🤝‍🧑',
     // Rettet (Opus-review, kvalitet/sjov/repeat-ness-gennemgang): venne og
     // hjaelper er strukturelt samme idé ("en defineret social kreds") i to
     // kostumer — venne er reelt Brokkekassen med venne-navneord (identiske
     // registry-felter, quiplash-prompts er brok's skelet). Slået sammen til
-    // Kendekassen (se kende_venner/kende_kolleger nedenfor) med en
+    // Vennekassen (se kende_venner/kende_kolleger nedenfor) med en
     // venner/kolleger-kreds-vælger i trin 3. Intet slettet — dette skin
     // virker 100% uændret for eksisterende rum, kun skjult fra trin 1.
     hiddenFromPicker: true,
@@ -1321,16 +1326,20 @@ const SKIN_PRESETS = [
     gameNames: { spil: 'Vennespillet', mrbrok: 'Mr. Amigo', complainer: 'Vennefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
-  // Kendekassen (Martins navn/begrundelse: "man KENDER dem") — venne+hjaelper
+  // Vennekassen (Martins navn/begrundelse: "man KENDER dem") — venne+hjaelper
   // slået sammen til ÉT skin med to kreds-varianter, valgt i trin 3 (se
   // renderCreateFlowStep3's kendeVariants-toggle). Implementeret som to
   // ADSKILTE themeId'er (kende_venner/kende_kolleger), ikke et nyt tag-lag —
   // genbruger den samme getThemeContent(themeId)-mønster resten af
-  // kodebasen allerede bruger. kende_venner ER trin 1-kortet ("Kendekassen"),
+  // kodebasen allerede bruger. kende_venner ER trin 1-kortet ("Vennekassen"),
   // kende_kolleger er kun tilgængelig via kreds-toggeren i trin 3.
   {
-    id: 'kende_venner', name: 'Kendekassen', emoji: '🧑‍🤝‍🧑',
-    ruleTagline: 'For dem I allerede kender godt.', unit: '€',
+    id: 'kende_venner', name: 'Vennekassen', emoji: '🧑‍🤝‍🧑',
+    // "Udfordr venner og kollegaer" (Martins tagline) — sat på DENNE, det
+    // eneste synlige trin-1-kort for hele familien af skins, netop fordi
+    // den varsler kreds-toggeren (venner/kolleger) man møder i trin 3, i
+    // stedet for kun at nævne den ene halvdel.
+    ruleTagline: 'Udfordr venner og kollegaer.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
     gameNames: { spil: 'Kendespillet', mrbrok: 'Mr. Kende', complainer: 'Kendefælden' },
@@ -1339,7 +1348,12 @@ const SKIN_PRESETS = [
     kendeVariantIds: { venner: 'kende_venner', kolleger: 'kende_kolleger' },
   },
   {
-    id: 'kende_kolleger', name: 'Kendekassen', emoji: '🧑‍🤝‍🧑',
+    // Navnet holdes til "Vennekassen (kolleger)", IKKE bare "Vennekassen" —
+    // samme kollisions-begrundelse som ved 'venne' ovenfor: dette skin er
+    // kun nået via kreds-toggeren i trin 3, men optræder ufiltreret i
+    // "Opret selv"-basislisten, hvor det ellers ville se identisk ud med
+    // kende_venner.
+    id: 'kende_kolleger', name: 'Vennekassen (kolleger)', emoji: '🧑‍🤝‍🧑',
     hiddenFromPicker: true,
     ruleTagline: 'For kollegerne — kom med en påstand, holdlederen afgør.', unit: 'point',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
@@ -1398,7 +1412,7 @@ const SKIN_PRESETS = [
   },
   {
     id: 'hjaelper', name: 'Kollegakassen', emoji: '🤝',
-    // Slået sammen til Kendekassens kolleger-variant, se kende_kolleger
+    // Slået sammen til Vennekassens kolleger-variant, se kende_kolleger
     // ovenfor — samme begrundelse som Vennekassens hiddenFromPicker. Intet
     // slettet, eksisterende rum uændrede.
     hiddenFromPicker: true,
@@ -1558,7 +1572,7 @@ const THEME_COPY = {
     emptyTitle: 'Ingen påstande endnu', emptyTitleList: 'Ingen påstande registreret endnu',
     emptyBodyList: 'Så snart der kommer en påstand, vises listen her.',
   },
-  // Kendekassen (Opus-review) — to ADSKILTE themeId'er (se
+  // Vennekassen (Opus-review) — to ADSKILTE themeId'er (se
   // themeRegistry.js's kommentar for hvorfor), genbruger venne/hjaelper's
   // krukke-copy 1:1 (selve UI-teksten nævner ikke skinnets navn, kun
   // generiske ord som "Broklisten"/"Påstandsliste").
@@ -1587,7 +1601,7 @@ const THEME_COPY = {
 };
 function themeCopy(){ return THEME_COPY[(state && state.themeId) || 'brok'] || THEME_COPY.brok; }
 
-// Kendekassens personlige lag (se action:'personal' i api/brok.js og
+// Vennekassens personlige lag (se action:'personal' i api/brok.js og
 // KENDSKAB_THEMES i api/_lib/game.js — skal holdes i sync med den serverside
 // liste, da denne kun styrer om menupunktet/udfyldelsesarket vises).
 const KENDSKAB_THEMES_CLIENT = ['kende_venner', 'kende_kolleger'];
@@ -2082,7 +2096,7 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
     };
   });
   applyHostApprovalGameRestriction();
-  // Kendekassens kreds-toggle (venner/kolleger) skifter reelt HELE skinnet
+  // Vennekassens kreds-toggle (venner/kolleger) skifter reelt HELE skinnet
   // (confirmationModel/allowedGames/gameNames/unit hænger sammen som ét
   // sæt, ikke enkeltfelter man kan toggle uafhængigt) — derfor et fuldt
   // gen-render af trin 3 med den anden variant, i stedet for kun at flytte
@@ -2473,7 +2487,7 @@ async function ensureTestBots(){
       if(r && r.state) state = r.state;
     }catch(e){ /* en fejlet bot-oprettelse må ikke stoppe resten */ }
   }
-  // Kendekassens 'kendskab'-runde (se KENDSKAB_THEMES i api/_lib/game.js)
+  // Vennekassens 'kendskab'-runde (se KENDSKAB_THEMES i api/_lib/game.js)
   // kræver rigtigt indhold i state.personalLayer — uden dette ville
   // "🤖 Test-spil med bots" ALDRIG kunne trække runden, fordi bots ikke har
   // nogen anden vej til at udfylde deres kendskabsark end via den
@@ -3826,7 +3840,7 @@ function gameLobbyHtml(){
     ['🎰', 'Ordhjulet: alle skriver ét ord, og hjulet trækker lod om hvis ord der vinder'],
     ['🌹', 'Rose: skriv den mest overdrevne ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
     ['🔮', 'Selvindsigt: gruppen stemmer hemmeligt på et superlativ-spørgsmål, mens én forsøger at gætte gruppens svar'],
-    ['🕵️', 'Kendskab (kun Kendekassen): et anonymt udsagn fra jeres kendskabsark — resten gætter hvem det handler om'],
+    ['🕵️', 'Kendskab (kun Vennekassen): et anonymt udsagn fra jeres kendskabsark — resten gætter hvem det handler om'],
     ['🏆', 'Point tælles på tværs af alle runder — flest point vinder'],
   ];
   if(gameInstructionsOpen === null) gameInstructionsOpen = !localStorage.getItem('bk_game_seen_instructions');

@@ -77,7 +77,7 @@ const SKIN_REGISTRY = {
     mechanic: 'host-judged', toneRegister: 'serious',
     allowedGames: ['complainer'],
   },
-  // Kendekassen (Opus-review, kvalitet/sjov/repeat-ness-plan): venne+hjaelper
+  // Vennekassen (Opus-review, kvalitet/sjov/repeat-ness-plan): venne+hjaelper
   // slået sammen til ÉT skin med to kreds-varianter, valgt ved oprettelse —
   // "man KENDER dem" (Martins navn/begrundelse), ikke "kassen kender noget".
   // Implementeret som to ADSKILTE themeId'er (kende_venner/kende_kolleger),

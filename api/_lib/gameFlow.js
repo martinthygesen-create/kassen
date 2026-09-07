@@ -190,7 +190,7 @@ function resolveGuessBrok(state, cur) {
 // resolveGuessBrok's ellers identiske opbygning (se guessbrok's authorWon
 // ovenfor) — der giver en overbevisende, stumpende tekst mening som en
 // skrive-færdighed at belønne. Her ville det belønne det STIK MODSATTE af
-// Kendekassens formål: et vagt, ugenkendeligt udsagn om en medspiller er
+// Vennekassens formål: et vagt, ugenkendeligt udsagn om en medspiller er
 // et MISLYKKET udsagn, ikke et snedigt et, og en point-bonus for det er en
 // reel spilbar strategi der underminerer selve pointen med at kende
 // hinanden godt (fund fra quizmaster-audit, se test_kendskab_stress.js —

@@ -1055,7 +1055,7 @@ const CONTENT_BY_THEME = {
     selfInsightQuestions: SELF_INSIGHT_QUESTIONS_HJAELPER,
     gameName: 'Kollegaspillet',
   },
-  // Kendekassen (Opus-review): to nye, ADSKILTE themeId'er (ikke et tag-lag,
+  // Vennekassen (Opus-review): to nye, ADSKILTE themeId'er (ikke et tag-lag,
   // se themeRegistry.js's kommentar for hvorfor) — genbruger 100% af
   // venne/hjaelper's eksisterende, allerede skrevne og validerede indhold
   // (samme konstanter, ikke kopier), kun gameName er nyt. venne/hjaelper
@@ -1234,7 +1234,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     fewestCount: 'Hvem har brokket sig færrest gange i denne kendekasse?',
     totalCount: 'Hvor mange brok er der registreret i alt i denne kendekasse?',
     longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
-    quoteWho: quote => `Ifølge Kendekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
+    quoteWho: quote => `Ifølge Vennekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
     quoteBy: quote => `Nogen anklagede en anden for: "${quote}" — hvem skrev anklagen?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne kendekasse?',
@@ -1244,7 +1244,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     fewestCount: 'Hvem har færrest noterede fejl i denne kendekasse?',
     totalCount: 'Hvor mange fejl er der noteret i alt i denne kendekasse?',
     longestStreak: 'Hvem har den længste aktuelle streak uden en noteret fejl?',
-    quoteWho: quote => `Ifølge Kendekassen blev der noteret en fejl om: "${quote}" — hvem var det?`,
+    quoteWho: quote => `Ifølge Vennekassen blev der noteret en fejl om: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken fejl blev noteret for ${name}?`,
     quoteBy: quote => `Nogen noterede påstanden: "${quote}" — hvem noterede den?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne kendekasse?',
@@ -1540,8 +1540,8 @@ const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok
 // Det personlige lag (Opus-review): hver deltager skriver et par korte
 // udsagn om medspillere ved oprettelse/join (se action:'personal' i
 // api/brok.js) — "kendskab"-rundetypen bruger dem til "hvem handler det
-// om?"-gæt. Bundet EKSKLUSIVT til Kendekassen (se dommens begrundelse:
-// laget ER selve Kendekassens definerende mekanik, ikke en generisk
+// om?"-gæt. Bundet EKSKLUSIVT til Vennekassen (se dommens begrundelse:
+// laget ER selve Vennekassens definerende mekanik, ikke en generisk
 // tilvalgs-toggle andre skins også skal bære). Samme minimumstærskel-
 // filosofi som MIN_EVENTS_FOR_ROOM_TRIVIA — for lidt indsamlet indhold, og
 // spørgsmålet giver ikke mening endnu.
@@ -1598,7 +1598,7 @@ function isOncePerGame(type, themeId) {
   return ONCE_PER_GAME_TYPES.includes(type);
 }
 
-// Kendekassens kolleger-variant (Opus-review): får lov til Brokspillet i
+// Vennekassens kolleger-variant (Opus-review): får lov til Brokspillet i
 // modsætning til det gamle hjaelper-skin, MEN quiplash/rose kræver at man
 // roaster en navngiven person — som ikke passer magt-asymmetrien i et
 // ansættelsesforhold (samme begrundelse som hjaelper's oprindelige
@@ -1758,7 +1758,7 @@ function beginRound(state, players) {
     const question = pool.length ? pickRandom(pool) : 'Hvem i gruppen er mest sig selv, uanset hvad?';
     state.game.current = { type, phase: 'vote', predictorId: predictor.id, question, votes: {}, predictorGuess: null };
   } else {
-    // "Kendskab" — kun i Kendekassen (se KENDSKAB_THEMES/isRoundTypeEligible
+    // "Kendskab" — kun i Vennekassen (se KENDSKAB_THEMES/isRoundTypeEligible
     // ovenfor, som allerede har sikret at der er mindst
     // MIN_ABOUT_FOR_KENDSKAB kandidater før denne type overhovedet kan
     // trækkes). Ét udsagn som en spiller ("forfatteren") har skrevet om en

@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ state: redactStateFor(state, voterId), confirmed, free, double });
     }
 
-    // Kendekassens personlige lag (Opus-review): hver deltager skriver ét
+    // Vennekassens personlige lag (Opus-review): hver deltager skriver ét
     // kort udsagn om sig selv (påkrævet) og op til to om andre, tildelt
     // deterministisk ud fra egen position i medlemslisten (round-robin,
     // ikke perfekt derangement — det behøver den ikke være, kun rimeligt
