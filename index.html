@@ -1285,6 +1285,14 @@ const SKIN_PRESETS = [
   },
   {
     id: 'sladre', name: 'Sladrekassen', emoji: '🗣️',
+    // Rettet (Opus-review, kvalitet/sjov/repeat-ness-gennemgang): mekanisk
+    // korrekt, men "hook-svag" — sladder er allerede høj-varians indhold,
+    // det mangler en mekanik der lader et rygte ÆNDRE SIG undervejs (dens
+    // egen natur), ikke bare endnu en overdrivelses-fix. Fjernet fra den
+    // synlige vælger (step 1) indtil den mekanik findes, men INTET er
+    // slettet — indholdet lever videre som "Opret selv"-base (se
+    // customBaseHtml), og skinnet virker 100% uændret for eksisterende rum.
+    hiddenFromPicker: true,
     // Rettet TO gange (bruger-feedback): første forsøg ("Bliver din
     // sladder opdaget...") brugte stadig "din" — men openBrokSheet lader
     // dig pege på ET HVILKET SOM HELST medlem, ikke kun bekende egen
@@ -1331,6 +1339,11 @@ const SKIN_PRESETS = [
   },
   {
     id: 'konkurrence', name: 'Konkurrencekassen', emoji: '🏆',
+    // Samme rettelse som Sladrekassen ovenfor: hook-svag, ikke defekt.
+    // "Registrer en sejr" kræver en vane gruppen selv skal opfinde — uden
+    // en synlig løbende stilling inde i selve runderne er den reelt brok
+    // med sportsnavneord. Fjernet fra den synlige vælger, intet slettet.
+    hiddenFromPicker: true,
     ruleTagline: 'Sejre og dyster mellem jer.', unit: 'point',
     poolPolarity: 'reward', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Sejre, bekræftet af alle',
@@ -1596,12 +1609,12 @@ function renderCreateFlowStep1(){
     <label class="field-label" style="color:rgba(255,247,232,0.6); text-align:center;">Hvilken slags kasse skal I lave?</label>
     <div class="skin-carousel-wrap">
       <div class="skin-carousel" id="skinCarousel">
-        ${SKIN_PRESETS.map(skin => cardHtml(skin.id, skin.emoji, skin.name, skin.ruleTagline)).join('')}
+        ${SKIN_PRESETS.filter(skin=>!skin.hiddenFromPicker).map(skin => cardHtml(skin.id, skin.emoji, skin.name, skin.ruleTagline)).join('')}
         ${cardHtml('custom', '✏️', 'Opret selv', 'Byg jeres helt egen kasse')}
       </div>
     </div>
     <div class="skin-dots" id="skinDots">
-      ${SKIN_PRESETS.map(()=>`<div class="skin-dot"></div>`).join('')}
+      ${SKIN_PRESETS.filter(skin=>!skin.hiddenFromPicker).map(()=>`<div class="skin-dot"></div>`).join('')}
       <div class="skin-dot"></div>
     </div>
     <p class="hint" style="margin:8px 0 0; font-size:11px; color:rgba(255,247,232,0.55); text-align:center;">Swipe for at se flere — vælg én for at gå videre.</p>
