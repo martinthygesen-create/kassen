@@ -1385,6 +1385,7 @@ const THEME_COPY = {
   brok: {
     feedLabel: 'Brok-feed',
     pendingVerb: 'anklaget',
+    guiltyAdj: 'skyldige',
     quotePrefix: 'brokkede sig over ', guessbrokExample: 'Morgenmaden lukkede fem minutter for tidligt',
     mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
     sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
@@ -1395,6 +1396,7 @@ const THEME_COPY = {
   bode: {
     feedLabel: 'Bøde-feed',
     pendingVerb: 'meldt',
+    guiltyAdj: 'skyldige',
     quotePrefix: 'blev meldt: ', guessbrokExample: 'Kørte 130 i en 50-zone for at nå bussen',
     mainBtnText: '💸 Nogen har dummet sig…', sheetTitle: 'Hvem brød en regel? 💸',
     sheetHint: 'Peg på synderen, og skriv præcis hvilken regel der blev brudt — ellers ved ingen hvad de stemmer om.',
@@ -1409,6 +1411,7 @@ const THEME_COPY = {
     // et der allerede er sket — matcher ikke resten af familiens mønster
     // ("Nogen brokker sig…", "Nogen glemte en runde…"). Rettet til samme
     // klare fortids-rapportering (bruger-feedback).
+    guiltyAdj: 'skyldige',
     quotePrefix: 'sladrede om ', guessbrokExample: 'Hørte at nabo nummer 12 skal skilles',
     mainBtnText: '🗣️ Nogen har sladret…', sheetTitle: 'Hvem sladrede? 🗣️',
     sheetHint: 'Peg på sladrehanken, og skriv præcis hvad de sladrede om — ellers ved ingen hvad de stemmer om.',
@@ -1419,6 +1422,7 @@ const THEME_COPY = {
   venne: {
     feedLabel: 'Brok-feed',
     pendingVerb: 'anklaget',
+    guiltyAdj: 'skyldige',
     quotePrefix: 'brokkede sig over ', guessbrokExample: 'Booked hele sommerhuset uden at spørge nogen',
     mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
     sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
@@ -1431,6 +1435,10 @@ const THEME_COPY = {
     pendingVerb: 'indstillet',
     // Modsat polaritet (reward, ikke punishment) — sheetet skal IKKE lyde
     // anklagende, "synderen" ville være direkte forkert her.
+    // guiltyAdj: samme princip udvidet til Fælden-finalen (bruger-feedback) —
+    // "skyldig" gav ingen mening i et ros-tema. "Overdrevne" passer på en
+    // rosende karakter der har lagt for meget i det.
+    guiltyAdj: 'overdrevne',
     quotePrefix: 'blev rost ', guessbrokExample: 'Gav sin sidste is væk til den der tabte sin',
     mainBtnText: '🌹 Ros nogen…', sheetTitle: 'Hvem skal roses? 🌹',
     sheetHint: 'Peg på personen, og skriv præcis hvad de gjorde godt — ellers ved ingen hvad de stemmer om.',
@@ -1441,6 +1449,7 @@ const THEME_COPY = {
   drik: {
     feedLabel: 'Runde-feed',
     pendingVerb: 'meldt',
+    guiltyAdj: 'skyldige',
     quotePrefix: 'blev meldt: ', guessbrokExample: 'Drak sin øl gennem et sugerør for at vinde et væddemål',
     mainBtnText: '🍻 Nogen glemte en runde…', sheetTitle: 'Hvem glemte runden? 🍻',
     sheetHint: 'Peg på synderen, og skriv præcis hvad der gik galt — ellers ved ingen hvad de stemmer om.',
@@ -1451,7 +1460,9 @@ const THEME_COPY = {
   konkurrence: {
     feedLabel: 'Sejrs-feed',
     pendingVerb: 'indstillet',
-    // Modsat polaritet (reward) — samme princip som Rosekassen.
+    // Modsat polaritet (reward) — samme princip som Rosekassen. guiltyAdj:
+    // "pralende" i stedet for "skyldig" i Fælden-finalen (bruger-feedback).
+    guiltyAdj: 'pralende',
     quotePrefix: '', guessbrokExample: 'Vandt hele kortspillet uden at kigge på kortene',
     mainBtnText: '🏆 Registrer en sejr…', sheetTitle: 'Hvem vandt? 🏆',
     sheetHint: 'Peg på vinderen, og skriv præcis hvad de vandt — ellers ved ingen hvad de stemmer om.',
@@ -1462,6 +1473,7 @@ const THEME_COPY = {
   logn: {
     feedLabel: 'Løgne-feed',
     pendingVerb: 'anklaget',
+    guiltyAdj: 'skyldige',
     quotePrefix: 'løj: ', guessbrokExample: 'Påstod at have mødt en berømthed i lufthavnen',
     mainBtnText: '🎭 Afslør en løgn…', sheetTitle: 'Hvem løj? 🎭',
     sheetHint: 'Peg på løgneren, og skriv præcis hvad løgnen gik ud på — ellers ved ingen hvad de stemmer om.',
@@ -1483,6 +1495,10 @@ const THEME_COPY = {
     // strengere mekanik ved siden af.
     feedLabel: 'Påstand-feed',
     pendingVerb: 'nævnt',
+    // guiltyAdj: "afslørede" i stedet for "skyldig" i Fælden-finalen — den
+    // dæmpede, seriøse arbejdsplads-tone (se themeRegistry.js) tåler ikke
+    // "skyldig"-sprog om en rigtig kollega ved navn (bruger-feedback).
+    guiltyAdj: 'afslørede',
     quotePrefix: '', guessbrokExample: 'Leverede rapporten en hel dag før deadline',
     mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
     sheetHint: 'Peg på personen, og skriv påstanden helt konkret — ellers ved ingen hvad de stemmer om.',
@@ -1492,6 +1508,17 @@ const THEME_COPY = {
   },
 };
 function themeCopy(){ return THEME_COPY[(state && state.themeId) || 'brok'] || THEME_COPY.brok; }
+
+// Det Store Brokkeris skjulte rolle blev tidligere altid kaldt "den skyldige"
+// i UI-teksten, uanset skin — gav ingen mening i et rostema (Rosefælden) eller
+// et pralertema (Konkurrencefælden), og var hårdere sprog end resten af
+// Kollegafældens dæmpede tone tilsigter (bruger-feedback). guiltyAdj (se
+// THEME_COPY) er det substantiverede adjektiv der bruges i stedet — "den
+// skyldige" bliver fx "den overdrevne" i Rosefælden. Danske genitiv/stort
+// forbogstav dannes mekanisk ud fra samme grundform.
+function complainerGuiltyDef(){ return 'den ' + themeCopy().guiltyAdj; }
+function complainerGuiltyDefCap(){ const s = complainerGuiltyDef(); return s.charAt(0).toUpperCase() + s.slice(1); }
+function complainerGuiltyGen(){ return complainerGuiltyDef() + 's'; }
 
 // Rum-dynamik-protokol, Del 1.2: dette er nu det FAKTISK håndhævede loft,
 // ikke kun en visningstekst — api/room.js's join-handler afviser nye
@@ -2238,7 +2265,7 @@ function showRoomIntroSplash(){
   if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'brok dig, og det koster 1€ i puljen'}`]);
   if(state.gameEnabled) items.push(['👉', gn.spil || 'Brokspillet', 'Hurtige quiz- og afstemningsrunder I spiller sammen']);
   if(state.mrbrokEnabled) items.push(['🕵️', gn.mrbrok || 'MrBrok', `Find den skjulte ${gn.mrbrok || 'MrBrok'}, før de andre bliver afsløret`]);
-  if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', 'Vær i karakter — men ingen ved endnu hvem der er skyldig']);
+  if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', `Vær i karakter — men ingen ved endnu hvem der er ${complainerGuiltyDef()}`]);
   if(items.length < 2) return; // ingen grund til at forklare "skift mellem" hvis der kun er én ting valgt
 
   const backdropHtml = `<div class="room-splash-backdrop" id="roomSplashBackdrop"><div class="room-splash" id="roomSplashInner"></div></div>`;
@@ -5491,7 +5518,7 @@ function maybeShowComplainerRevealSplash(c){
   if(c.youAreGuilty){
     inner.innerHTML = `
       <div style="font-size:52px;">🪤</div>
-      <h3>Du er den skyldige!</h3>
+      <h3>Du er ${complainerGuiltyDef()}!</h3>
       <p>Bliv i karakter gennem den sidste spørgerunde — så skal du gætte en konkret detalje om en af de andre, ud fra det de har sagt undervejs. Ingen andre ved det er dig endnu.</p>
       <button class="game-btn" id="complainerRevealCloseBtn">Forstået, jeg er klar</button>
     `;
@@ -5574,11 +5601,11 @@ function complainerLobbyHtml(){
   const steps = [
     ['🎭', 'Alle får hemmeligt en <b>arketype</b> (fx "den indre brokker") og en hverdags-situation (chef, nabo, familie, kollega, ven)'],
     ['🗒️', 'Hver opbygningsrunde skriver alle et kort, konkret indlæg i karakter — ud fra et spørgsmål der bliver skarpere for hver runde'],
-    ['🤫', 'Bagefter stemmer alle HEMMELIGT om hvem der virker mest skyldig lige nu — ingen ved endnu hvem der reelt ER det'],
+    ['🤫', `Bagefter stemmer alle HEMMELIGT om hvem der virker mest ${themeCopy().guiltyAdj} lige nu — ingen ved endnu hvem der reelt ER det`],
     ['🎰', 'Rundens topmest mistænkte vælger: bank et lille sikkert point, eller sats det dobbelt op på at være topmest mistænkt IGEN næste runde'],
-    ['🪤', 'Én af jer er hemmeligt <b>den skyldige</b> — men <b>ingen ved det, heller ikke den skyldige selv</b>, før spillet afslører det for dem alene'],
-    ['🎯', 'Når det sker, skal den skyldige — stadig i karakter — gætte en konkret detalje om en anden spiller ud fra det de har sagt'],
-    ['✅', 'De andre stemmer hemmeligt om gættet er tæt nok. Rammer det, vinder den skyldige'],
+    ['🪤', `Én af jer er hemmeligt <b>${complainerGuiltyDef()}</b> — men <b>ingen ved det, heller ikke ${complainerGuiltyGen()} selv</b>, før spillet afslører det for dem alene`],
+    ['🎯', `Når det sker, skal ${complainerGuiltyDef()} — stadig i karakter — gætte en konkret detalje om en anden spiller ud fra det de har sagt`],
+    ['✅', `De andre stemmer hemmeligt om gættet er tæt nok. Rammer det, vinder ${complainerGuiltyDef()}`],
   ];
   if(complainerInstructionsOpen === null) complainerInstructionsOpen = !localStorage.getItem('bk_complainer_seen_instructions');
   localStorage.setItem('bk_complainer_seen_instructions', '1');
@@ -5790,7 +5817,7 @@ function complainerVoteOptionsHtml(c, cur){
 }
 
 function complainerVoteHtml(c, cur){
-  const badge = `<div class="game-badge">${complainerRoundLabel(c, cur)} · 🤔 Hvem virker mest skyldig?</div>`;
+  const badge = `<div class="game-badge">${complainerRoundLabel(c, cur)} · 🤔 Hvem virker mest ${themeCopy().guiltyAdj}?</div>`;
   const eligible = c.players.length;
   const already = profile && cur.votes && cur.votes[profile.memberId] !== undefined;
   if(already){
@@ -5798,7 +5825,7 @@ function complainerVoteHtml(c, cur){
   }
   return `
     ${badge}
-    <p class="hint" style="text-align:center; margin:0 0 8px; color:rgba(255,247,232,0.7);"><b style="color:rgba(255,247,232,0.92);">Hvem tror du er den skyldige?</b> Ingen ved det endnu, heller ikke dem selv — ren mavefornemmelse. Din stemme er hemmelig indtil alle har stemt.</p>
+    <p class="hint" style="text-align:center; margin:0 0 8px; color:rgba(255,247,232,0.7);"><b style="color:rgba(255,247,232,0.92);">Hvem tror du er ${complainerGuiltyDef()}?</b> Ingen ved det endnu, heller ikke dem selv — ren mavefornemmelse. Din stemme er hemmelig indtil alle har stemt.</p>
     ${complainerVoteOptionsHtml(c, cur)}
     ${gameProgressHtml(cur.voteCount||0, eligible, 'har stemt')}
     ${complainerComplaintBlockHtml(c, cur)}
@@ -5906,7 +5933,7 @@ function complainerGuessHtml(c, cur){
       return `
         ${badge}
         <div class="game-card" id="complainerCard">
-          <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.7);">Du er den skyldige! Bliv i karakter — gæt en konkret detalje om en af de andre, ud fra det de har sagt undervejs.</p>
+          <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.7);">Du er ${complainerGuiltyDef()}! Bliv i karakter — gæt en konkret detalje om en af de andre, ud fra det de har sagt undervejs.</p>
           <label class="field-label" style="color:rgba(255,247,232,0.7);">Om hvem?</label>
           <div class="name-grid" style="margin-bottom:12px;">
             ${options.map(mm=>`<div class="name-pill ${complainerGuessTargetId===mm.id?'selected':''}" data-complainer-guess-target="${mm.id}">${escapeHtml(mm.name)}</div>`).join('')}
@@ -5919,7 +5946,7 @@ function complainerGuessHtml(c, cur){
     }
     return `${badge}<div class="empty-state"><span class="emoji">🤞</span><b>Dit gæt er sendt</b>De andre stemmer nu om det er tæt nok.</div>`;
   }
-  return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>Nogen tænker...</b>Vent på den skyldiges sidste gæt — I finder snart ud af hvem det er.</div>${complainerHistoryHtml(c)}`;
+  return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>Nogen tænker...</b>Vent på ${complainerGuiltyGen()} sidste gæt — I finder snart ud af hvem det er.</div>${complainerHistoryHtml(c)}`;
 }
 
 function complainerJudgeHtml(c, cur){
@@ -5935,7 +5962,7 @@ function complainerJudgeHtml(c, cur){
   return `
     ${badge}
     <div class="game-card" id="complainerCard" style="text-align:center;">
-      <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">Den skyldige gættede om ${escapeHtml(targetMember?targetMember.name:'?')}:</p>
+      <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">${complainerGuiltyDefCap()} gættede om ${escapeHtml(targetMember?targetMember.name:'?')}:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px;">"${escapeHtml(cur.detail||'?')}"</p>
       <p class="hint" style="margin:10px 0; color:rgba(255,247,232,0.6);">Er det tæt nok? Vær ærlig — det er kun sjovt hvis dommen er fair.</p>
       <div style="display:flex; gap:10px;">
@@ -6003,10 +6030,10 @@ function complainerOverHtml(c, cur){
     <div class="game-badge">🎉 ${escapeHtml(complainerName)} er slut!</div>
     <div class="game-card" id="complainerReveal" style="text-align:center; margin-bottom:12px;">
       <div style="font-size:34px;">🫵</div>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">Den skyldige var... ${escapeHtml(guiltyMember?guiltyMember.name:'?')}!</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:6px 0;">${complainerGuiltyDefCap()} var... ${escapeHtml(guiltyMember?guiltyMember.name:'?')}!</p>
       <p class="hint" style="color:rgba(255,247,232,0.6);">Gættede om <b style="color:rgba(255,247,232,0.85);">${escapeHtml(targetMember?targetMember.name:'?')}</b>: "${escapeHtml(cur.detail||'?')}"</p>
-      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.guiltyWon?'var(--coin)':'var(--coral)'};">${cur.guiltyWon ? '👑 Den skyldige vandt!' : '👑 De andre gennemskuede gættet!'}</p>
-      ${c.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.guiltyWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `Den skyldige lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; margin-top:8px; color:${cur.guiltyWon?'var(--coin)':'var(--coral)'};">${cur.guiltyWon ? `👑 ${complainerGuiltyDefCap()} vandt!` : '👑 De andre gennemskuede gættet!'}</p>
+      ${c.wager==='euro' ? `<p class="hint" style="color:rgba(255,247,232,0.7);">${cur.guiltyWon ? `De andre lægger 1${escapeHtml(state.unit || '€')} hver i puljen.` : `${complainerGuiltyDefCap()} lægger 1${escapeHtml(state.unit || '€')} i puljen.`}</p>` : '<p class="hint" style="color:rgba(255,247,232,0.7);">Kun for sjov denne gang.</p>'}
     </div>
     <div class="section-label">🎯 Mistanke-regnskab</div>
     ${scoreRows}
