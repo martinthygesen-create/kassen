@@ -140,11 +140,13 @@ module.exports = async (req, res) => {
           const c = state.complainer;
           const guiltyId = c.guiltyId;
           const others = state.members.map(m => m.id).filter(id => id !== guiltyId);
-          const roleLabel = getThemeContent(state.themeId).guiltyRoleLabel || 'Den Store Brokker';
+          const theme = getThemeContent(state.themeId);
+          const roleLabel = theme.guiltyRoleLabel || 'Den Store Brokker';
           try {
             await Promise.all([
               pushToMembers(state, others, { title: `🪤 Du er ${roleLabel}!`, body: 'Bliv i karakter gennem sidste spørgerunde — så skal du gætte en detalje om en af de andre.', url: '/?r=' + roomId }),
-              pushToMembers(state, [guiltyId], { title: '🪤 Det Store Brokkeri', body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId }),
+              // Rettet (Opus-review): hardcodede "Det Store Brokkeri" uanset skin.
+              pushToMembers(state, [guiltyId], { title: `🪤 ${theme.gameName}`, body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId }),
             ]);
           } catch (e) { /* push-fejl må ikke vælte selve poll-kaldet */ }
         }

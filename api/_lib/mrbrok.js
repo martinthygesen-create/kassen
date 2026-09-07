@@ -75,22 +75,29 @@ const MRBROK_CLUE_TIPS = [
 // tilstræbte størrelse. Dommerens minimum-pulje-gate (Fase 6) skal have
 // en konkret tærskel at måle op imod — udvid denne pulje FØR levering til
 // rigtige brugere, dokumenteret her så det er let at finde igen ved test.
+// Rettet (Opus-review): 7 af de 15 emner koncentrerede sig om PRÆCIS to
+// regelbrud ("kommer for sent" / "glemmer noget") — så en bluffer kunne
+// gætte sig plausibelt igennem hele spillet med "jeg glemte det igen",
+// uanset hvilket emne de reelt manglede at kende. Omskrevet til bredere
+// spredning af regelbrud-typer (grænseoverskridelse, misbrug af fælles
+// ressourcer, genveje på sikkerhed/kvalitet, dobbeltmoral) — samme
+// rolle+domæne-håndværk som resten af puljen, kun mere varieret.
 const MRBROK_TOPICS_BODE = [
   'Sløv målmand — kommer altid for sent til opvarmning',
-  'Glemsom holdkaptajn — glemmer bolde og veste i klubhuset',
+  'Skrydende holdkaptajn — bryder selv reglerne om fair play, når det passer ham',
   'Doven bestyrelsesmedlem — møder aldrig forberedt til møderne',
   'Sur kollega — parkerer altid på andres reserverede plads',
   'Rodet praktikant — efterlader rod på det fælles skrivebord',
-  'Distræt lærer — glemmer konsekvent at aflevere karakterer til tiden',
+  'Firkantet lærer — straffer elever hårdere end reglementet reelt foreskriver',
   'Skødesløs nabo — sætter skraldespanden forkert ud hver uge',
-  'Ligeglad chauffør — kommer for sent til hver eneste afhentning',
+  'Ligeglad chauffør — kører for stærkt i skolezonen for at spare tid',
   'Fraværende teammedlem — melder afbud i sidste øjeblik hver gang',
-  'Uorganiseret arrangør — glemmer altid at booke lokalet i tide',
+  'Uorganiseret arrangør — inviterer dobbelt så mange som lokalet må rumme',
   'Sløset revisor — afleverer regnskabet en uge for sent hver gang',
-  'Distræt vagtchef — glemmer at aflåse hver anden vagt',
+  'Distræt vagtchef — springer sikkerhedstjekket over for at nå hjem hurtigere',
   'Ukoncentreret dommer — fløjter forkerte afgørelser konsekvent',
-  'Glemsom kasserer — glemmer at opkræve kontingent i tide',
-  'Sløv vikar — møder uforberedt til hver eneste vagt',
+  'Fedtet kasserer — bruger foreningens kort til private indkøb',
+  'Egenrådig vikar — ignorerer skemaet og improviserer efter eget hoved',
 ];
 
 // Samme ni hints som brok-varianten, men "brokke dig over" (kun relevant
@@ -155,12 +162,20 @@ const MRBROK_TOPICS_LOGN = [
   'Falsk anmelder — lyver om at have prøvet produktet overhovedet',
 ];
 
+// Rettet (Opus-review): to af de generelle tips ("svar med en følelse, ikke
+// et faktum" / "vend spørgsmålet, svar vagt") bad reelt ALLE ærlige spillere
+// om at gøre PRÆCIS det samme som de to MrBrok-only tips nederst ("svar
+// selvsikkert og vagt") — så det eneste afsløringssignal MrBrok bygger på
+// (vaghed/afledning) blev givet som instruktion til alle, ikke kun
+// blufferen. Erstattet med to tips der i stedet presser ærlige spillere mod
+// KONKRET detalje (sted/tidspunkt/selve løgnens ordlyd), så vaghed reelt
+// bliver noget der stikker ud, ikke noget alle er blevet bedt om.
 const MRBROK_CLUE_TIPS_LOGN = [
   'Nævn én konkret (men ikke afslørende) detalje i stedet for at svare generelt',
   'Hold svaret kort — giv ikke det hele væk på én gang',
   'Lyv om en PERSON i situationen, ikke bare selve tingen',
-  'Svar med en følelse ved det, ikke et direkte faktum',
-  'Vend spørgsmålet en anelse — svar med den løgn du helst selv ville fortælle',
+  'Nævn et konkret sted eller tidspunkt løgnen fandt sted',
+  'Beskriv præcis HVILKEN løgn du fortalte, ikke bare at du løj',
   'Nævn hvor tit du er kommet afsted med den slags løgne før',
   'Beskriv hvordan du plejer at reagere når du bliver taget i en løgn',
   'Er du MrBrok: lyt til hvad de andre lige har sagt, og genbrug deres ord',
@@ -174,15 +189,21 @@ const MRBROK_CLUE_TIPS_LOGN = [
 // Bødekassen/Sladrekassen — Dommerens lækage-tjek fanger ordet "brok" i et
 // fremmed temas indhold, se commit-historikken for Konkurrencekassens
 // første forsøg).
+// Rettet (Opus-review): 6 af de 10 emner koncentrerede sig om ÉT snævert
+// mønster (aflyser/svarer ikke/kommer ikke til tiden) — smalt domæne, høj
+// clue-kollision (en bluffer kan gætte plausibelt med "de svarer bare
+// aldrig" uanset hvilket emne de reelt manglede). To emner omskrevet til
+// andre venskabs-friktioner (kontrol/dominans, urimelig kritik) for bredere
+// spredning, samme rolle+domæne-håndværk som resten af puljen.
 const MRBROK_TOPICS_VENNE = [
   'Glemsom vennegruppe-planlægger — er irriteret over at ingen svarer i gruppechatten',
   'Skeptisk madklub-medlem — er utilfreds med hvem der altid glemmer at handle ind',
   'Utålmodig spilaften-vært — er irriteret over folk der aldrig kan finde ud af reglerne',
-  'Træt karpooler — er utilfreds med venner der aldrig er klar til tiden',
+  'Kontrollerende karpooler — er utilfreds med venner der altid vil bestemme playlisten og ruten',
   'Irriteret festplanlægger — er irriteret over gæster der melder afbud i sidste øjeblik',
   'Skuffet rejsefælle — er skuffet over venner der aldrig kan blive enige om planer',
   'Frustreret gruppechat-admin — er frustreret over folk der spammer med memes',
-  'Utilfreds fitness-makker — er utilfreds med venner der aflyser træning hele tiden',
+  'Kritisk fitness-makker — er utilfreds med venner der keder sig og sukker hele træningen igennem',
   'Vred fælleskøkken-bruger — er vred over opvask der aldrig bliver taget',
   'Skeptisk lånefinansier — er skeptisk over venner der "glemmer" at betale tilbage',
 ];

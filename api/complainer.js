@@ -76,7 +76,12 @@ module.exports = async (req, res) => {
 
         const starter = state.members.find(mm => mm.id === actorId);
         const notInGame = state.members.map(mm => mm.id).filter(id => !players.includes(id));
-        pushInfo = [{ excludeIds: [actorId, ...notInGame], title: '🪤 Det Store Brokkeri er i gang!', body: `${starter ? starter.name : 'Nogen'} startede et spil — kom med!`, url: '/?r=' + roomId }];
+        // Rettet (Opus-review): hardcodede "Det Store Brokkeri" uanset skin
+        // — samme brok-ordslækage i et fremmed tema som Dommerens
+        // lækage-tjek ellers er bygget til at fange (fx "Sladrefælden er i
+        // gang!" blev til "Det Store Brokkeri er i gang!" i Sladrekassen).
+        const gameName = getThemeContent(state.themeId).gameName;
+        pushInfo = [{ excludeIds: [actorId, ...notInGame], title: `🪤 ${gameName} er i gang!`, body: `${starter ? starter.name : 'Nogen'} startede et spil — kom med!`, url: '/?r=' + roomId }];
         return;
       }
 
@@ -239,10 +244,12 @@ module.exports = async (req, res) => {
       if (state.complainer.active && state.complainer.revealPushPending) {
         const guiltyId = state.complainer.guiltyId;
         const others = state.members.map(mm => mm.id).filter(id => id !== guiltyId);
-        const roleLabel = getThemeContent(state.themeId).guiltyRoleLabel || 'Den Store Brokker';
+        const theme = getThemeContent(state.themeId);
+        const roleLabel = theme.guiltyRoleLabel || 'Den Store Brokker';
         pushInfo = [
           { excludeIds: others, title: `🪤 Du er ${roleLabel}!`, body: 'Bliv i karakter gennem sidste spørgerunde — så skal du gætte en detalje om en af de andre.', url: '/?r=' + roomId },
-          { excludeIds: [guiltyId], title: '🪤 Det Store Brokkeri', body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId },
+          // Rettet (Opus-review): hardcodede "Det Store Brokkeri" uanset skin.
+          { excludeIds: [guiltyId], title: `🪤 ${theme.gameName}`, body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId },
         ];
         state.complainer.revealPushPending = false;
       }
