@@ -1175,6 +1175,24 @@ const CONTENT_BY_THEME = {
     guiltyRoleLabel: 'Den Store Brokker',
     interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_VENNE,
   },
+  // Kendekassen (Opus-review) — to ADSKILTE themeId'er, genbruger
+  // venne/hjaelper's eksisterende indhold uændret, kun gameName/tone er nyt.
+  kende_venner: {
+    archetypes: COMPLAINER_ARCHETYPES_VENNE,
+    situations: COMPLAINER_SITUATIONS_VENNE,
+    prompts: COMPLAINER_PROMPTS_VENNE,
+    gameName: 'Kendefælden',
+    guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_VENNE,
+  },
+  kende_kolleger: {
+    archetypes: COMPLAINER_ARCHETYPES_HJAELPER,
+    situations: COMPLAINER_SITUATIONS_HJAELPER,
+    prompts: COMPLAINER_PROMPTS_HJAELPER,
+    gameName: 'Kendefælden',
+    guiltyRoleLabel: 'Den Afslørede',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_HJAELPER,
+  },
   rose: {
     archetypes: COMPLAINER_ARCHETYPES_ROSE,
     situations: COMPLAINER_SITUATIONS_ROSE,

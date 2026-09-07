@@ -77,6 +77,31 @@ const SKIN_REGISTRY = {
     mechanic: 'host-judged', toneRegister: 'serious',
     allowedGames: ['complainer'],
   },
+  // Kendekassen (Opus-review, kvalitet/sjov/repeat-ness-plan): venne+hjaelper
+  // slået sammen til ÉT skin med to kreds-varianter, valgt ved oprettelse —
+  // "man KENDER dem" (Martins navn/begrundelse), ikke "kassen kender noget".
+  // Implementeret som to ADSKILTE themeId'er (kende_venner/kende_kolleger),
+  // ikke et nyt tag-lag ovenpå det eksisterende system — genbruger dermed
+  // 100% af den velafprøvede getThemeContent(themeId)-mønster resten af
+  // kodebasen allerede bruger, i stedet for at true et parallelt
+  // opslags-lag ind i syv filer. venne/hjaelper som RÅ themeId'er lever
+  // uændret videre (eksisterende rum, se index.html's hiddenFromPicker).
+  kende_venner: {
+    confirmationModel: 'quorum', poolPolarity: 'punishment',
+    mechanic: 'witness-confirm', toneRegister: 'playful',
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
+  // kolleger-varianten får (modsat det gamle hjaelper-skin) LOV til at
+  // spille Brokspillet — men kun de rundetyper der ikke kræver at man
+  // roaster en navngiven person (quiplash/rose udelukkes specifikt for
+  // dette skin, se EXCLUDED_ROUND_TYPES_BY_THEME i _lib/game.js). MrBrok
+  // holdes stadig udelukket — magt-asymmetri-begrundelsen for det står
+  // uændret ved magt, se hjaelper ovenfor.
+  kende_kolleger: {
+    confirmationModel: 'host-approval', poolPolarity: 'punishment',
+    mechanic: 'host-judged', toneRegister: 'serious',
+    allowedGames: ['spil', 'complainer'],
+  },
 };
 
 function getThemeRegistryEntry(themeId) {

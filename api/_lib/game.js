@@ -1055,6 +1055,34 @@ const CONTENT_BY_THEME = {
     selfInsightQuestions: SELF_INSIGHT_QUESTIONS_HJAELPER,
     gameName: 'Kollegaspillet',
   },
+  // Kendekassen (Opus-review): to nye, ADSKILTE themeId'er (ikke et tag-lag,
+  // se themeRegistry.js's kommentar for hvorfor) — genbruger 100% af
+  // venne/hjaelper's eksisterende, allerede skrevne og validerede indhold
+  // (samme konstanter, ikke kopier), kun gameName er nyt. venne/hjaelper
+  // som rå themeId'er lever uændret videre for eksisterende rum.
+  kende_venner: {
+    quiplashPrompts: QUIPLASH_PROMPTS_VENNE,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_VENNE,
+    worldTrivia: getTriviaForSkin('venne'),
+    worldTrueFalse: WORLD_TRUEFALSE_VENNE,
+    decoyBrok: DECOY_VENNE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_VENNE,
+    gameName: 'Kendespillet',
+  },
+  // kolleger-varianten må spille Brokspillet (i modsætning til det gamle
+  // hjaelper-skin) — men quiplash/rose er udelukket, se
+  // EXCLUDED_ROUND_TYPES_BY_THEME ovenfor.
+  kende_kolleger: {
+    quiplashPrompts: QUIPLASH_PROMPTS_HJAELPER,
+    winnerTauntPrompts: WINNER_TAUNT_PROMPTS,
+    quiplashDecoys: QUIPLASH_DECOYS_HJAELPER,
+    worldTrivia: getTriviaForSkin('hjaelper'),
+    worldTrueFalse: WORLD_TRUEFALSE_HJAELPER,
+    decoyBrok: DECOY_HJAELPER,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_HJAELPER,
+    gameName: 'Kendespillet',
+  },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
@@ -1200,6 +1228,26 @@ const QUESTION_TEMPLATES_BY_THEME = {
     quoteWhich: name => `Hvilken fejl blev noteret for ${name}?`,
     quoteBy: quote => `Nogen noterede påstanden: "${quote}" — hvem noterede den?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne kollegakasse?',
+  },
+  kende_venner: {
+    mostCount: 'Hvem har brokket sig flest gange i denne kendekasse?',
+    fewestCount: 'Hvem har brokket sig færrest gange i denne kendekasse?',
+    totalCount: 'Hvor mange brok er der registreret i alt i denne kendekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
+    quoteWho: quote => `Ifølge Kendekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    quoteBy: quote => `Nogen anklagede en anden for: "${quote}" — hvem skrev anklagen?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne kendekasse?',
+  },
+  kende_kolleger: {
+    mostCount: 'Hvem har flest noterede fejl i denne kendekasse?',
+    fewestCount: 'Hvem har færrest noterede fejl i denne kendekasse?',
+    totalCount: 'Hvor mange fejl er der noteret i alt i denne kendekasse?',
+    longestStreak: 'Hvem har den længste aktuelle streak uden en noteret fejl?',
+    quoteWho: quote => `Ifølge Kendekassen blev der noteret en fejl om: "${quote}" — hvem var det?`,
+    quoteWhich: name => `Hvilken fejl blev noteret for ${name}?`,
+    quoteBy: quote => `Nogen noterede påstanden: "${quote}" — hvem noterede den?`,
+    memberCountFallback: 'Hvor mange medlemmer er der i denne kendekasse?',
   },
 };
 function getQuestionTemplates(themeId) {
@@ -1508,6 +1556,19 @@ function isOncePerGame(type, themeId) {
   return ONCE_PER_GAME_TYPES.includes(type);
 }
 
+// Kendekassens kolleger-variant (Opus-review): får lov til Brokspillet i
+// modsætning til det gamle hjaelper-skin, MEN quiplash/rose kræver at man
+// roaster en navngiven person — som ikke passer magt-asymmetrien i et
+// ansættelsesforhold (samme begrundelse som hjaelper's oprindelige
+// spil-udelukkelse, se themeRegistry.js). Udelukket her i stedet, ikke
+// hele spillet.
+const EXCLUDED_ROUND_TYPES_BY_THEME = {
+  kende_kolleger: ['quiplash', 'rose'],
+};
+function excludedRoundTypesFor(themeId) {
+  return EXCLUDED_ROUND_TYPES_BY_THEME[themeId] || [];
+}
+
 function beginRound(state, players) {
   state.game.round += 1;
   const playerIds = players.map(m => m.id);
@@ -1522,7 +1583,8 @@ function beginRound(state, players) {
   if (!state.game.roundTypeBag || !state.game.roundTypeBag.length) {
     const lastType = state.game.current && state.game.current.type;
     if (!state.game.usedOnceTypes) state.game.usedOnceTypes = [];
-    const pool = ROUND_TYPES.filter(t => !state.game.usedOnceTypes.includes(t));
+    const excluded = excludedRoundTypesFor(state.themeId);
+    const pool = ROUND_TYPES.filter(t => !state.game.usedOnceTypes.includes(t) && !excluded.includes(t));
     const bag = shuffle(pool.slice());
     // pop() trækker fra ENDEN af arrayet — så bag[bag.length-1] er den
     // NÆSTE der bliver trukket. Uden dette tjek kunne en frisk pose (8+

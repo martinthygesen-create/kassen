@@ -1307,11 +1307,47 @@ const SKIN_PRESETS = [
   },
   {
     id: 'venne', name: 'Vennekassen', emoji: '🧑‍🤝‍🧑',
+    // Rettet (Opus-review, kvalitet/sjov/repeat-ness-gennemgang): venne og
+    // hjaelper er strukturelt samme idé ("en defineret social kreds") i to
+    // kostumer — venne er reelt Brokkekassen med venne-navneord (identiske
+    // registry-felter, quiplash-prompts er brok's skelet). Slået sammen til
+    // Kendekassen (se kende_venner/kende_kolleger nedenfor) med en
+    // venner/kolleger-kreds-vælger i trin 3. Intet slettet — dette skin
+    // virker 100% uændret for eksisterende rum, kun skjult fra trin 1.
+    hiddenFromPicker: true,
     ruleTagline: 'Brok over vennegruppens skæve vaner.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Brok, bekræftet af alle',
     gameNames: { spil: 'Vennespillet', mrbrok: 'Mr. Amigo', complainer: 'Vennefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
+  },
+  // Kendekassen (Martins navn/begrundelse: "man KENDER dem") — venne+hjaelper
+  // slået sammen til ÉT skin med to kreds-varianter, valgt i trin 3 (se
+  // renderCreateFlowStep3's kendeVariants-toggle). Implementeret som to
+  // ADSKILTE themeId'er (kende_venner/kende_kolleger), ikke et nyt tag-lag —
+  // genbruger den samme getThemeContent(themeId)-mønster resten af
+  // kodebasen allerede bruger. kende_venner ER trin 1-kortet ("Kendekassen"),
+  // kende_kolleger er kun tilgængelig via kreds-toggeren i trin 3.
+  {
+    id: 'kende_venner', name: 'Kendekassen', emoji: '🧑‍🤝‍🧑',
+    ruleTagline: 'For dem I allerede kender godt.', unit: '€',
+    poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
+    smaatText: 'Brok, bekræftet af alle',
+    gameNames: { spil: 'Kendespillet', mrbrok: 'Mr. Kende', complainer: 'Kendefælden' },
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
+    kendeTag: 'venner',
+    kendeVariantIds: { venner: 'kende_venner', kolleger: 'kende_kolleger' },
+  },
+  {
+    id: 'kende_kolleger', name: 'Kendekassen', emoji: '🧑‍🤝‍🧑',
+    hiddenFromPicker: true,
+    ruleTagline: 'For kollegerne — kom med en påstand, holdlederen afgør.', unit: 'point',
+    poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
+    smaatText: 'Påstande om kolleger, bedømt af holdlederen',
+    gameNames: { spil: 'Kendespillet', mrbrok: 'MrBrok', complainer: 'Kendefælden' },
+    allowedGames: ['spil', 'complainer'],
+    kendeTag: 'kolleger',
+    kendeVariantIds: { venner: 'kende_venner', kolleger: 'kende_kolleger' },
   },
   {
     id: 'rose', name: 'Rosekassen', emoji: '🌹',
@@ -1362,6 +1398,10 @@ const SKIN_PRESETS = [
   },
   {
     id: 'hjaelper', name: 'Kollegakassen', emoji: '🤝',
+    // Slået sammen til Kendekassens kolleger-variant, se kende_kolleger
+    // ovenfor — samme begrundelse som Vennekassens hiddenFromPicker. Intet
+    // slettet, eksisterende rum uændrede.
+    hiddenFromPicker: true,
     // "noter" som enhed var uklart (bruger-feedback: "ved ikke engang hvad
     // noter er") — "point" er allerede den etablerede, letforståelige
     // enhed for ikke-penge-skins (Rose/Konkurrence bruger den samme).
@@ -1510,6 +1550,32 @@ const THEME_COPY = {
     // guiltyAdj: "afslørede" i stedet for "skyldig" i Fælden-finalen — den
     // dæmpede, seriøse arbejdsplads-tone (se themeRegistry.js) tåler ikke
     // "skyldig"-sprog om en rigtig kollega ved navn (bruger-feedback).
+    guiltyAdj: 'afslørede',
+    quotePrefix: '', guessbrokExample: 'Leverede rapporten en hel dag før deadline',
+    mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
+    sheetHint: 'Peg på personen, og skriv påstanden helt konkret — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "leverede uden at følge skabelonen..." (påkrævet)', listLabel: 'Påstandsliste',
+    emptyTitle: 'Ingen påstande endnu', emptyTitleList: 'Ingen påstande registreret endnu',
+    emptyBodyList: 'Så snart der kommer en påstand, vises listen her.',
+  },
+  // Kendekassen (Opus-review) — to ADSKILTE themeId'er (se
+  // themeRegistry.js's kommentar for hvorfor), genbruger venne/hjaelper's
+  // krukke-copy 1:1 (selve UI-teksten nævner ikke skinnets navn, kun
+  // generiske ord som "Broklisten"/"Påstandsliste").
+  kende_venner: {
+    feedLabel: 'Brok-feed',
+    pendingVerb: 'anklaget',
+    guiltyAdj: 'skyldige',
+    quotePrefix: 'brokkede sig over ', guessbrokExample: 'Booked hele sommerhuset uden at spørge nogen',
+    mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
+    sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "over hvem der bestemmer planerne..." (påkrævet)', listLabel: 'Broklisten',
+    emptyTitle: 'Ingen brok endnu', emptyTitleList: 'Ingen brok registreret endnu',
+    emptyBodyList: 'Så snart nogen brokker sig, vises regnskabet her.',
+  },
+  kende_kolleger: {
+    feedLabel: 'Påstand-feed',
+    pendingVerb: 'nævnt',
     guiltyAdj: 'afslørede',
     quotePrefix: '', guessbrokExample: 'Leverede rapporten en hel dag før deadline',
     mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
@@ -1820,9 +1886,23 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
       </div>
       <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px; color:rgba(255,247,232,0.7);">← Tilbage</button>
     </div>
+    ${skin.kendeVariantIds ? `
+    <div class="onboard-card">
+      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvilken kreds er det?</label>
+      <div class="app-pick-row wrap-pick-row" id="kendeKredsPickRow" style="margin:10px 0 4px;">
+        <div class="onboard-pick toggle-pick app-pick${skin.kendeTag==='venner'?' selected':''}" data-kende-kreds="venner" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">🧑‍🤝‍🧑 Venner</div>
+        </div>
+        <div class="onboard-pick toggle-pick app-pick${skin.kendeTag==='kolleger'?' selected':''}" data-kende-kreds="kolleger" style="background:var(--sea); color:#fff;">
+          <div class="app-pick-label">🤝 Kolleger</div>
+        </div>
+      </div>
+      <p class="hint" style="margin:0; font-size:11.5px; color:rgba(255,247,232,0.58); text-align:center;">${skin.kendeTag==='venner' ? 'Alle stemmer sammen — flertallet bestemmer.' : 'Dæmpet, professionel tone — holdlederen godkender alene, ingen navngiven skurk.'}</p>
+    </div>
+    ` : ''}
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
-      ${skin.id === 'hjaelper' ? `
+      ${skin.kendeVariantIds ? '' : skin.id === 'hjaelper' ? `
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
       <div class="app-pick-row wrap-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
@@ -1976,6 +2056,22 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
     };
   });
   applyHostApprovalGameRestriction();
+  // Kendekassens kreds-toggle (venner/kolleger) skifter reelt HELE skinnet
+  // (confirmationModel/allowedGames/gameNames/unit hænger sammen som ét
+  // sæt, ikke enkeltfelter man kan toggle uafhængigt) — derfor et fuldt
+  // gen-render af trin 3 med den anden variant, i stedet for kun at flytte
+  // en 'selected'-klasse som resten af togglerne her.
+  if(skin.kendeVariantIds){
+    document.querySelectorAll('#kendeKredsPickRow .onboard-pick').forEach(el=>{
+      el.onclick = ()=>{
+        const tag = el.dataset.kendeKreds;
+        if(tag === skin.kendeTag) return;
+        const nextId = skin.kendeVariantIds[tag];
+        const nextSkin = SKIN_PRESETS.find(s => s.id === nextId);
+        if(nextSkin) renderCreateFlowStep3(nextSkin, groupName, isCustom);
+      };
+    });
+  }
   document.getElementById('createBtn').onclick = async ()=>{
     const btn = document.getElementById('createBtn');
     // Kaos-bruger-hærdning: uden disabled her kan et hurtigt dobbeltklik
