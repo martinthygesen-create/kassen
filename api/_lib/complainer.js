@@ -294,6 +294,7 @@ const COMPLAINER_PROMPTS_BODE = [
   { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen andre får en bøde for præcis det du selv gjorde sidste uge uden konsekvens. Du brokker dig til en helt udenforstående ven om uretfærdigheden. Hvad siger du?' },
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en bøde du "glemte" at betale for tre måneder siden. Du undskylder dig til din bedste ven, som lige nævnte det. Hvad siger du?' },
   { id: 'rel3', category: 'relational', tier: 3, text: 'Du opdager at du selv har foreslået den bøderegel, du nu selv er blevet ramt af. Du undskylder dig til din partner, mens du prøver at forklare hvorfor DIN sag er anderledes. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 2, text: 'Du ser en anden få en advarsel for noget langt mindre end det du selv slap for sidste måned. Du undskylder situationen til en kollega, som ikke kender sagen. Hvad siger du?' },
 ];
 
 // Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
@@ -303,7 +304,7 @@ const COMPLAINER_PROMPTS_BODE = [
 const COMPLAINER_ARCHETYPES_SLADRE = [
   {
     id: 'frisoer', name: 'Den hviskende frisør',
-    promptHook: 'Med en kunde i stolen og et øre for al sladder —',
+    promptHook: 'Som en der altid har et øre for sladder —',
     instructions: [
       'Du sænker stemmen dramatisk før du deler det bedste.',
       'Du lover "det bliver kun mellem os" — og siger det alligevel videre.',
@@ -355,6 +356,33 @@ const COMPLAINER_ARCHETYPES_SLADRE = [
       'Du er urokkeligt sikker på at have ret, helt uden beviser.',
     ],
   },
+  {
+    id: 'fitness_sladrehank', name: 'Den sladrende træningsmakker',
+    promptHook: 'Som en der kun sænker pulsen for at sladre —',
+    instructions: [
+      'Du afbryder træningen for at dele det, du lige har hørt.',
+      'Du lover "sidste sæt, så siger jeg det" og trækker det i langdrag.',
+      'Du bruger konkurrence-sprog: "du bliver IKKE klog på det her".',
+    ],
+  },
+  {
+    id: 'kassedame_hoerer_alt', name: 'Kassedamen der hører alt',
+    promptHook: 'Som en der ekspederer med et åbent øre —',
+    instructions: [
+      'Du taler stille mens du "bare arbejder videre".',
+      'Du samler brudstykker fra flere kunder til én historie.',
+      'Du er sikker på din version, selv med huller i den.',
+    ],
+  },
+  {
+    id: 'gruppechat_admin', name: 'Gruppechat-administratoren',
+    promptHook: 'Som en der ved alt, fordi alle skriver til dig —',
+    instructions: [
+      'Du citerer (frit fra hukommelsen) hvad andre "faktisk skrev".',
+      'Du tilføjer skærmbilleder til historien, selv når du ikke har nogen.',
+      'Du er stolt af at være den første, der ved det.',
+    ],
+  },
 ];
 
 const COMPLAINER_SITUATIONS_SLADRE = ['ven', 'familie', 'arbejde', 'nabo'];
@@ -373,6 +401,8 @@ const COMPLAINER_PROMPTS_SLADRE = [
   { id: 'nabo1', category: 'nabo', tier: 1, text: 'Din nabo har åbenbart holdt en hemmelig fest mens de andre var bortrejst. Du sladrer om det til postbuddet, som bare vil aflevere en pakke. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen sladrer til dig om en hemmelighed, men beder dig love ikke at sige det videre. Du sladrer alligevel til din partner samme aften. Hvad siger du?' },
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du opdager at den du selv sladrer mest til, sladrer videre om dig til andre. Du sladrer om DET til en helt tredje person. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 1, text: 'Du beder nogen love ikke at sladre videre — og opdager bagefter at du selv gjorde præcis det samme for en time siden. Du sladrer om ironien til en fælles ven. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 3, text: 'En du ofte sladrer med, viser sig at have sladret om DIG til andre i ugevis. Du sladrer om det til den eneste du er sikker på ikke selv sladrer. Hvad siger du?' },
 ];
 
 // Løgnerkasse-motoren (se KASSEMOTORPLAN.md's klassifikations-tabel): kun
@@ -434,6 +464,33 @@ const COMPLAINER_ARCHETYPES_LOGN = [
       'Du lader stilhed arbejde for dig i stedet for at forklare for meget.',
     ],
   },
+  {
+    id: 'perfektionist_alibi', name: 'Perfektionisten med det færdige alibi',
+    promptHook: 'Som en der har historien planlagt på forhånd —',
+    instructions: [
+      'Du fremlægger løgnen struktureret, som en færdig plan.',
+      'Du har svar klar på indvendinger, før de bliver stillet.',
+      'Du bliver irriteret hvis nogen finder et hul i logikken.',
+    ],
+  },
+  {
+    id: 'offer_omvendt', name: 'Den der vender sig til offer',
+    promptHook: 'Som en der altid ender som den forurettede —',
+    instructions: [
+      'Du vender samtalen til at handle om, hvor uretfærdigt du bliver behandlet.',
+      'Du bliver såret over overhovedet at blive mistænkt.',
+      'Du kræver en undskyldning i stedet for at svare på spørgsmålet.',
+    ],
+  },
+  {
+    id: 'detaljeoverdriver', name: 'Detalje-overdriveren',
+    promptHook: 'Som en der pynter historien med flere detaljer end nødvendigt —',
+    instructions: [
+      'Du tilføjer unødvendige, meget specifikke detaljer for at virke troværdig.',
+      'Du gentager de samme detaljer, hvis nogen tvivler.',
+      'Du bliver ivrig i stedet for nervøs, når historien vokser.',
+    ],
+  },
 ];
 
 const COMPLAINER_SITUATIONS_LOGN = ['ven', 'familie', 'arbejde', 'fremmed'];
@@ -446,6 +503,8 @@ const COMPLAINER_PROMPTS_LOGN = [
   { id: 'fremmed1', category: 'fremmed', tier: 1, text: 'Du har løjet om din alder for at slippe billigere ind et sted. Du forklarer dig til en dørmand, som lige har set dit id. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 1, text: 'Du har lige opdaget at en ven løj om noget småt for nylig. Du forklarer nu DIN egen lignende løgn til den samme ven. Hvad siger du?' },
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du bliver mindet om en løgn du fortalte for længe siden, som nu viser sig at være opdaget. Du forklarer dig til den du løj for dengang. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 3, text: 'Du plejer at afsløre andres løgne med det samme — men bliver selv taget i en lille løgn af den du normalt afslører flest. Du forklarer dig til en fælles ven. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 1, text: 'En du står tæt på ville blive chokeret over at opdage hvor ofte du reelt lyver om småting. Du forklarer den seneste løgn til en helt udenforstående. Hvad siger du?' },
 ];
 
 // Godkendelseskasse-motoren (se planens klassifikation: Kollegakassen — kun
@@ -499,6 +558,33 @@ const COMPLAINER_ARCHETYPES_HJAELPER = [
       'Du holder fokus på arbejdsgangen, ikke en person.',
     ],
   },
+  {
+    id: 'diplomat_forsigtig', name: 'Den forsigtige diplomat',
+    promptHook: 'Som en der altid pakker det ind i vat —',
+    instructions: [
+      'Du starter altid med noget positivt, før du nævner problemet.',
+      'Du bruger vendinger som "det er nok bare mig, men...".',
+      'Du undskylder for at sige noget overhovedet.',
+    ],
+  },
+  {
+    id: 'effektiv_direkte', name: 'Den effektive direkte',
+    promptHook: 'Som en der går lige til sagen —',
+    instructions: [
+      'Du er kortfattet og konkret, uden omsvøb.',
+      'Du foreslår straks en løsning i samme sætning.',
+      'Du bliver let utålmodig med lange forklaringer.',
+    ],
+  },
+  {
+    id: 'humoristisk_letter', name: 'Den humoristiske stemningsspreder',
+    promptHook: 'Som en der gør alting til en vittighed —',
+    instructions: [
+      'Du pakker kritikken ind i et grin.',
+      'Du overdriver for komisk effekt, uden at være ondskabsfuld.',
+      'Du afslutter altid med et smiley-agtigt "men det er jo bare mig".',
+    ],
+  },
 ];
 
 const COMPLAINER_SITUATIONS_HJAELPER = ['opgave', 'tid', 'kommunikation'];
@@ -510,6 +596,9 @@ const COMPLAINER_PROMPTS_HJAELPER = [
   { id: 'tid2', category: 'tid', tier: 2, text: 'Et møde starter konsekvent for sent. Du nævner det til en ekstern samarbejdspartner, som lige er ankommet til tiden. Hvad siger du?' },
   { id: 'kommunikation1', category: 'kommunikation', tier: 1, text: 'En vigtig besked blev ikke videregivet til resten af teamet. Du nævner det til en praktikant, som ikke var involveret. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 2, text: 'Du bliver selv mindet om en lignende fejl du selv lavede for nylig. Du nævner det alligevel videre til en kollega. Hvad siger du?' },
+  { id: 'rel2', category: 'relational', tier: 1, text: 'Du bliver mindet om, at du selv leverede for sent i sidste kvartal — samme uge som du nævnte en kollegas forsinkelse. Du nævner det videre til en ny kollega, som ikke kender historien. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 3, text: 'Du plejer at være den der påpeger fejl først — men bliver selv taget i en lignende fejl af en kollega. Du nævner det til en tredje kollega, som ikke var involveret. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 2, text: 'Du lovede selv at følge op på en sag for to uger siden og har ikke gjort det endnu. Alligevel nævner du en kollegas manglende opfølgning til en anden kollega. Hvad siger du?' },
 ];
 
 // Vennekassen — 6 arketyper, vennegruppe-specifikke personaer.
@@ -606,6 +695,8 @@ const COMPLAINER_PROMPTS_VENNE = [
   { id: 'ven3', category: 'ven', tier: 2, text: 'En ven låner dit værktøj/udstyr og afleverer det tilbage i stykker uden at nævne det selv. Du brokker dig til en fælles ven, som lige har hørt den halve historie. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 2, text: 'En ven brokker sig konstant over planlægning, men bidrager aldrig selv med noget. Du brokker dig om DET til en tredje ven. Hvad siger du?' },
   { id: 'rel2', category: 'relational', tier: 3, text: 'Du indser at du selv gjorde nøjagtig det du lige har brokket dig over hos en anden ven, for få uger siden. Du brokker dig om det til en ven der husker begge episoder. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 1, text: 'En ven beder dig love at holde en hemmelighed — som du selv fortæller videre samme aften. Du brokker dig om skyldfølelsen til en helt udenforstående ven. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 2, text: 'Du opdager at hele vennegruppen har en indforstået joke om DIG, som du aldrig har hørt om. Du brokker dig om det til den eneste der fortalte dig det. Hvad siger du?' },
 ];
 
 // Rosekassen — reward-polaritet, 5 arketyper, personaer der ROSER.
@@ -702,6 +793,7 @@ const COMPLAINER_PROMPTS_ROSE = [
   { id: 'rel1', category: 'relational', tier: 2, text: 'Du bliver selv rost for noget, og indser at du sjældent giver samme ros videre. Du roser nu en anden for præcis det samme. Hvad siger du?' },
   { id: 'rel2', category: 'relational', tier: 3, text: 'Du indser at den du roser mindst, faktisk fortjener det mest. Du roser vedkommende for første gang i lang tid, til en fælles ven som lagde mærke til stilheden. Hvad siger du?' },
   { id: 'rel3', category: 'relational', tier: 1, text: 'Du hører en anden rose en tredje person varmt. Du supplerer med din egen ros af samme person, til den der startede det. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 2, text: 'En ven roser dig for noget, du egentlig ved var mest held. Du giver rosen videre til den der reelt fortjente den, foran en fælles ven. Hvad siger du?' },
 ];
 
 // Drikkekassen — session-baseret, 6 arketyper, fest/drikkeleg-personaer.
@@ -797,6 +889,8 @@ const COMPLAINER_PROMPTS_DRIK = [
   { id: 'fest2', category: 'fest', tier: 3, text: 'Værten glemte at invitere dig til efterfesten. Du brokker dig til en fælles ven, som var der. Hvad siger du?' },
   { id: 'rel1', category: 'relational', tier: 1, text: 'Nogen brokker sig over at skulle give en runde, men accepterer altid andres. Du brokker dig om DET til en tredje gæst. Hvad siger du?' },
   { id: 'rel2', category: 'relational', tier: 2, text: 'Du indser at du selv gjorde nøjagtig det du plejer at brokke dig over andre for til fester. Du brokker dig om det til en gæst der husker begge aftener. Hvad siger du?' },
+  { id: 'rel3', category: 'relational', tier: 1, text: 'Du opdager at du selv startede den regel, du nu brokker dig mest over til fester. Du brokker dig om det til en gæst der husker hvem der fandt på den. Hvad siger du?' },
+  { id: 'rel4', category: 'relational', tier: 3, text: 'En ven du plejer at drikke med, husker en pinlig detalje fra sidste fest, som du selv havde fortrængt. Du brokker dig om at blive mindet om det, til en anden gæst. Hvad siger du?' },
 ];
 
 // Konkurrencekassen — EGET indhold, IKKE en regex-omskrivning af brok-
@@ -1003,16 +1097,24 @@ function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;
 }
 
-// Vælger arketype + situation til hver spiller. Ikke vægtet/roterende som
-// MrBrok's pickMrBrok — Det Store Brokkeri er endnu ung nok til at et simpelt
-// tilfældigt shuffle er fint (kan senere udbygges med samme
-// gentagelses-modstand hvis det bliver et problem i praksis).
+// Vælger arketype + situation til hver spiller. Arketyper trækkes UDEN
+// tilbagelægning (shufflet pulje, delt ud én ad gangen) i stedet for
+// uafhængigt tilfældigt pr. spiller — ellers får to spillere i samme spil
+// ofte samme personlighed, især i de mindre puljer (5-6 arketyper ved 5-6
+// spillere er en klassisk fødselsdagsparadoks-kollision). Har puljen færre
+// arketyper end spillere, genshuffles en ny runde af hele puljen for de
+// resterende spillere (så en person aldrig kan ende med den arketype de
+// selv lige fik, men to FORSKELLIGE spillere kan godt dele en arketype når
+// puljen er opbrugt). Situationer er bevidst stadig uafhængige — at dele
+// situation er ufarligt, pickPromptFor undgår alligevel prompt-kollision.
 function assignArchetypesAndSituations(players, themeId) {
   const theme = getThemeContent(themeId);
   const archetypes = {};
   const situations = {};
+  let pool = shuffle(theme.archetypes.slice());
   players.forEach(p => {
-    archetypes[p.id] = pickRandom(theme.archetypes).id;
+    if (!pool.length) pool = shuffle(theme.archetypes.slice());
+    archetypes[p.id] = pool.pop().id;
     situations[p.id] = pickRandom(theme.situations);
   });
   return { archetypes, situations };
