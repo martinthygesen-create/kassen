@@ -2461,6 +2461,8 @@ const BOT_FILLER_ANSWERS = ['Det er da til at grine ad, ærlig talt', 'Nogen må
 const BOT_FILLER_WORDS = ['regnvejr', 'morgenmad', 'myggestik', 'trafikkø', 'snorken'];
 const BOT_FILLER_STATEMENTS = ['Jeg har prøvet det tre gange i denne uge', 'Det skete faktisk i går aftes', 'Alle andre vidste det, bare ikke mig'];
 const BOT_FILLER_COMPLIMENTS = ['Du er altid god til at få humøret op igen', 'Du lytter bedre end de fleste jeg kender', 'Du finder altid en løsning, uanset hvad'];
+const BOT_FILLER_SELF = ['Er altid først fremme med en kommentar', 'Kan finde på hvad som helst for at slippe for opvasken', 'Husker aldrig hvor mobilen ligger'];
+const BOT_FILLER_ABOUT = ['Er svær at overraske, uanset hvad man finder på', 'Har altid en plan B klar, selv når ingen spurgte', 'Kan snakke sig ud af næsten alt'];
 function pickBotFiller(list){ return list[Math.floor(Math.random()*list.length)]; }
 function isBotMember(id){ const mm = state.members.find(m=>m.id===id); return !!(mm && mm.isBot); }
 
@@ -2470,6 +2472,23 @@ async function ensureTestBots(){
       const r = await api('room', { action:'join', roomId, name, isBot:true });
       if(r && r.state) state = r.state;
     }catch(e){ /* en fejlet bot-oprettelse må ikke stoppe resten */ }
+  }
+  // Kendekassens 'kendskab'-runde (se KENDSKAB_THEMES i api/_lib/game.js)
+  // kræver rigtigt indhold i state.personalLayer — uden dette ville
+  // "🤖 Test-spil med bots" ALDRIG kunne trække runden, fordi bots ikke har
+  // nogen anden vej til at udfylde deres kendskabsark end via den
+  // menu-sheet et menneske selv åbner. Fundet under quizmaster-audit
+  // (se test_kendskab_stress.js) — bots seedes derfor her med samme
+  // action:'personal' som et rigtigt menneske ville sende, kun med
+  // opdigtet tekst, og kun én gang pr. bot (ikke ved hvert nyt testspil).
+  if(isKendekasse()){
+    const botsNeedingEntry = state.members.filter(m=>m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]));
+    for(const bot of botsNeedingEntry){
+      try{
+        const r = await api('brok', { action:'personal', roomId, actorId: bot.id, selfText: pickBotFiller(BOT_FILLER_SELF), aboutTexts: [{ text: pickBotFiller(BOT_FILLER_ABOUT) }, { text: pickBotFiller(BOT_FILLER_ABOUT) }] });
+        if(r && r.state) state = r.state;
+      }catch(e){ /* en fejlet bot-udfyldelse må ikke stoppe resten */ }
+    }
   }
 }
 
@@ -4138,8 +4157,7 @@ function kendskabHtml(g, cur){
     <div class="game-card" id="gameCard" style="text-align:center;">
       <p class="hint" style="color:rgba(255,247,232,0.6);">"${escapeHtml(cur.text)}" — skrevet af ${escapeHtml(author?author.name:'?')} om:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);">✅ ${escapeHtml(target?target.name:'?')}</p>
-      <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt' : 'Ingen gættede rigtigt.'}</p>
-      ${cur.authorWon ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">😏 ${escapeHtml(author?author.name:'?')} narrede alle</p>` : ''}
+      <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt' : 'Ingen gættede rigtigt denne gang.'}</p>
     </div>
     ${gameReadyHtml(g, cur)}
   `;

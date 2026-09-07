@@ -185,23 +185,23 @@ function resolveGuessBrok(state, cur) {
   cur.readyIds = [];
 }
 
-// "Kendskab" — samme opbygning som resolveGuessBrok (gæt rigtigt =
-// ROUND_POINTS, ingen der gætter rigtigt = bonus til forfatteren for at have
-// beskrevet target så godt at ingen kunne placere det), men med
-// ROUND_POINTS i stedet for guessbrok's 1 point — dette er en "rigtig"
-// afsløringsrunde om et ægte medspiller-udsagn, ikke en let bonus-runde.
+// "Kendskab" — kun gætterne får point (ROUND_POINTS ved korrekt gæt).
+// BEVIDST INGEN forfatter-bonus for at "stumpe" alle, i modsætning til
+// resolveGuessBrok's ellers identiske opbygning (se guessbrok's authorWon
+// ovenfor) — der giver en overbevisende, stumpende tekst mening som en
+// skrive-færdighed at belønne. Her ville det belønne det STIK MODSATTE af
+// Kendekassens formål: et vagt, ugenkendeligt udsagn om en medspiller er
+// et MISLYKKET udsagn, ikke et snedigt et, og en point-bonus for det er en
+// reel spilbar strategi der underminerer selve pointen med at kende
+// hinanden godt (fund fra quizmaster-audit, se test_kendskab_stress.js —
+// simulering viste forfatterbonussen udløste 24-51% af tiden ved bevidst
+// vage udsagn, mod 0-8% ved genkendelige).
 function resolveKendskab(state, cur) {
   const correctGuessers = Object.keys(cur.guesses || {}).filter(id => cur.guesses[id] === cur.correctIndex);
-  const totalGuessers = Object.keys(cur.guesses || {}).length;
   correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
-  const authorWon = totalGuessers > 0 && correctGuessers.length === 0;
-  if (authorWon && cur.authorId && state.game.scores[cur.authorId] !== undefined) {
-    state.game.scores[cur.authorId] += ROUND_POINTS;
-  }
   cur.phase = 'results';
   stampPhase(cur);
   cur.correctGuessers = correctGuessers;
-  cur.authorWon = authorWon;
   cur.readyIds = [];
 }
 
