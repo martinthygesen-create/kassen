@@ -85,6 +85,10 @@ function getPendingIds(cur, players) {
       return !(cur.votes && cur.votes[id] !== undefined);
     });
   }
+  if (cur.type === 'kendskab' && cur.phase === 'guess') {
+    const eligible = players.filter(id => id !== cur.authorId && id !== cur.targetId);
+    return eligible.filter(id => !(cur.guesses && cur.guesses[id] !== undefined));
+  }
   return [];
 }
 
@@ -173,6 +177,26 @@ function resolveGuessBrok(state, cur) {
   const authorWon = totalGuessers > 0 && correctGuessers.length === 0;
   if (authorWon && state.game.scores[cur.authorId] !== undefined) {
     state.game.scores[cur.authorId] += 1;
+  }
+  cur.phase = 'results';
+  stampPhase(cur);
+  cur.correctGuessers = correctGuessers;
+  cur.authorWon = authorWon;
+  cur.readyIds = [];
+}
+
+// "Kendskab" — samme opbygning som resolveGuessBrok (gæt rigtigt =
+// ROUND_POINTS, ingen der gætter rigtigt = bonus til forfatteren for at have
+// beskrevet target så godt at ingen kunne placere det), men med
+// ROUND_POINTS i stedet for guessbrok's 1 point — dette er en "rigtig"
+// afsløringsrunde om et ægte medspiller-udsagn, ikke en let bonus-runde.
+function resolveKendskab(state, cur) {
+  const correctGuessers = Object.keys(cur.guesses || {}).filter(id => cur.guesses[id] === cur.correctIndex);
+  const totalGuessers = Object.keys(cur.guesses || {}).length;
+  correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
+  const authorWon = totalGuessers > 0 && correctGuessers.length === 0;
+  if (authorWon && cur.authorId && state.game.scores[cur.authorId] !== undefined) {
+    state.game.scores[cur.authorId] += ROUND_POINTS;
   }
   cur.phase = 'results';
   stampPhase(cur);
@@ -402,6 +426,8 @@ function forceResolveCurrentPhase(state, cur, players) {
       }
     });
     resolveSelvindsigt(state, cur, players);
+  } else if (cur.type === 'kendskab' && cur.phase === 'guess') {
+    resolveKendskab(state, cur);
   } else if (cur.phase === 'results' || cur.phase === 'skipped') {
     goToNextRoundOrEnd(state, players);
   }
@@ -446,6 +472,7 @@ module.exports = {
   transitionRoseToMatch,
   resolveRoseMatch,
   resolveSelvindsigt,
+  resolveKendskab,
   goToNextRoundOrEnd,
   endGame,
   expireGamePhaseIfDue,

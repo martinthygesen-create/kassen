@@ -200,12 +200,39 @@ function botSubmitForRound(state, players) {
     gameFlow.resolveSelvindsigt(state, cur, players);
     return;
   }
+  if (cur.type === 'kendskab' && cur.phase === 'guess') {
+    cur.guesses = cur.guesses || {};
+    players.forEach(id => { if (id !== cur.authorId && id !== cur.targetId) cur.guesses[id] = cur.correctIndex; });
+    gameFlow.resolveKendskab(state, cur);
+    return;
+  }
   throw new Error(`PLAYTEST-FEJL: ukendt runde-type/fase kombination: ${cur.type}/${cur.phase}`);
 }
+
+// Kendekassens personlige lag (se KENDSKAB_THEMES i api/_lib/game.js) —
+// uden dette har botSubmitForRound ovenfor ALDRIG en 'kendskab'-runde at
+// dække, fordi isRoundTypeEligible kræver mindst MIN_ABOUT_FOR_KENDSKAB
+// rigtige kandidater, som ellers aldrig findes i en frisk bot-state.
+function seedPersonalLayer(state) {
+  const ids = state.members.map(m => m.id);
+  const entries = {};
+  ids.forEach((authorId, i) => {
+    const others = ids.filter(id => id !== authorId);
+    entries[authorId] = {
+      submittedAt: Date.now(),
+      self: `Testudsagn om ${state.members[i].name} selv`,
+      about: others.slice(0, 2).map(targetId => ({ targetId, text: `Testudsagn om ${state.members.find(m => m.id === targetId).name}` })),
+    };
+  });
+  state.personalLayer = { entries };
+}
+
+const KENDSKAB_THEMES_TEST = ['kende_venner', 'kende_kolleger'];
 
 async function playtestBrokspillet(themeId, botNames) {
   log('--- Brokspillet, én fuld runde ---');
   const state = makeBotState(themeId, botNames);
+  if (KENDSKAB_THEMES_TEST.includes(themeId)) seedPersonalLayer(state);
   const players = state.members.map(m => m.id);
   const scores = {}; players.forEach(id => (scores[id] = 0));
   state.game = { active: true, wager: 'fun', players, round: 0, totalRounds: 5, scores, current: null, startedAt: Date.now() };
@@ -222,6 +249,30 @@ async function playtestBrokspillet(themeId, botNames) {
   assert(guard < 10, `runden nåede aldrig 'results'-fasen inden for ${guard} forsøg — mulig uendelig løkke i botSubmitForRound`);
   assert(state.game.current.phase === 'results', `forventede fase 'results', fik '${state.game.current && state.game.current.phase}'`);
   log(`✅ Runde-type '${startType}' fuldført til resultat-fasen uden fejl`);
+
+  // Kendekasse-temaer: kør en ekstra, dedikeret 'kendskab'-runde (personal-
+  // lag-seedet ovenfor gør den eligible) i stedet for kun at stole på at
+  // shuffle-posen tilfældigt trækker den — ellers kan denne rundetype
+  // sagtens gå udækket i mange kørsler i træk.
+  if (KENDSKAB_THEMES_TEST.includes(themeId)) {
+    // Forcer trækningen i stedet for at stole på shuffle-bag-lotteriet
+    // (~10% chance pr. forsøg blandt 8 rundetyper) — ellers ville denne
+    // dedikerede dækning selv være flaky på tværs af CI-kørsler.
+    state.game.round = 0;
+    state.game.usedOnceTypes = [];
+    state.game.roundTypeBag = ['kendskab'];
+    game.beginRound(state, state.members);
+    assert(state.game.current.type === 'kendskab', `forventede tvungen 'kendskab'-runde, fik '${state.game.current.type}'`);
+    gameFlow.stampPhase(state.game.current);
+    let guard2 = 0;
+    while (state.game.current && state.game.current.phase !== 'results' && guard2 < 10) {
+      await sleep(REALISTIC_DELAY_MS());
+      botSubmitForRound(state, players);
+      guard2++;
+    }
+    assert(guard2 < 10, `'kendskab'-runden nåede aldrig 'results'-fasen inden for ${guard2} forsøg`);
+    log(`✅ Runde-type 'kendskab' fuldført til resultat-fasen uden fejl`);
+  }
   return state;
 }
 

@@ -15,6 +15,7 @@ const {
   transitionRoseToMatch,
   resolveRoseMatch,
   resolveSelvindsigt,
+  resolveKendskab,
   goToNextRoundOrEnd,
   expireGamePhaseIfDue,
 } = require('./_lib/gameFlow');
@@ -182,6 +183,13 @@ module.exports = async (req, res) => {
           const votesIn = Object.keys(cur.votes).length;
           const guessIn = cur.predictorGuess !== null && cur.predictorGuess !== undefined;
           if (votesIn >= votersNeeded && guessIn) resolveSelvindsigt(state, cur, players);
+        } else if (cur.type === 'kendskab' && cur.phase === 'guess') {
+          if (actorId === cur.authorId || actorId === cur.targetId) throw new ApiError(403, 'du kan ikke gætte på denne runde');
+          if (cur.guesses[actorId] !== undefined) throw new ApiError(409, 'du har allerede gættet');
+          if (!Number.isInteger(payload.choiceIndex)) throw new ApiError(400, 'ugyldigt gæt');
+          cur.guesses[actorId] = payload.choiceIndex;
+          const eligible = players.filter(id => id !== cur.authorId && id !== cur.targetId).length;
+          if (Object.keys(cur.guesses).length >= eligible) resolveKendskab(state, cur);
         } else {
           throw new ApiError(400, 'ugyldig handling lige nu');
         }

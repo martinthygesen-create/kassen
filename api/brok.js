@@ -1,4 +1,4 @@
-const { getState, setState, uid, neededVotes, healPendingVotes, isAdmin, checkPoolMilestone, redactStateFor } = require('./_lib/store');
+const { getState, setState, mutateState, uid, neededVotes, healPendingVotes, isAdmin, checkPoolMilestone, redactStateFor, ApiError } = require('./_lib/store');
 const { pushToMembers } = require('./_lib/push');
 
 const MILESTONE_LINES = [
@@ -56,6 +56,44 @@ module.exports = async (req, res) => {
       }
 
       return res.status(200).json({ state: redactStateFor(state, voterId), confirmed, free, double });
+    }
+
+    // Kendekassens personlige lag (Opus-review): hver deltager skriver ét
+    // kort udsagn om sig selv (påkrævet) og op til to om andre, tildelt
+    // deterministisk ud fra egen position i medlemslisten (round-robin,
+    // ikke perfekt derangement — det behøver den ikke være, kun rimeligt
+    // spredt over tid). Fødes ind i den nye "kendskab"-rundetype, se
+    // MIN_ABOUT_FOR_KENDSKAB i _lib/game.js. mutateState (CAS), IKKE den
+    // simple getState/setState resten af filen bruger — flere medlemmer
+    // udfylder typisk laget samtidig lige efter de joiner, hvilket er
+    // netop det scenarie CAS beskytter imod (se api/admin.js's tilsvarende
+    // begrundelse for approveMember/rejectMember).
+    if (action === 'personal') {
+      const { actorId, selfText, aboutTexts } = req.body || {};
+      if (!actorId) return res.status(400).json({ error: 'mangler data' });
+      const mutated = await mutateState(roomId, async (fresh) => {
+        if (!fresh.members.find(m => m.id === actorId)) throw new ApiError(400, 'ukendt medlem');
+        if (!fresh.personalLayer) fresh.personalLayer = { entries: {} };
+        const cleanSelf = (selfText || '').toString().trim().slice(0, 120);
+        if (!cleanSelf) throw new ApiError(400, 'skriv mindst ét udsagn om dig selv');
+        const memberIds = fresh.members.map(m => m.id);
+        const others = memberIds.filter(id => id !== actorId);
+        let targets = [];
+        if (others.length === 1) {
+          targets = [others[0]];
+        } else if (others.length >= 2) {
+          const offset = memberIds.indexOf(actorId);
+          targets = [...new Set([others[offset % others.length], others[(offset + 1) % others.length]])];
+        }
+        const rawAbout = Array.isArray(aboutTexts) ? aboutTexts : [];
+        const about = targets.map((targetId, i) => {
+          const text = ((rawAbout[i] && rawAbout[i].text) || '').toString().trim().slice(0, 120);
+          return text ? { targetId, text } : null;
+        }).filter(Boolean);
+        fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: cleanSelf, about };
+      });
+      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
+      return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
     }
 
     if (action === 'cancel') {

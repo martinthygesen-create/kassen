@@ -1535,7 +1535,43 @@ function buildRoseDerangement(ids) {
 // medlemmer der reelt er med i DENNE runde af spillet (kan være en delmængde
 // af hele rummet) — trivia-spørgsmål handler stadig om hele rummets rigtige
 // brok-historik, uanset hvem der spiller med lige nu.
-const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt'];
+const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt', 'kendskab'];
+
+// Det personlige lag (Opus-review): hver deltager skriver et par korte
+// udsagn om medspillere ved oprettelse/join (se action:'personal' i
+// api/brok.js) — "kendskab"-rundetypen bruger dem til "hvem handler det
+// om?"-gæt. Bundet EKSKLUSIVT til Kendekassen (se dommens begrundelse:
+// laget ER selve Kendekassens definerende mekanik, ikke en generisk
+// tilvalgs-toggle andre skins også skal bære). Samme minimumstærskel-
+// filosofi som MIN_EVENTS_FOR_ROOM_TRIVIA — for lidt indsamlet indhold, og
+// spørgsmålet giver ikke mening endnu.
+const KENDSKAB_THEMES = ['kende_venner', 'kende_kolleger'];
+const MIN_ABOUT_FOR_KENDSKAB = 3;
+function collectAboutCandidates(state, players) {
+  const entries = (state.personalLayer && state.personalLayer.entries) || {};
+  const candidates = [];
+  Object.keys(entries).forEach(authorId => {
+    (entries[authorId].about || []).forEach(item => {
+      if (!players.includes(item.targetId) || !item.text) return;
+      // Skal efterlade mindst ÉN spiller der hverken er forfatter eller
+      // target til at gætte — ellers hænger runden (ingen tilbage til at
+      // indsende, og ingen "pending" til at udløse Brokspillets nødbremse
+      // heller, se getPendingIds/expireGamePhaseIfDue i gameFlow.js).
+      // Rammes kun i praksis ved præcis 2 aktive spillere.
+      const eligibleGuessers = players.filter(id => id !== authorId && id !== item.targetId).length;
+      if (eligibleGuessers < 1) return;
+      candidates.push({ authorId, targetId: item.targetId, text: item.text });
+    });
+  });
+  return candidates;
+}
+function isRoundTypeEligible(type, state, players) {
+  if (type === 'kendskab') {
+    if (!KENDSKAB_THEMES.includes(state.themeId)) return false;
+    return collectAboutCandidates(state, players).length >= MIN_ABOUT_FOR_KENDSKAB;
+  }
+  return true;
+}
 
 // Casinobrok (hjul) og rose er rene "held/fyld"-runder uden reelt
 // færdigheds- eller vote-element — begrænses til HØJST ÉN gang pr. HELE
@@ -1584,7 +1620,7 @@ function beginRound(state, players) {
     const lastType = state.game.current && state.game.current.type;
     if (!state.game.usedOnceTypes) state.game.usedOnceTypes = [];
     const excluded = excludedRoundTypesFor(state.themeId);
-    const pool = ROUND_TYPES.filter(t => !state.game.usedOnceTypes.includes(t) && !excluded.includes(t));
+    const pool = ROUND_TYPES.filter(t => !state.game.usedOnceTypes.includes(t) && !excluded.includes(t) && isRoundTypeEligible(t, state, playerIds));
     const bag = shuffle(pool.slice());
     // pop() trækker fra ENDEN af arrayet — så bag[bag.length-1] er den
     // NÆSTE der bliver trukket. Uden dette tjek kunne en frisk pose (8+
@@ -1704,7 +1740,7 @@ function beginRound(state, players) {
     // transitionRoseToMatch/resolveRoseMatch i gameFlow.js.
     const targets = buildRoseDerangement(playerIds);
     state.game.current = { type, phase: 'write', targets, compliments: {}, guesses: {} };
-  } else {
+  } else if (type === 'selvindsigt') {
     // "Selvindsigt" (Opus-review, gameplay-fund) — koldstart-sikker rundetype,
     // kræver INGEN historik i kassen og intet forudgående indtastet indhold.
     // Ét medlem trækkes som "gætteren"; resten stemmer hemmeligt på hvem i
@@ -1715,6 +1751,21 @@ function beginRound(state, players) {
     const pool = getThemeContent(state.themeId).selfInsightQuestions || [];
     const question = pool.length ? pickRandom(pool) : 'Hvem i gruppen er mest sig selv, uanset hvad?';
     state.game.current = { type, phase: 'vote', predictorId: predictor.id, question, votes: {}, predictorGuess: null };
+  } else {
+    // "Kendskab" — kun i Kendekassen (se KENDSKAB_THEMES/isRoundTypeEligible
+    // ovenfor, som allerede har sikret at der er mindst
+    // MIN_ABOUT_FOR_KENDSKAB kandidater før denne type overhovedet kan
+    // trækkes). Ét udsagn som en spiller ("forfatteren") har skrevet om en
+    // navngiven medspiller ("target") i det personlige lag vises anonymt —
+    // resten (INKL. forfatteren selv, som blot ikke kan gætte forkert på sig
+    // selv) skal gætte hvem i rummet det handler om. Se resolveKendskab i
+    // gameFlow.js.
+    const candidates = collectAboutCandidates(state, playerIds);
+    const pick = pickRandom(candidates);
+    const targetMember = players.find(m => m.id === pick.targetId);
+    const distractorNames = shuffle(players.filter(m => m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
+    const { options, correctIndex } = buildOptions(targetMember.name, distractorNames);
+    state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, targetId: pick.targetId, options, correctIndex, guesses: {} };
   }
 }
 

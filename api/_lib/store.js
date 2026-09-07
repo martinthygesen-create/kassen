@@ -573,9 +573,30 @@ function getGameNames(themeId) {
 // hægte `gameNames` på uanset hvilken af de to interne exit-veje
 // (mrbrok-inaktiv-tidligt-retur vs. den fulde sti) der rammes — selve
 // redaktions-logikken herunder (nu `redactStateForInner`) er UÆNDRET.
+// Kendekassens personlige lag (state.personalLayer, se action:'personal' i
+// api/brok.js) er IKKE en enkelt rundes svar (som fx guessbrok's
+// cur.correctIndex, der ligesom resten af state.game bevidst sendes
+// uredigeret til alle, se redactStateForInner's kommentar nedenfor) — det er
+// HELE puljen af fremtidige "kendskab"-runders indhold, samlet ét sted.
+// Uredigeret ville én persons devtools-kig spoile enhver kendskab-runde
+// resten af spillet, ikke bare den aktuelle — markant værre end den
+// eksisterende per-runde-eksponering. Hver klient får derfor kun sit EGET
+// bidrag plus et samlet antal (til lobby-fremdriftsindikatoren), aldrig
+// andres about-tekster eller hvem de handler om.
+function redactPersonalLayerFor(personalLayer, viewerId) {
+  if (!personalLayer) return personalLayer;
+  const entries = personalLayer.entries || {};
+  const mine = viewerId && entries[viewerId] ? { [viewerId]: entries[viewerId] } : {};
+  return { entries: mine, submittedCount: Object.keys(entries).length };
+}
+
 function redactStateFor(state, viewerId) {
   const redacted = redactStateForInner(state, viewerId);
-  return { ...redacted, gameNames: getGameNames(state.themeId) };
+  return {
+    ...redacted,
+    gameNames: getGameNames(state.themeId),
+    personalLayer: redactPersonalLayerFor(state.personalLayer, viewerId),
+  };
 }
 
 function redactStateForInner(state, viewerId) {
