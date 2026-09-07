@@ -144,7 +144,7 @@ function autoSubmitRound(state, players) {
   if (cur.type === 'kendskab' && cur.phase === 'guess') {
     cur.guesses = cur.guesses || {};
     const eligible = players.filter(id => id !== cur.authorId && id !== cur.targetId);
-    assert(eligible.length >= 1, `kendskab-runde trukket med 0 gyldige gættere (spillere=${players.length}, author=${cur.authorId}, target=${cur.targetId})`);
+    assert(eligible.length >= 2, `kendskab-runde trukket med under 2 gyldige gættere (spillere=${players.length}, author=${cur.authorId}, target=${cur.targetId}) — quizmaster-fund: for tyndt valgrum når gætterens eget navn altid er blandt options`);
     eligible.forEach(id => { cur.guesses[id] = Math.random() < 0.5 ? cur.correctIndex : 0; });
     gameFlow.resolveKendskab(state, cur);
     return;

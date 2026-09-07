@@ -1553,13 +1553,19 @@ function collectAboutCandidates(state, players) {
   Object.keys(entries).forEach(authorId => {
     (entries[authorId].about || []).forEach(item => {
       if (!players.includes(item.targetId) || !item.text) return;
-      // Skal efterlade mindst ÉN spiller der hverken er forfatter eller
-      // target til at gætte — ellers hænger runden (ingen tilbage til at
-      // indsende, og ingen "pending" til at udløse Brokspillets nødbremse
-      // heller, se getPendingIds/expireGamePhaseIfDue i gameFlow.js).
-      // Rammes kun i praksis ved præcis 2 aktive spillere.
+      // Skal efterlade mindst TO spillere der hverken er forfatter eller
+      // target til at gætte — ikke bare én. Med kun én tilbage (præcis 3
+      // aktive spillere) er valgmulighederne i beginRound (options bygget
+      // fra ALLE ikke-target-spillere, inkl. gætteren selv, se
+      // distractorNames nedenfor) reelt kun target+forfatter, fordi
+      // gætteren trygt kan udelukke sit eget navn — et 50/50-gæt uden reel
+      // usikkerhed (fund fra quizmaster-audit, se test_kendskab_stress.js).
+      // Ved 4+ tilbageværende gættere fortynder eget-navn-eliminationen sig
+      // nok blandt de øvrige distraktorer til at gættet stadig er reelt.
+      // Kravet om mindst 1 (ikke 0) var kun en hæng-beskyttelse — dette er
+      // en skærpelse af SAMME grænse, ikke en ny mekanisme.
       const eligibleGuessers = players.filter(id => id !== authorId && id !== item.targetId).length;
-      if (eligibleGuessers < 1) return;
+      if (eligibleGuessers < 2) return;
       candidates.push({ authorId, targetId: item.targetId, text: item.text });
     });
   });
@@ -1757,9 +1763,10 @@ function beginRound(state, players) {
     // MIN_ABOUT_FOR_KENDSKAB kandidater før denne type overhovedet kan
     // trækkes). Ét udsagn som en spiller ("forfatteren") har skrevet om en
     // navngiven medspiller ("target") i det personlige lag vises anonymt —
-    // resten (INKL. forfatteren selv, som blot ikke kan gætte forkert på sig
-    // selv) skal gætte hvem i rummet det handler om. Se resolveKendskab i
-    // gameFlow.js.
+    // resten (undtagen forfatteren og target selv, som begge allerede
+    // kender svaret, se den ekskluderende gætteliste i getPendingIds/
+    // api/game.js's submit-handler) skal gætte hvem i rummet det handler
+    // om. Se resolveKendskab i gameFlow.js.
     const candidates = collectAboutCandidates(state, playerIds);
     const pick = pickRandom(candidates);
     const targetMember = players.find(m => m.id === pick.targetId);
