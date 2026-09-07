@@ -282,6 +282,11 @@ const DECOY_BODE = [
   'Tog den sidste kop kaffe uden at brygge ny',
   'Glemte at melde sygdom til tiden',
   'Parkerede cyklen midt i indgangen',
+  'Glemte at rydde op efter mødet',
+  'Kom uden det aftalte udstyr til træningen',
+  'Meldte forkert antal deltagere til arrangementet',
+  'Efterlod lyset tændt hele natten',
+  'Glemte at melde afbud til frokosten',
 ];
 
 // Kasse-motor-generalisering, tredje tema (Sladrekassen — Martins eget
@@ -329,6 +334,10 @@ const WORLD_TRUEFALSE_SLADRE = [
   { statement: 'Rygter i store organisationer opstår ofte netop hvor den officielle information mangler eller er uklar.', isTrue: true },
 ];
 
+// Udvidet fra 8 til 20 (Opus-review, koldstart-fund): et koldt rum uden
+// ret meget egen historik endnu trak de samme 3 decoys hver eneste
+// guessbrok-runde — efter 2-3 runder kendte spillerne dem udenad, og
+// runden holdt op med at være et gæt. Se pickDecoyBroks.
 const DECOY_SLADRE = [
   'Fortalte en hemmelighed videre samme dag som løftet om tavshed',
   'Sladrede om en kollega ved kaffemaskinen',
@@ -338,6 +347,18 @@ const DECOY_SLADRE = [
   'Videresendte et rygte uden at tjekke det først',
   'Sladrede om en ven til en anden ven',
   'Fortalte alle om en overraskelsesfest, før den var en overraskelse',
+  'Genfortalte en gammel historie som om den lige var sket',
+  'Lyttede med på et opkald på højtaler uden at sige det',
+  'Spurgte ind til noget privat "bare fordi hun/han var nysgerrig"',
+  'Delte en hemmelighed videre med et "bare mellem os"',
+  'Overhørte en skænderi og genfortalte det med det samme',
+  'Gættede sig frem til noget privat og fortalte det som et faktum',
+  'Kiggede med på en andens telefon over skulderen',
+  'Fortalte en tredjepart om et brud, før parret selv havde sagt det',
+  'Genfortalte en historie med sig selv i en bedre rolle',
+  'Sladrede om en fest ingen egentlig var inviteret til',
+  'Spredte et rygte for at teste om det kom tilbage til en selv',
+  'Fortalte naboen om en anden nabos skænderi',
 ];
 
 // Vennekassen
@@ -382,6 +403,18 @@ const DECOY_VENNE = [
   'Glemte sin andel af den fælles dagligvarehandel',
   'Meldte afbud dagen før den planlagte tur',
   'Tog den sidste øl uden at sige det',
+  'Spurgte "hvad hedder han/hun nu lige" om en de har mødt fem gange',
+  'Foreslog en aktivitet ingen andre havde lyst til, og insisterede',
+  'Glemte at invitere én, uden at det var med vilje',
+  'Delte et pinligt billede fra vennegruppen uden at spørge',
+  'Kom uforberedt til quizzen og gættede alt',
+  'Lånte noget og "glemte" at give det tilbage',
+  'Blandede sig i et skænderi der ikke handlede om en selv',
+  'Foreslog at dele regningen ulige "for det er nemmere"',
+  'Ankom med en plus-en ingen vidste kom',
+  'Aflyste for tredje gang på en måned',
+  'Tog styringen over playlisten hele aftenen',
+  'Svarede "måske" på en invitation i to uger',
 ];
 
 // Rosekassen — reward-polaritet
@@ -432,6 +465,18 @@ const DECOY_ROSE = [
   'Roste børnenes tålmodighed efter en lang dag',
   'Takkede chaufføren ekstra tydeligt',
   'Fremhævede en holdkammerats indsats efter tabet',
+  'Skrev en anmeldelse fem stjerner udelukkende pga. personalet',
+  'Rejste sig op og klappede for en fremmed på scenen',
+  'Fortalte en chef om en medarbejders gode arbejde, uopfordret',
+  'Gav den sidste plads i køen væk med et smil',
+  'Roste en modstander for et godt træk midt i kampen',
+  'Sendte en lang, oprigtig besked bare for at sige tak',
+  'Fremhævede en fremmeds mod til at spørge om hjælp',
+  'Gav en stående klapsalve til en amatør-optræden',
+  'Rost en nybegynder for at turde prøve overhovedet',
+  'Sagde højt hvor stolt man var af en helt fremmed',
+  'Skrev en anbefaling uden at blive bedt om det',
+  'Fremhævede den stille i gruppen som den der løste problemet',
 ];
 
 // Drikkekassen — session-baseret
@@ -476,6 +521,18 @@ const DECOY_DRIK = [
   'Lovede at ringe efter en taxa og glemte det',
   'Drak af andres glas ved en fejl',
   'Kom uden gave til den fælles fest',
+  'Blandede drinks der aldrig burde have mødt hinanden',
+  'Erklærede sig selv vinder af en drikkeleg ingen andre spillede',
+  'Væltede et fyldt glas midt i en skål',
+  'Insisterede på "én omgang mere" klokken tre om natten',
+  'Glemte hvor mange gange man selv havde skålet',
+  'Bestilte den dyreste flaske og delte regningen ligeligt',
+  'Sov på sofaen til sin egen fest kl. 23',
+  'Fortalte den samme historie tre gange samme aften',
+  'Tabte en væddemål og nægtede at betale panten',
+  'Skiftede musik midt i en andens yndlingssang',
+  'Glemte at tømme flaskerne op inden gæsterne kom',
+  'Prøvede at overtale bartenderen til en gratis omgang',
 ];
 
 // Dynamisk Trivia & Dilemma-bank (IMPLEMENTATION PROTOCOL, min. 20 pr. tema):
@@ -672,6 +729,18 @@ const DECOY_KONKURRENCE = [
   'Huskede scoren fra en kamp for tre år siden',
   'Påstod det var strategi, da det var rent held',
   'Krævede en officiel "omkamp" over en bagatel',
+  'Trænede alene i hemmelighed før et almindeligt familiespil',
+  'Forklarede reglerne detaljeret for et spil alle allerede kunne',
+  'Startede en officiel resultatliste for en spontan leg',
+  'Nægtede at spille "bare for sjov" uden points',
+  'Analyserede modstanderens sidste ti træk højlydt',
+  'Krævede video-genafspilning af et helt uskyldigt point',
+  'Fejrede en sejr over et barn som var det en VM-finale',
+  'Skrev sejren ind i en app ingen andre havde hørt om',
+  'Forlangte revanche på revanchen på revanchen',
+  'Startede en "officiel" sæsonstatistik for hyggespil',
+  'Kaldte et helt almindeligt kortspil "high stakes"',
+  'Insisterede på opvarmning før en tur i haven',
 ];
 
 // Løgnerkassens og Kollegakassens egne quiplash-sæt (defensivt/fremtids-
@@ -717,6 +786,18 @@ const DECOY_LOGN = [
   'Påstod at "næsten" have nået deadline',
   'Lovede at huske det denne gang, igen',
   'Sagde beskeden ikke var set, selvom den var læst',
+  'Påstod at have mødt en kendt person i lufthavnen',
+  'Sagde man kun havde drukket "en enkelt" til festen',
+  'Påstod at kende svaret hele tiden, efter at have fået det oplyst',
+  'Sagde man havde forudset noget man tydeligvis ikke gjorde',
+  'Påstod at telefonen var løbet tør for strøm som undskyldning',
+  'Sagde man havde prøvet retten før, uden nogensinde at have',
+  'Påstod at en gave var meget dyrere end den var',
+  'Sagde man var eksperten i noget man aldrig havde prøvet',
+  'Påstod at have set filmen, ud fra kun traileren',
+  'Sagde man havde styr på det, uden at have åbnet mappen',
+  'Påstod at have en god grund, uden at kunne nævne den',
+  'Sagde man var "lige startet" på noget der stod færdigt',
 ];
 
 const QUIPLASH_PROMPTS_HJAELPER = [
@@ -757,6 +838,18 @@ const DECOY_HJAELPER = [
   'Genbrugte en gammel løsning uden at opdatere den',
   'Meldte en opgave færdig for tidligt',
   'Stolede på hukommelsen frem for tjeklisten',
+  'Sendte en mail til hele holdet i stedet for én person',
+  'Booket samme mødelokale som en anden afdeling',
+  'Glemte at opdatere versionen før den blev delt',
+  'Svarede "ja" på en mail uden at læse den til ende',
+  'Kopierede en skabelon uden at rette firmanavnet',
+  'Lod en deadline glide en dag uden at sige det',
+  'Sendte et udkast i stedet for den endelige version',
+  'Trykkede "svar alle" på en intern kommentar',
+  'Planlagde et møde uden at tjekke andres kalendere',
+  'Lovede en leverance uden at spørge resten af holdet',
+  'Delte en fil med forkert adgang ved en fejl',
+  'Glemte at følge op på en kundehenvendelse',
 ];
 
 const CONTENT_BY_THEME = {
