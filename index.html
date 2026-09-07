@@ -3647,7 +3647,7 @@ function gameLobbyHtml(){
     ['🎯', 'Hvilket er ægte? Én skriver et RIGTIGT indlæg blandt 3 opdigtede — resten gætter hvilket der er ægte'],
     ['🔍', 'Trivia om jeres egen historik (og lidt verdens-viden ind imellem)'],
     ['🎰', 'Ordhjulet: alle skriver ét ord, og hjulet trækker lod om hvis ord der vinder'],
-    ['🌹', 'Rose: skriv en ægte ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
+    ['🌹', 'Rose: skriv den mest overdrevne ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
     ['🏆', 'Point tælles på tværs af alle runder — flest point vinder'],
   ];
   if(gameInstructionsOpen === null) gameInstructionsOpen = !localStorage.getItem('bk_game_seen_instructions');
@@ -4083,8 +4083,8 @@ function roseHtml(g, cur){
     return `
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🌹 Rose</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card rose-card" id="gameCard">
-        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:0 0 6px;">🌹 Skriv en ægte ros til <span style="color:#ff8fb3;">${escapeHtml(targetMember?targetMember.name:'?')}</span></p>
-        <p class="hint" style="margin:0 0 12px; color:rgba(255,247,232,0.6);">Kort og ægte — noget de er gode til, eller bare noget du sætter pris på.</p>
+        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:0 0 6px;">🌹 Skriv den mest overdrevne ros til <span style="color:#ff8fb3;">${escapeHtml(targetMember?targetMember.name:'?')}</span></p>
+        <p class="hint" style="margin:0 0 12px; color:rgba(255,247,232,0.6);">Vildt overdrevet — den skal være løgn af begejstring. Jo mere ude af proportioner, jo bedre.</p>
         <textarea id="roseInput" rows="2" maxlength="140" placeholder="Din ros..." ${mine?'disabled':''}>${mine?escapeHtml(mine):''}</textarea>
         ${mine ? '' : `<button class="game-btn rose-btn" id="roseSubmitBtn" style="margin-top:10px;">🌹 Send rosen</button>`}
       </div>

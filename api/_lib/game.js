@@ -385,15 +385,21 @@ const DECOY_VENNE = [
 ];
 
 // Rosekassen — reward-polaritet
+// Rettet (Opus-review, gameplay-fund): oprigtig ros er lav-varians tekst —
+// alle skriver en variant af "altid god til at hjælpe", så teksten ikke
+// afslører noget om hvem der skrev den, og gætterunden bliver et blindt
+// lodtræk i stedet for et rigtigt gæt. Overdrivelse er høj-varians og
+// tvinger personlig stemme frem — samme instinkt QUIPLASH_PROMPTS_SLADRE
+// allerede havde ("den mest overdrevne rygte om {target}").
 const QUIPLASH_PROMPTS_ROSE = [
-  'Den mest velfortjente ros til {target} lige nu er...',
-  'Skriv den flotteste kompliment til {target}',
-  '{target} fortjener ros for altid at være god til...',
-  'Den bedste overraskelse {target} kunne give er...',
-  'Hvis {target} havde sin egen hæderspris, ville den hedde...',
-  '{target}s mest undervurderede talent er...',
-  'Det {target} gør bedst uden at vide det er...',
-  'Om 10 år bliver {target} stadig rost for...',
+  'Den helt vildt overdrevne, urealistiske ros til {target} lige nu er...',
+  'Skriv den mest overdrevne kompliment til {target} — den skal være løgn af begejstring',
+  'Hvis {target} fik en hæderspris for noget helt absurd, ville den hedde...',
+  'Den mest hysterisk overdrevne overraskelse {target} kunne give er...',
+  'Hvis {target} havde en statue rejst for noget latterligt småt, ville den hedde...',
+  '{target}s mest overdrevent legendariske (og opdigtede) talent er...',
+  'Ifølge et vildt overdrevet rygte er {target} verdensmester i...',
+  'Om 100 år vil folkeeventyr stadig overdrive {target}s bedrift med at...',
 ];
 const QUIPLASH_DECOYS_ROSE = [
   'At altid huske andres fødselsdage uden at blive mindet om det',
@@ -902,6 +908,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
     quoteWho: quote => `Ifølge Brokkekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    quoteBy: quote => `Nogen anklagede en anden for: "${quote}" — hvem skrev anklagen?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne brokkekasse?',
   },
   // Fase 5 bevis-tema: samme struktur, egen grammatik ("fået bøder" i
@@ -915,6 +922,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden en bøde?',
     quoteWho: quote => `Ifølge Bødekassen fik nogen en bøde for: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse fik ${name} en bøde for?`,
+    quoteBy: quote => `Nogen meldte en anden for: "${quote}" — hvem meldte det?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne bødekasse?',
   },
   venne: {
@@ -924,6 +932,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
     quoteWho: quote => `Ifølge Vennekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    quoteBy: quote => `Nogen anklagede en ven for: "${quote}" — hvem skrev anklagen?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne vennekasse?',
   },
   rose: {
@@ -933,6 +942,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle ros-streak?',
     quoteWho: quote => `Ifølge Rosekassen roste nogen: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken ros gav ${name}?`,
+    quoteBy: quote => `Nogen indstillede en anden med: "${quote}" — hvem skrev rosen?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne rosekasse?',
   },
   drik: {
@@ -942,6 +952,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden brok?',
     quoteWho: quote => `Ifølge Drikkekassen brokkede nogen sig over: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilket af disse ting brokkede ${name} sig over?`,
+    quoteBy: quote => `Nogen meldte en anden for: "${quote}" — hvem meldte det?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne drikkekasse?',
   },
   konkurrence: {
@@ -951,6 +962,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle sejrsstreak?',
     quoteWho: quote => `Ifølge Konkurrencekassen vandt nogen på: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken sejr stod ${name} bag?`,
+    quoteBy: quote => `Nogen indstillede en sejr: "${quote}" — hvem skrev indstillingen?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne konkurrencekasse?',
   },
   sladre: {
@@ -960,6 +972,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden at sladre?',
     quoteWho: quote => `Ifølge Sladrekassen sladrede nogen om: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken sladderhistorie stod ${name} bag?`,
+    quoteBy: quote => `Nogen startede sladderhistorien: "${quote}" — hvem var kilden?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne sladrekasse?',
   },
   // logn/hjaelper: 'spil' er ikke aktiveret i SKIN_PRESETS.allowedGames i
@@ -975,6 +988,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden en afsløret løgn?',
     quoteWho: quote => `Ifølge Løgnekassen blev nogen afsløret i en løgn om: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken løgn blev ${name} afsløret i?`,
+    quoteBy: quote => `Nogen afslørede løgnen: "${quote}" — hvem afslørede den?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne løgnekasse?',
   },
   hjaelper: {
@@ -984,6 +998,7 @@ const QUESTION_TEMPLATES_BY_THEME = {
     longestStreak: 'Hvem har den længste aktuelle streak uden en noteret fejl?',
     quoteWho: quote => `Ifølge Kollegakassen blev der noteret en fejl om: "${quote}" — hvem var det?`,
     quoteWhich: name => `Hvilken fejl blev noteret for ${name}?`,
+    quoteBy: quote => `Nogen noterede påstanden: "${quote}" — hvem noterede den?`,
     memberCountFallback: 'Hvor mange medlemmer er der i denne kollegakasse?',
   },
 };
@@ -1090,6 +1105,24 @@ function generateTriviaQuestion(state) {
         const distractors = shuffle(otherTexts).slice(0, 3);
         const { options, correctIndex } = buildOptions(correct, distractors);
         return { question: t.quoteWhich(target.name), options, correctIndex };
+      });
+    }
+
+    // "Hvem sagde det" (Opus-review, trivia-fund): actorId gemmes nu på
+    // hændelsen (se healPendingVotes i _lib/store.js) — så motoren for
+    // FØRSTE gang kan spørge om hvem der rejste sagen, ikke kun hvem den
+    // handlede om. Ældre hændelser (fra før denne rettelse) har
+    // actorId:null og filtreres automatisk væk her, ingen migrering
+    // nødvendig — puljen vokser bare naturligt efterhånden som rummet
+    // bruges. Samme decoy-levedygtigheds-tjek som quoteWho ovenfor.
+    const actorEvents = brokEvents.filter(e => e.actorId && members.find(m => m.id === e.actorId));
+    if (actorEvents.length >= MIN_EVENTS_FOR_ROOM_TRIVIA) {
+      candidates.push(() => {
+        const ev = pickRandom(actorEvents);
+        const correct = members.find(m => m.id === ev.actorId);
+        const otherActors = shuffle(members.filter(m => m.id !== ev.actorId)).slice(0, 3).map(m => m.name);
+        const { options, correctIndex } = buildOptions(correct.name, otherActors);
+        return { question: t.quoteBy(ev.message), options, correctIndex };
       });
     }
   }
@@ -1264,6 +1297,16 @@ const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok
 // Chancen — resten af tiden er den en rigtig afstemningsrunde, ikke ren
 // tilfældighed, så den skal stadig kunne gentages på tværs af cyklusser.
 const ONCE_PER_GAME_TYPES = ['casinobrok', 'rose'];
+// Rettet (Opus-review, gameplay-fund): rose-runden var kappet til ÉN gang
+// pr. spil sammen med casinobrok, klassificeret som ren "held/fyld" —
+// rigtigt for de fleste skins, hvor den er en sjov afveksling, men FORKERT
+// for Rosekassen selv, hvor rose-runden (nu omskrevet til overdrivelse, se
+// roseHtml i index.html) reelt er skinnets hovedret, ikke en bonus. Kun
+// undtaget her, ikke fjernet globalt fra ONCE_PER_GAME_TYPES.
+function isOncePerGame(type, themeId) {
+  if (type === 'rose' && themeId === 'rose') return false;
+  return ONCE_PER_GAME_TYPES.includes(type);
+}
 
 function beginRound(state, players) {
   state.game.round += 1;
@@ -1310,7 +1353,7 @@ function beginRound(state, players) {
     state.game.roundTypeBag = bag;
   }
   const type = state.game.roundTypeBag.pop();
-  if (ONCE_PER_GAME_TYPES.includes(type) && !state.game.usedOnceTypes.includes(type)) {
+  if (isOncePerGame(type, state.themeId) && !state.game.usedOnceTypes.includes(type)) {
     state.game.usedOnceTypes.push(type);
   }
   if (type === 'quiplash') {

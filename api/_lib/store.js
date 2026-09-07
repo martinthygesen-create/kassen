@@ -534,7 +534,14 @@ function healPendingVotes(state) {
     const isReward = state.poolPolarity === 'reward';
     const free = isLucky && !isReward;
     const double = isLucky && isReward;
-    state.events.push({ id: p.id, memberId: p.memberId, message: p.message, ts: Date.now(), votes: p.votes, free, double });
+    // actorId gemmes nu med på hændelsen (Opus-review, trivia-fund): den
+    // fandtes allerede på selve sagen (api/brok.js) men blev smidt væk lige
+    // her, hver eneste gang — så motoren aldrig kunne stille "hvem sagde
+    // det?"-spørgsmål, kun "hvem blev det sagt om?" (se
+    // generateTriviaQuestion i _lib/game.js). Åbner en hel ny
+    // spørgsmålsfamilie fra kassens egne, allerede-eksisterende data, uden
+    // at spillerne skal skrive noget nyt.
+    state.events.push({ id: p.id, memberId: p.memberId, actorId: p.actorId || null, message: p.message, ts: Date.now(), votes: p.votes, free, double });
     if (isLucky) state.freeBrokMemberId = null;
     confirmedIds.push(p.id);
     return false;
