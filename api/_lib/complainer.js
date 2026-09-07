@@ -303,7 +303,7 @@ const COMPLAINER_PROMPTS_BODE = [
 const COMPLAINER_ARCHETYPES_SLADRE = [
   {
     id: 'frisoer', name: 'Den hviskende frisør',
-    promptHook: 'Med en kunde i stolen og øre for alt —',
+    promptHook: 'Med en kunde i stolen og et øre for al sladder —',
     instructions: [
       'Du sænker stemmen dramatisk før du deler det bedste.',
       'Du lover "det bliver kun mellem os" — og siger det alligevel videre.',
