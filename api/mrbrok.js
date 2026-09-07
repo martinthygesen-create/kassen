@@ -22,16 +22,20 @@ const DEFAULT_WARMUP = 3;
 // minWarmupForPlayers.
 const ALLOWED_WARMUP = [2, 3];
 
-// Worst case (MrBrok never fanget ved et forkert gæt) tager
-// (players.length - 2) afstemningsrunder før spillet tvinges til en
-// afgørelse (se resolveVote's activeIds<=2-check). Rolige runder (1
-// imitations-runde + warmupRounds) skal udgøre MINDST halvdelen af det
-// samlede antal runder, ellers bruger man mere tid på at se folk blive
-// stemt ud end på rent faktisk at lære rollen at kende — især mærkbart
-// i store grupper. +1 for imitations-runden, som ikke er en af de
-// konfigurerede warmupRounds (se mrbrokFlow.js's advanceClue).
-function minWarmupForPlayers(n) {
-  return Math.max(2, n - 3);
+// Rettet (Opus-review, gameplay-fund #4): den gamle minWarmupForPlayers
+// skalerede FORKERT VEJ — den TVANG STØRRE grupper op til FLERE
+// opvarmningsrunder (n-3), selvom hver runde i forvejen tager længere tid
+// jo flere spillere der er om at tale. Ved 6 spillere gav det 3 opvarmnings-
+// runder + 1 imitationsrunde × 6 ture = 24 verbale ture FØR første
+// afstemning (12-18 minutter uden en eneste beslutning). Ny model sigter i
+// stedet mod et nogenlunde KONSTANT samlet antal ture uanset gruppestørrelse
+// (TARGET_TURNS), og udleder warmupRounds derfra — så store grupper får
+// FÆRRE runder, ikke flere, mens de stadig får mindst 2 (den tidligere
+// fastsatte nedre grænse, se ALLOWED_WARMUP) og aldrig mere end hvad
+// værten selv bad om.
+const TARGET_TURNS = 16;
+function minWarmupForPlayers(n, requested) {
+  return Math.max(2, Math.min(requested, Math.floor(TARGET_TURNS / n)));
 }
 
 module.exports = async (req, res) => {
@@ -58,7 +62,7 @@ module.exports = async (req, res) => {
         if (playerObjs.length < MIN_PLAYERS) throw new ApiError(400, `vælg mindst ${MIN_PLAYERS} spillere`);
         const wager = req.body.wager === 'euro' ? 'euro' : 'fun';
         const requestedWarmup = ALLOWED_WARMUP.includes(req.body.warmupRounds) ? req.body.warmupRounds : DEFAULT_WARMUP;
-        const warmupRounds = Math.max(requestedWarmup, minWarmupForPlayers(playerObjs.length));
+        const warmupRounds = minWarmupForPlayers(playerObjs.length, requestedWarmup);
         const players = playerObjs.map(mm => mm.id);
         const mrBrokId = pickMrBrok(state, playerObjs).id;
         const scores = {};
@@ -101,6 +105,13 @@ module.exports = async (req, res) => {
           const votedForId = payload.votedForId;
           if (votedForId === actorId) throw new ApiError(400, 'du kan ikke stemme på dig selv');
           if (!m.activeIds.includes(votedForId)) throw new ApiError(400, 'ukendt spiller');
+          // Rettet (Opus-review, bug #6): manglede et "allerede stemt"-værn
+          // (Det Store Brokkeris tilsvarende afstemninger har det allerede,
+          // se api/complainer.js) — uden det kunne alle undtagen den sidste
+          // stemmeafgiver frit ombestemme sig helt frem til afstemningen
+          // lukkede, mens voteCount undervejs lækker fremdriften via
+          // redactStateFor.
+          if (cur.votes[actorId] !== undefined) throw new ApiError(409, 'du har allerede stemt denne runde');
           cur.votes[actorId] = votedForId;
           if (Object.keys(cur.votes).length >= m.activeIds.length) resolveVote(state);
         } else if (cur.type === 'steal' && !cur.guess) {
@@ -111,6 +122,7 @@ module.exports = async (req, res) => {
         } else if (cur.type === 'steal' && cur.guess) {
           if (actorId === m.mrBrokId) throw new ApiError(403, 'du kan ikke stemme om dit eget gæt');
           if (!m.activeIds.includes(actorId)) throw new ApiError(403, 'du er ikke aktiv i denne omgang af MrBrok');
+          if (cur.votes[actorId] !== undefined) throw new ApiError(409, 'du har allerede stemt');
           cur.votes[actorId] = !!payload.closeEnough;
           if (Object.keys(cur.votes).length >= m.activeIds.length) resolveSteal(state);
         } else {

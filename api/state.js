@@ -2,6 +2,7 @@ const { getState, mutateState, processPendingExpiry, checkSilenceNudge, healPend
 const { expireGamePhaseIfDue, BROKSPILLET_AUTO_MS, COMPLAINT_COUNTDOWN_MS } = require('./_lib/gameFlow');
 const { expireMrbrokPhaseIfDue } = require('./_lib/mrbrokFlow');
 const { expireComplainerPhaseIfDue } = require('./_lib/complainerFlow');
+const { getThemeContent } = require('./_lib/complainer');
 const { pushToMembers } = require('./_lib/push');
 
 // Billig, ikke-muterende forhåndstjek: er der overhovedet en chance for at
@@ -120,8 +121,34 @@ module.exports = async (req, res) => {
     if (complainerExpiryMightBeDue(state)) {
       const mutated = await mutateState(roomId, async (fresh) => {
         expireComplainerPhaseIfDue(fresh);
+        // Rettet (Opus-review, bug #4): nødbremsen kan selv udløse den
+        // private afsløring (fx en ubesvaret sidste bet-beslutning) — uden
+        // dette tjek her udeblev pushen helt, fordi api/complainer.js's
+        // egen push-logik kun kørte når et menneske selv sendte 'submit'.
+        // Samme c.revealPushPending-flag som api/complainer.js læser
+        // (sat i beginReveal i complainerFlow.js), konsumeret her hvis
+        // DETTE opportunistiske kald var det der udløste overgangen.
+        if (fresh.complainer && fresh.complainer.revealPushPending) {
+          fresh.complainer.revealPushPending = false;
+          return { complainerRevealPush: true };
+        }
+        return null;
       });
-      if (mutated) state = mutated.state;
+      if (mutated) {
+        state = mutated.state;
+        if (mutated.result && mutated.result.complainerRevealPush) {
+          const c = state.complainer;
+          const guiltyId = c.guiltyId;
+          const others = state.members.map(m => m.id).filter(id => id !== guiltyId);
+          const roleLabel = getThemeContent(state.themeId).guiltyRoleLabel || 'Den Store Brokker';
+          try {
+            await Promise.all([
+              pushToMembers(state, others, { title: `🪤 Du er ${roleLabel}!`, body: 'Bliv i karakter gennem sidste spørgerunde — så skal du gætte en detalje om en af de andre.', url: '/?r=' + roomId }),
+              pushToMembers(state, [guiltyId], { title: '🪤 Det Store Brokkeri', body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId }),
+            ]);
+          } catch (e) { /* push-fejl må ikke vælte selve poll-kaldet */ }
+        }
+      }
     }
 
     for (const { pending, memberIds } of dueReminders) {

@@ -334,8 +334,16 @@ function getThemeContent(themeId) {
 function pickTopic(state) {
   const topics = getThemeContent(state.themeId).mrbrokTopics;
   if (!state.gameContentBank) state.gameContentBank = {};
-  if (!state.gameContentBank.mrbrokTopicHistory) state.gameContentBank.mrbrokTopicHistory = [];
-  const history = state.gameContentBank.mrbrokTopicHistory;
+  // Rettet (Opus-review, bug #9): historikken var tidligere ÉN fælles liste
+  // for hele rummet uanset tema — gemte INDEKSER, ikke selve emnet. Skiftede
+  // et rum skin (eller startede et nyt spil i et andet tema-forsøg), kunne
+  // indekser fra det GAMLE temas historik vilkårligt blokere emner i det
+  // NYE temaet, og minGap-udregningen (baseret på det nye temas puljestørrelse)
+  // blev regnet mod en historik der reelt tilhørte et andet tema. Nu er
+  // historikken nøglet pr. tema.
+  if (!state.gameContentBank.mrbrokTopicHistory) state.gameContentBank.mrbrokTopicHistory = {};
+  if (!state.gameContentBank.mrbrokTopicHistory[state.themeId]) state.gameContentBank.mrbrokTopicHistory[state.themeId] = [];
+  const history = state.gameContentBank.mrbrokTopicHistory[state.themeId];
   const minGap = Math.ceil(topics.length * 0.6);
   const recentlyUsed = new Set(history.slice(-minGap));
   const candidates = topics.map((_, i) => i).filter(i => !recentlyUsed.has(i));

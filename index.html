@@ -758,7 +758,6 @@ let lastComplaintKeyComplainer = null;
 let complainerRoleRevealed = false; // samme "skjult som standard, kræver et tryk"-mønster som mrbrokRoleRevealed
 let complainerRoleRevealedRound = null;
 let complainerRoleHideTimer = null;
-let complainerGuessTargetId = null; // lokalt valg under gættefinalen, indtil det sendes
 let complainerHistoryOpenRounds = new Set(); // hvilke tidligere runder i "Sådan gik det hidtil" der er foldet ud
 let complainerRevealSplashShownFor = null; // c.startedAt for det spil den PRIVATE afsløringssplash sidst blev vist til — se maybeShowComplainerRevealSplash
 let complainerRoleSplashShownFor = null; // c.startedAt — rolle-afsløringssplashen ved spilstart, se maybeShowComplainerRoleSplash
@@ -2524,10 +2523,17 @@ async function runComplainerBotAction(c, cur, botId){
     return botSubmit('complainer', botId, { votedForId: pickBotFiller(options) });
   }
   if(cur.type === 'bet' && cur.topId === botId) return botSubmit('complainer', botId, { choice: Math.random() < 0.5 ? 'gamble' : 'safe' });
-  if(cur.type === 'guess' && c.youAreGuilty){
-    const options = (c.players||[]).filter(id=>id!==botId);
-    if(!options.length) return;
-    return botSubmit('complainer', botId, { targetId: pickBotFiller(options), detail: pickBotFiller(BOT_FILLER_STATEMENTS) });
+  // Rettet (Opus-review, bug #8): tjekkede tidligere c.youAreGuilty — den
+  // VIEWENDE klientens egen status, ikke botId's. Er den skyldige selv en
+  // bot, er den polende klient (den der reelt kører driveBotsForComplainer)
+  // typisk ikke selv skyldig, så betingelsen var altid falsk og INGEN bot
+  // gættede nogensinde — fasen stod i stedet stille til nødbremsen tvang
+  // den videre efter ~87s. getPendingComplainerIdsClient sender allerede
+  // ALLE spillere som kandidater når viewer ikke er skyldig (præcis for at
+  // håndtere at guiltyId er maskeret client-side, se dens kommentar) —
+  // serveren afviser blot forkerte bots med 403, som botSubmit sluger.
+  if(cur.type === 'guess' && !cur.targetId && cur.forcedTargetId){
+    return botSubmit('complainer', botId, { targetId: cur.forcedTargetId, detail: pickBotFiller(BOT_FILLER_STATEMENTS) });
   }
   if(cur.type === 'judge') return botSubmit('complainer', botId, { closeEnough: Math.random() < 0.5 });
 }
@@ -5877,11 +5883,12 @@ function complainerBetHtml(c, cur){
       : `<p class="hint" style="color:rgba(255,247,232,0.7); text-align:center;">😬 ${escapeHtml(gm?gm.name:'?')} var IKKE topmest mistænkt denne gang — satsningen gik tabt.</p>`;
   })() : '';
   if(!isTop){
-    return `${badge}${gambleNote}<div class="empty-state"><span class="emoji">😳</span><b>${escapeHtml(topMember?topMember.name:'?')} er rundens mest mistænkte</b>${isFinalRound ? 'De banker nu deres sidste point, lige inden afsløringen.' : 'De vælger nu om de vil banke et sikkert point, eller satse dobbelt op.'}</div>${complainerChallengeBlockHtml(c, cur)}`;
+    return `${badge}${gambleNote}<div class="empty-state"><span class="emoji">😳</span><b>${escapeHtml(topMember?topMember.name:'?')} er rundens mest mistænkte</b>${isFinalRound ? 'De banker nu deres sidste point, lige inden afsløringen.' : 'De vælger nu om de vil banke et sikkert point, eller satse dobbelt op.'}</div>${complainerComplaintBlockHtml(c, cur)}${complainerChallengeBlockHtml(c, cur)}`;
   }
   return `
     ${badge}
     ${gambleNote}
+    ${complainerComplaintBlockHtml(c, cur)}
     ${complainerChallengeBlockHtml(c, cur)}
     <div class="game-card" id="complainerCard" style="text-align:center;">
       <div style="font-size:26px;">😳</div>
@@ -5927,40 +5934,43 @@ function complainerHistoryHtml(c){
 
 function complainerGuessHtml(c, cur){
   const badge = `<div class="game-badge">🪤 Afsløringen er sket — privat</div>`;
+  // forcedTargetId (Opus-review, gameplay-fund #3): gættemålet er ikke
+  // længere et frit valg — bordets samlede mistankestemmer gennem hele
+  // spillet har allerede afgjort hvem der skal gættes om, se
+  // computeForcedTargetId i complainerFlow.js. Vises derfor som et navn,
+  // ikke som en vælger.
+  const forcedMember = state.members.find(mm=>mm.id===cur.forcedTargetId);
   if(c.youAreGuilty){
     if(!cur.targetId){
-      const options = state.members.filter(mm=>c.players.includes(mm.id) && mm.id !== profile.memberId);
       return `
         ${badge}
         <div class="game-card" id="complainerCard">
-          <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.7);">Du er ${complainerGuiltyDef()}! Bliv i karakter — gæt en konkret detalje om en af de andre, ud fra det de har sagt undervejs.</p>
-          <label class="field-label" style="color:rgba(255,247,232,0.7);">Om hvem?</label>
-          <div class="name-grid" style="margin-bottom:12px;">
-            ${options.map(mm=>`<div class="name-pill ${complainerGuessTargetId===mm.id?'selected':''}" data-complainer-guess-target="${mm.id}">${escapeHtml(mm.name)}</div>`).join('')}
-          </div>
+          <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.7);">Du er ${complainerGuiltyDef()}! Bordets mistanke peger på <b style="color:rgba(255,247,232,0.92);">${escapeHtml(forcedMember?forcedMember.name:'?')}</b> — gæt en konkret detalje om dem, stadig i karakter, ud fra det de har sagt undervejs.</p>
+          ${complainerComplaintBlockHtml(c, cur)}
           <textarea id="complainerGuessInput" rows="2" maxlength="240" placeholder="Dit konkrete gæt om detaljen..."></textarea>
-          <button class="game-btn" id="complainerGuessBtn" style="margin-top:10px;">🎯 Send gæt</button>
+          <button class="game-btn" id="complainerGuessBtn" style="margin-top:10px;" data-complainer-guess-target="${cur.forcedTargetId||''}">🎯 Send gæt</button>
         </div>
         ${complainerHistoryHtml(c)}
       `;
     }
     return `${badge}<div class="empty-state"><span class="emoji">🤞</span><b>Dit gæt er sendt</b>De andre stemmer nu om det er tæt nok.</div>`;
   }
-  return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>Nogen tænker...</b>Vent på ${complainerGuiltyGen()} sidste gæt — I finder snart ud af hvem det er.</div>${complainerHistoryHtml(c)}`;
+  return `${badge}<div class="empty-state"><span class="emoji">⏳</span><b>Nogen tænker...</b>Vent på ${complainerGuiltyGen()} sidste gæt om <b style="color:rgba(255,247,232,0.85);">${escapeHtml(forcedMember?forcedMember.name:'?')}</b> — I finder snart ud af hvem det er.</div>${complainerComplaintBlockHtml(c, cur)}${complainerHistoryHtml(c)}`;
 }
 
 function complainerJudgeHtml(c, cur){
   const badge = `<div class="game-badge">🎯 Gættefinale</div>`;
   const targetMember = state.members.find(mm=>mm.id===cur.targetId);
   if(c.youAreGuilty){
-    return `${badge}<div class="empty-state"><span class="emoji">🤞</span><b>Dit gæt er sendt</b>Vent på de andres dom.</div>`;
+    return `${badge}<div class="empty-state"><span class="emoji">🤞</span><b>Dit gæt er sendt</b>Vent på de andres dom.</div>${complainerComplaintBlockHtml(c, cur)}`;
   }
   const already = profile && cur.votes && cur.votes[profile.memberId] !== undefined;
   if(already){
-    return `${badge}<div class="empty-state"><span class="emoji">🤫</span><b>Din dom er registreret</b>Vent på de andre.</div>${gameProgressHtml(cur.voteCount||0, Math.max(1,c.players.length-1), 'har dømt')}`;
+    return `${badge}<div class="empty-state"><span class="emoji">🤫</span><b>Din dom er registreret</b>Vent på de andre.</div>${complainerComplaintBlockHtml(c, cur)}${gameProgressHtml(cur.voteCount||0, Math.max(1,c.players.length-1), 'har dømt')}`;
   }
   return `
     ${badge}
+    ${complainerComplaintBlockHtml(c, cur)}
     <div class="game-card" id="complainerCard" style="text-align:center;">
       <p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">${complainerGuiltyDefCap()} gættede om ${escapeHtml(targetMember?targetMember.name:'?')}:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px;">"${escapeHtml(cur.detail||'?')}"</p>
@@ -6177,17 +6187,15 @@ function bindComplainerHandlers(c){
     };
   }
   if(cur.type === 'guess' && c.youAreGuilty && !cur.targetId){
-    document.querySelectorAll('[data-complainer-guess-target]').forEach(el=>{
-      el.onclick = ()=>{ complainerGuessTargetId = el.dataset.complainerGuessTarget; render(); };
-    });
+    // Gættemålet er tvunget af bordets mistankehistorik (cur.forcedTargetId,
+    // se computeForcedTargetId i complainerFlow.js) — ikke længere et frit
+    // valg, så der er intet navnegitter at klikke på her mere.
     const btn = document.getElementById('complainerGuessBtn');
     if(btn) btn.onclick = ()=>{
       const detail = document.getElementById('complainerGuessInput').value.trim();
-      if(!detail || !complainerGuessTargetId){ toast('Vælg hvem, og skriv dit gæt'); return; }
+      if(!detail){ toast('Skriv dit gæt'); return; }
       lockSubmitBtn(btn, 'Sender...');
-      const targetId = complainerGuessTargetId;
-      complainerGuessTargetId = null;
-      complainerApi('submit', { payload: { targetId, detail } });
+      complainerApi('submit', { payload: { targetId: cur.forcedTargetId, detail } });
     };
   }
   if(cur.type === 'judge' && !c.youAreGuilty){

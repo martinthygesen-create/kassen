@@ -1,5 +1,5 @@
 const { mutateState, redactStateFor, ApiError } = require('./_lib/store');
-const { assignArchetypesAndSituations } = require('./_lib/complainer');
+const { assignArchetypesAndSituations, getThemeContent } = require('./_lib/complainer');
 const {
   MIN_COMPLAIN_AGE_MS,
   beginComplainRound,
@@ -129,8 +129,14 @@ module.exports = async (req, res) => {
         } else if (cur.type === 'guess') {
           if (actorId !== c.guiltyId) throw new ApiError(403, 'kun Den Store Brokker kan gætte');
           if (cur.targetId) throw new ApiError(409, 'der er allerede afgivet et gæt');
-          const targetId = payload.targetId;
-          if (!c.players.includes(targetId) || targetId === c.guiltyId) throw new ApiError(400, 'ukendt medspiller');
+          // Gættemålet er nu TVUNGET (Opus-review, gameplay-fund #3, se
+          // computeForcedTargetId i complainerFlow.js) — bordets samlede
+          // mistankestemmer gennem hele spillet afgør hvem der skal gættes
+          // om, i stedet for at Den Store Brokker frit vælger den
+          // "letteste". payload.targetId valideres stadig for at fange en
+          // klient der er kommet ud af sync, men er reelt ikke et frit valg.
+          const targetId = cur.forcedTargetId;
+          if (payload.targetId && payload.targetId !== targetId) throw new ApiError(400, 'gættemålet er bestemt af bordets mistanke, ikke et frit valg');
           const detail = (payload.detail || '').toString().trim().slice(0, 240);
           if (!detail) throw new ApiError(400, 'skriv dit gæt');
           submitGuess(state, targetId, detail);
@@ -143,50 +149,14 @@ module.exports = async (req, res) => {
         } else {
           throw new ApiError(400, 'ugyldig handling lige nu');
         }
-
-        // Den private afsløring: INDHOLDET skal aldrig broadcastes (kun Den
-        // Store Brokker selv får at vide hvem de er), men PUSHEN skal — hvis
-        // kun ét medlems telefon lyser op ved bordet i akkurat dette
-        // øjeblik, ER det i sig selv et afsløringstegn, uanset hvad der reelt
-        // står i notifikationen (produktejer-rettelse — samme fejltype som
-        // MrBrok-sessionen i CLAUDE.md, bare flyttet fra runde 1 til dette
-        // øjeblik). Derfor sender vi til ALLE spillere samtidig når faserne
-        // netop skiftede til 'interrogation' (den nye spørgerunde der nu
-        // ligger LIGE efter afsløringen, se beginReveal i complainerFlow.js
-        // — ikke længere 'guess', som nu først kommer efter spørgerunden) —
-        // kun ordlyden er forskellig pr. modtager (pushToMembers har ikke
-        // pr.-modtager-indhold, se _lib/push.js, så vi kalder den to gange i
-        // parallel: én batch til kun den skyldige med det rigtige indhold,
-        // én batch til alle andre med en neutral, "der sker noget"-besked).
-        // turnIndex === 0-tjekket sikrer pushen kun sendes ÉN gang (ved
-        // selve overgangen ind i spørgerunden), ikke ved hvert efterfølgende
-        // 'submit' der bare rykker turen videre INDE i spørgerunden. Selve
-        // skærmbilledet de ser når de tjekker er stadig korrekt kildet fra
-        // den eksisterende per-viewer-redaktion (youAreGuilty/current.type),
-        // denne push ændrer kun TIMINGEN af hvornår folk kigger, ikke hvad
-        // de ser.
-        if (state.complainer.current && state.complainer.current.type === 'interrogation'
-            && state.complainer.current.turnIndex === 0
-            && state.complainer.revealed
-            && cur.type === 'bet') {
-          const guiltyId = state.complainer.guiltyId;
-          const others = state.members.map(mm => mm.id).filter(id => id !== guiltyId);
-          pushInfo = [
-            { excludeIds: others, title: '🪤 Du er Den Store Brokker!', body: 'Bliv i karakter gennem sidste spørgerunde — så skal du gætte en detalje om en af de andre.', url: '/?r=' + roomId },
-            { excludeIds: [guiltyId], title: '🪤 Det Store Brokkeri', body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId },
-          ];
-        }
-        return;
-      }
-
-      // ============================================================
-      // EXPERIMENTAL — "Udfordring". Se CLAUDE.md/commit-besked og
-      // complainerFlow.js's applyComplainerChallenge for kontekst/begrundelse.
-      // Ét flag (state.complainer.challengeEnabled), ét kaldested — fjern
-      // denne blok + dens ene kaldested i complainerFlow.js + UI-knappen i
-      // index.html's complainerBetHtml for at rippe hele featuren ud igen,
-      // hvis den ikke tester godt ved bordet.
-      if (action === 'challenge') {
+      } else if (action === 'challenge') {
+        // ============================================================
+        // EXPERIMENTAL — "Udfordring". Se CLAUDE.md/commit-besked og
+        // complainerFlow.js's applyComplainerChallenge for kontekst/begrundelse.
+        // Ét flag (state.complainer.challengeEnabled), ét kaldested — fjern
+        // denne blok + dens ene kaldested i complainerFlow.js + UI-knappen i
+        // index.html's complainerBetHtml for at rippe hele featuren ud igen,
+        // hvis den ikke tester godt ved bordet.
         if (c.challengeEnabled === false) throw new ApiError(400, 'Udfordring er slået fra i dette spil');
         if (!cur || cur.type !== 'bet') throw new ApiError(400, 'kan kun udfordres under en bank/gamble-beslutning');
         if (cur.choice) throw new ApiError(409, 'for sent — valget er allerede taget');
@@ -195,37 +165,47 @@ module.exports = async (req, res) => {
         if (c.challengeUsedBy && c.challengeUsedBy[actorId]) throw new ApiError(409, 'du har allerede brugt din udfordring i dette spil');
         if (cur.challenged) throw new ApiError(409, 'der er allerede udfordret denne runde');
         applyComplainerChallenge(state, actorId);
-        return;
-      }
-      // ============================================================
-
-      // "approveBrok" — "🔥 Godt brok!": de andre spillere kan give ÉN
-      // simpel tak/anerkendelse til en medspiller der lige har haft sin tur,
-      // for hvor godt de ramte deres arketypes instruerede stil. Helt
-      // separat point-kanal fra c.scores (mistankepoint) — se
-      // c.brokScores/c.brokApprovals ovenfor i 'start'.
-      if (action === 'approveBrok') {
-        if (!cur || cur.type !== 'complain') throw new ApiError(400, 'kan kun gives under en brok-runde');
+        // ============================================================
+      } else if (action === 'approveBrok') {
+        // "approveBrok" — "🔥 Godt brok!": de andre spillere kan give ÉN
+        // simpel tak/anerkendelse til en medspiller der lige har haft sin tur,
+        // for hvor godt de ramte deres arketypes instruerede stil. Helt
+        // separat point-kanal fra c.scores (mistankepoint) — se
+        // c.brokScores/c.brokApprovals ovenfor i 'start'.
+        //
+        // Rettet (Opus-review, bug #5): vinduet var tidligere KUN 'complain'-
+        // fasen — men den sidste taler i en runde har allerede fået skiftet
+        // fasen til 'vote' i det øjeblik deres egen tur er slut, så de kunne
+        // ALDRIG anerkendes, uanset hvor godt de ramte deres arketype.
+        // Udvidet til også at virke i den efterfølgende 'vote'-fase, opslået
+        // mod den lige afsluttede rundes rækkefølge i c.history (se
+        // beginVoteRound i complainerFlow.js, som nu gemmer 'order' med).
         if (!c.players.includes(actorId)) throw new ApiError(403, 'du er ikke med i dette spil af Det Store Brokkeri');
         const targetId = req.body && req.body.payload && req.body.payload.targetId;
         if (!c.players.includes(targetId)) throw new ApiError(400, 'ukendt spiller');
         if (targetId === actorId) throw new ApiError(403, 'du kan ikke give dig selv ros');
-        const idx = cur.order.indexOf(targetId);
-        if (idx === -1 || idx >= cur.turnIndex) throw new ApiError(400, 'den spiller har ikke haft sin tur endnu i denne runde');
-        const key = cur.round + ':' + targetId;
+        let round, order, turnIndex;
+        if (cur && cur.type === 'complain') {
+          round = cur.round; order = cur.order; turnIndex = cur.turnIndex;
+        } else if (cur && cur.type === 'vote' && c.history && c.history.length) {
+          const last = c.history[c.history.length - 1];
+          round = last.round; order = last.order; turnIndex = order.length;
+        } else {
+          throw new ApiError(400, 'kan kun gives under eller lige efter en brok-runde');
+        }
+        const idx = order.indexOf(targetId);
+        if (idx === -1 || idx >= turnIndex) throw new ApiError(400, 'den spiller har ikke haft sin tur endnu i denne runde');
+        const key = round + ':' + targetId;
         if (!c.brokApprovals) c.brokApprovals = {};
         if (!c.brokApprovals[key]) c.brokApprovals[key] = {};
         if (c.brokApprovals[key][actorId]) throw new ApiError(409, 'du har allerede givet ros for det brok');
         c.brokApprovals[key][actorId] = true;
         if (!c.brokScores) c.brokScores = {};
         c.brokScores[targetId] = (c.brokScores[targetId] || 0) + 1;
-        return;
-      }
-
-      // "complain" — samme filosofi som Brokspillet/MrBrok: en spiller der
-      // selv allerede er færdig kan brokke sig over en langsom medspiller
-      // efter lidt tid, hvilket starter en kort tvangs-nedtælling.
-      if (action === 'complain') {
+      } else if (action === 'complain') {
+        // "complain" — samme filosofi som Brokspillet/MrBrok: en spiller der
+        // selv allerede er færdig kan brokke sig over en langsom medspiller
+        // efter lidt tid, hvilket starter en kort tvangs-nedtælling.
         if (!cur) throw new ApiError(400, 'ingen aktiv runde');
         if (!c.players.includes(actorId)) throw new ApiError(403, 'du er ikke med i dette spil af Det Store Brokkeri');
         const pending = getPendingComplainerIds(c);
@@ -238,15 +218,34 @@ module.exports = async (req, res) => {
         const requestedTarget = req.body && req.body.payload && req.body.payload.targetId;
         const targetId = pending.includes(requestedTarget) ? requestedTarget : pending[0];
         cur.complaint = { by: actorId, targetId, startedAt: Date.now() };
-        return;
-      }
-
-      if (action === 'end') {
+      } else if (action === 'end') {
         state.complainer = { active: false };
-        return;
+      } else {
+        throw new ApiError(400, 'ukendt handling');
       }
 
-      throw new ApiError(400, 'ukendt handling');
+      // Den private afsløring: INDHOLDET skal aldrig broadcastes (kun Den
+      // Store Brokker selv får at vide hvem de er), men PUSHEN skal — hvis
+      // kun ét medlems telefon lyser op ved bordet i akkurat dette øjeblik,
+      // ER det i sig selv et afsløringstegn, uanset hvad der reelt står i
+      // notifikationen. Rettet (Opus-review, bug #4): udløses nu af selve
+      // FASE-OVERGANGEN (c.revealPushPending, sat i beginReveal i
+      // complainerFlow.js) i stedet for af hvilken HANDLING der udløste den
+      // — den gamle betingelse (kun ved et menneskeligt 'submit' i
+      // bet-fasen) sprang pushen helt over hvis nødbremsen selv tvang
+      // overgangen (fx en ubesvaret sidste bet-beslutning). Virker nu
+      // uanset trigger, og samme flag læses fra api/state.js's
+      // opportunistiske poll-udløb.
+      if (state.complainer.active && state.complainer.revealPushPending) {
+        const guiltyId = state.complainer.guiltyId;
+        const others = state.members.map(mm => mm.id).filter(id => id !== guiltyId);
+        const roleLabel = getThemeContent(state.themeId).guiltyRoleLabel || 'Den Store Brokker';
+        pushInfo = [
+          { excludeIds: others, title: `🪤 Du er ${roleLabel}!`, body: 'Bliv i karakter gennem sidste spørgerunde — så skal du gætte en detalje om en af de andre.', url: '/?r=' + roomId },
+          { excludeIds: [guiltyId], title: '🪤 Det Store Brokkeri', body: 'Der sker noget lige nu — tjek appen.', url: '/?r=' + roomId },
+        ];
+        state.complainer.revealPushPending = false;
+      }
     });
     if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
     const { state } = mutated;

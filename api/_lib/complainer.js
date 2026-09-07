@@ -1038,6 +1038,7 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS,
     prompts: COMPLAINER_PROMPTS,
     gameName: 'Det Store Brokkeri',
+    guiltyRoleLabel: 'Den Store Brokker',
   },
   // Fase 5 bevis-tema. gameName "Bødefælden" (ikke "Det Store Brokkeri" —
   // spilnavne er tema-afhængige, se planen).
@@ -1046,6 +1047,7 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS_BODE,
     prompts: COMPLAINER_PROMPTS_BODE,
     gameName: 'Bødefælden',
+    guiltyRoleLabel: 'Den Store Brokker',
   },
   // Konkurrencekassen: eget indhold (se COMPLAINER_ARCHETYPES_KONKURRENCE's
   // kommentar ovenfor for hvorfor — en tidligere regex-omskrivning af
@@ -1055,42 +1057,55 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS_KONKURRENCE,
     prompts: COMPLAINER_PROMPTS_KONKURRENCE,
     gameName: 'Konkurrencefælden',
+    // Reward-polaritet — "Den Store Brokker" gav ingen mening for et
+    // pralertema (bruger-feedback, samme princip som index.html's
+    // THEME_COPY.guiltyAdj for det tilsvarende UI-sprog).
+    guiltyRoleLabel: 'Den Pralende',
   },
   sladre: {
     archetypes: COMPLAINER_ARCHETYPES_SLADRE,
     situations: COMPLAINER_SITUATIONS_SLADRE,
     prompts: COMPLAINER_PROMPTS_SLADRE,
     gameName: 'Sladrefælden',
+    guiltyRoleLabel: 'Den Store Brokker',
   },
   logn: {
     archetypes: COMPLAINER_ARCHETYPES_LOGN,
     situations: COMPLAINER_SITUATIONS_LOGN,
     prompts: COMPLAINER_PROMPTS_LOGN,
     gameName: 'Løgnefælden',
+    guiltyRoleLabel: 'Den Store Brokker',
   },
   hjaelper: {
     archetypes: COMPLAINER_ARCHETYPES_HJAELPER,
     situations: COMPLAINER_SITUATIONS_HJAELPER,
     prompts: COMPLAINER_PROMPTS_HJAELPER,
     gameName: 'Kollegafælden',
+    // Bevidst dæmpet, seriøs arbejdsplads-tone (se themeRegistry.js) — tåler
+    // ikke "skyldig"-sprog om en rigtig kollega ved navn (bruger-feedback).
+    guiltyRoleLabel: 'Den Afslørede',
   },
   venne: {
     archetypes: COMPLAINER_ARCHETYPES_VENNE,
     situations: COMPLAINER_SITUATIONS_VENNE,
     prompts: COMPLAINER_PROMPTS_VENNE,
     gameName: 'Vennefælden',
+    guiltyRoleLabel: 'Den Store Brokker',
   },
   rose: {
     archetypes: COMPLAINER_ARCHETYPES_ROSE,
     situations: COMPLAINER_SITUATIONS_ROSE,
     prompts: COMPLAINER_PROMPTS_ROSE,
     gameName: 'Rosefælden',
+    // Reward-polaritet — se konkurrence's kommentar ovenfor.
+    guiltyRoleLabel: 'Den Overdrevne',
   },
   drik: {
     archetypes: COMPLAINER_ARCHETYPES_DRIK,
     situations: COMPLAINER_SITUATIONS_DRIK,
     prompts: COMPLAINER_PROMPTS_DRIK,
     gameName: 'Skålefælden',
+    guiltyRoleLabel: 'Den Store Brokker',
   },
 };
 function getThemeContent(themeId) {
@@ -1105,29 +1120,40 @@ function getThemeContent(themeId) {
 // arketyper end spillere, genshuffles en ny runde af hele puljen for de
 // resterende spillere (så en person aldrig kan ende med den arketype de
 // selv lige fik, men to FORSKELLIGE spillere kan godt dele en arketype når
-// puljen er opbrugt). Situationer er bevidst stadig uafhængige — at dele
-// situation er ufarligt, pickPromptFor undgår alligevel prompt-kollision.
+// puljen er opbrugt).
+//
+// Situation: ÉN delt situation for HELE bordet (Opus-review, gameplay-fund):
+// individuelt uafhængige situationer gav ALDRIG dubletter (målt), men var
+// ren støj — med 5-6 spillere og 3-5 situationer var det tilfældige mønster
+// af hvem der delte situation med hvem den eneste ting mistankeafstemningen
+// reelt kunne læse noget ud af, og det er ikke et signal nogen bevidst har
+// sendt. Én delt situation for alle gør i stedet Den Store Brokkers
+// eneste individuelle akse (se beginComplainRound i complainerFlow.js, som
+// bevidst giver DEM en anden situation end bordets — det er det rigtige,
+// deducerbare signal mistankeafstemningen skal handle om).
 function assignArchetypesAndSituations(players, themeId) {
   const theme = getThemeContent(themeId);
   const archetypes = {};
   const situations = {};
   let pool = shuffle(theme.archetypes.slice());
+  const sharedSituation = pickRandom(theme.situations);
   players.forEach(p => {
     if (!pool.length) pool = shuffle(theme.archetypes.slice());
     archetypes[p.id] = pool.pop().id;
-    situations[p.id] = pickRandom(theme.situations);
+    situations[p.id] = sharedSituation;
   });
   return { archetypes, situations };
 }
 
 // Ønsket tier for en given runde ud af det samlede antal opbygningsrunder —
-// jævnt fordelt tredjedele, så et 4-runders spil fx giver tier 1,2,2,3 og et
-// 6-runders spil giver 1,1,2,2,3,3.
+// jævnt fordelt tredjedele, så et 4-runders spil giver 1,2,3,3 og et
+// 6-runders spil giver 1,2,2,3,3,3 (fandt og rettede en fejl her, se
+// Opus-review: den gamle udregning delte totalRounds i tredjedele FØR
+// per-runde-mapningen og ramte derfor aldrig tier 3 ved standardspillets
+// 4 runder — tier-sekvensen blev 1,1,2,2, så de mest eskalerende, mest
+// afslørende prompts aldrig blev vist i det spil folk faktisk spiller).
 function tierForRound(round, totalRounds) {
-  const third = Math.max(1, Math.ceil(totalRounds / 3));
-  if (round <= third) return 1;
-  if (round <= third * 2) return 2;
-  return 3;
+  return Math.min(3, Math.max(1, Math.ceil((round * 3) / totalRounds)));
 }
 
 // Vælger en prompt til en spiller for en given runde: matcher spillerens

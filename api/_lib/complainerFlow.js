@@ -21,11 +21,11 @@ const { stampPhase, MIN_COMPLAIN_AGE_MS, BROKSPILLET_AUTO_MS, COMPLAINT_COUNTDOW
 // ingen (heller ikke Den Store Brokker selv) endnu ved hvem der reelt er
 // skyldig på dette tidspunkt i spillet; det er ren performance/cheap-talk.
 // "safe" banker med det samme; "gamble" sætter beløbet i spil på om samme
-// spiller OGSÅ topper mistanken NÆSTE runde (dobbelt op / helt tabt). Tabet
-// er et tabt IKKE-bankede point, aldrig en negativ saldo — man kan derfor
-// aldrig komme i minus af denne mekanik (se pendingGamble-håndteringen
-// nedenfor), men gevinsten/tabet er stort nok (dobbelt op) til at det rent
-// faktisk stikker, ikke bare er ligegyldigt baggrundsstøj.
+// spiller OGSÅ topper mistanken NÆSTE runde (dobbelt op, eller et rigtigt
+// tab — se resolveSuspicionRound: rettet efter Opus-review, gameplay-fund
+// #5. Et tabt gamble koster nu op til de ALLEREDE BANKEDE point, aldrig
+// under 0, så man stadig aldrig kan ende i minus af denne mekanik — men
+// "sats dobbelt op" er ikke længere et gratis valg uden downside).
 const SUSPECT_POINTS = 2;
 
 function stampPhaseComplainer(cur) {
@@ -47,6 +47,21 @@ function stampPhaseComplainer(cur) {
 function beginComplainRound(state, roundNumber) {
   const c = state.complainer;
   c.round = roundNumber;
+  // Den Store Brokkers eneste individuelle akse (Opus-review, gameplay-fund
+  // #1+#2 — se assignArchetypesAndSituations i _lib/complainer.js for
+  // hvorfor bordet nu deler ÉN situation): de fik allerede den SAMME
+  // situation som alle andre udstillet på deres rollekort (c.situations),
+  // men deres FAKTISKE prompt hentes her fra en anden situation — sat ÉN
+  // gang for hele spillet (ikke genvalgt hver runde), så mønsteret er
+  // konsistent nok til at et opmærksomt bord reelt kan lægge mærke til det
+  // over flere runder. De ved det ikke selv, og intet i klientens data
+  // afslører det (kun selve den TALTE prompt, som ikke gemmes af appen).
+  if (!c.guiltySituation) {
+    const theme = getThemeContent(state.themeId);
+    const shared = c.situations[c.players[0]];
+    const others = theme.situations.filter(s => s !== shared);
+    c.guiltySituation = others.length ? pickRandom(others) : shared;
+  }
   const prompts = {};
   // Fejl fundet ved gentagen bot-simulering (quizmaster-audit, se
   // commit-historikken): pickPromptFor undgik kun genbrug for DENNE
@@ -63,7 +78,8 @@ function beginComplainRound(state, roundNumber) {
   const usedThisRound = [];
   c.players.forEach(id => {
     const excluded = (c.usedPromptIds[id] || []).concat(usedThisRound);
-    const prompt = pickPromptFor(id, c.situations[id], roundNumber, c.totalRounds, excluded, state.themeId);
+    const situationForPrompt = id === c.guiltyId ? c.guiltySituation : c.situations[id];
+    const prompt = pickPromptFor(id, situationForPrompt, roundNumber, c.totalRounds, excluded, state.themeId);
     // Prompten der reelt VISES kombinerer arketypens promptHook med den
     // valgte situationelle prompt (se composePromptText i _lib/complainer.js)
     // — så en "passiv-aggressiv pilot" og en "udadvendt lærer" ikke længere
@@ -106,7 +122,12 @@ function beginVoteRound(state) {
   const c = state.complainer;
   const cur = c.current;
   if (!c.history) c.history = [];
-  c.history.push({ round: cur.round, prompts: cur.prompts });
+  // order gemmes med (Opus-review, bug #5): uden den kunne approveBrok
+  // aldrig anerkende rundens SIDSTE taler, fordi fasen allerede var skiftet
+  // til 'vote' i det øjeblik deres tur var slut — se approveBrok-handleren
+  // i api/complainer.js, som nu slår rækkefølgen op her for den lige
+  // afsluttede runde.
+  c.history.push({ round: cur.round, prompts: cur.prompts, order: cur.order });
   c.current = { type: 'vote', round: cur.round, votes: {} };
   stampPhaseComplainer(c.current);
 }
@@ -141,9 +162,16 @@ function resolveSuspicionRound(state) {
       c.scores[g.playerId] = (c.scores[g.playerId] || 0) + win;
       lastGambleResult = { playerId: g.playerId, won: true, amount: win };
     } else {
-      // Tabt satsning = et tabt point der ALDRIG blev banket — ingen
-      // negativ saldo, blot ingen gevinst. Se kommentar ved SUSPECT_POINTS.
-      lastGambleResult = { playerId: g.playerId, won: false, amount: g.amount };
+      // Rettet (Opus-review, gameplay-fund #5): et tabt gamble kostede
+      // FØR intet ud over det udeblevne point — gratis opside, ingen reel
+      // downside, så "sats dobbelt op" var matematisk altid det rigtige
+      // valg, aldrig et dilemma. Nu koster et tabt gamble op til de
+      // ALLEREDE BANKEDE point (aldrig ubankede/fremtidige, og aldrig
+      // under 0 — man kan stadig ikke ende i minus af denne mekanik, kun
+      // miste hvad man allerede har optjent i spillet).
+      const lost = Math.min(g.amount, c.scores[g.playerId] || 0);
+      c.scores[g.playerId] = (c.scores[g.playerId] || 0) - lost;
+      lastGambleResult = { playerId: g.playerId, won: false, amount: g.amount, lost };
     }
     c.pendingGamble = null;
   }
@@ -263,6 +291,16 @@ function beginReveal(state) {
   const c = state.complainer;
   c.revealed = true;
   c.revealedAt = Date.now();
+  // Rettet (Opus-review, bug #4): pushen der advarer Den Store Brokker blev
+  // tidligere kun sendt fra api/complainer.js's 'submit'-handler, betinget
+  // af at netop dét kald var den handling der udløste overgangen — men
+  // expireComplainerPhaseIfDue kan udløse PRÆCIS samme overgang via
+  // nødbremsen (fx hvis den sidste bet-beslutning aldrig blev klikket), og
+  // så udeblev pushen helt. Et flag sat her, ved selve fase-overgangen
+  // (uanset HVEM/HVAD der udløste den), lader alle kaldesteder (både
+  // api/complainer.js og api/state.js's opportunistiske poll-udløb) sende
+  // den samme private afsløring pålideligt.
+  c.revealPushPending = true;
   beginInterrogationRound(state);
 }
 
@@ -306,9 +344,26 @@ function advanceInterrogation(state) {
 // Udskilt fra det tidligere beginReveal, så både beginReveal (vejen ind i
 // spørgerunden) og advanceInterrogation (vejen ud af den) kan dele PRÆCIS
 // samme opsætning af selve gættefasen.
+// forcedTargetId (Opus-review, gameplay-fund #3): gør mistankeafstemningen
+// til andet end en cosmetic sideshow. Den spiller bordet samlet set har
+// kåret flest gange som "rundens topmest mistænkte" bliver Den Store
+// Brokkers TVUNGNE gættemål — hver mistankestemme gennem hele spillet
+// får dermed en konkret, mekanisk konsekvens i stedet for kun at give
+// 2 point ved siden af. Uafgjort (flere spillere med samme antal
+// kåringer) brydes tilfældigt, ikke af seneste runde — enhver systematisk
+// tie-break ville lække information om hvem der senest toppede mistanken.
+function computeForcedTargetId(c) {
+  const tally = {};
+  (c.topSuspectHistory || []).forEach(entry => { tally[entry.topId] = (tally[entry.topId] || 0) + 1; });
+  const eligible = c.players.filter(id => id !== c.guiltyId);
+  const max = Math.max(0, ...eligible.map(id => tally[id] || 0));
+  const leaders = max > 0 ? eligible.filter(id => (tally[id] || 0) === max) : eligible;
+  return pickRandom(leaders);
+}
+
 function beginGuessPhase(state) {
   const c = state.complainer;
-  c.current = { type: 'guess', targetId: null, detail: null };
+  c.current = { type: 'guess', targetId: null, detail: null, forcedTargetId: computeForcedTargetId(c) };
   stampPhaseComplainer(c.current);
 }
 
@@ -411,10 +466,15 @@ function forceResolveComplainerPhase(state) {
     cur.choice = 'safe';
     resolveBet(state);
   } else if (cur.type === 'guess') {
-    const others = c.players.filter(p => p !== c.guiltyId);
-    submitGuess(state, others.length ? pickRandom(others) : c.guiltyId, '(nåede ikke at gætte)');
+    submitGuess(state, cur.forcedTargetId, '(nåede ikke at gætte)');
   } else if (cur.type === 'judge') {
-    pending.forEach(id => { cur.votes[id] = false; });
+    // Rettet (Opus-review, bug #2): udeblevne dommere blev tidligere talt
+    // som "ikke tæt nok" (false), så nødbremsen reelt DØMTE aktivt IMOD
+    // Den Store Brokker — ved 5 spillere (4 dommere) betød to udeblevne
+    // stemmer alene at gættet aldrig kunne godkendes, uanset hvor godt det
+    // ramte. MrBrok's tilsvarende nødbremse (forceResolveMrbrokPhase →
+    // resolveSteal) gør det rigtige i samme situation: udeblevne stemmer er
+    // bare neutrale, ikke automatisk "nej".
     resolveJudge(state);
   }
 }
