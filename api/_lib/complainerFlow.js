@@ -52,15 +52,20 @@ function beginComplainRound(state, roundNumber) {
   // hvorfor bordet nu deler ÉN situation): de fik allerede den SAMME
   // situation som alle andre udstillet på deres rollekort (c.situations),
   // men deres FAKTISKE prompt hentes her fra en anden situation — sat ÉN
-  // gang for hele spillet (ikke genvalgt hver runde), så mønsteret er
-  // konsistent nok til at et opmærksomt bord reelt kan lægge mærke til det
-  // over flere runder. De ved det ikke selv, og intet i klientens data
-  // afslører det (kun selve den TALTE prompt, som ikke gemmes af appen).
+  // gang for hele spillet (ikke genvalgt hver runde). De ved det ikke selv,
+  // og intet i klientens data afslører det (kun selve den TALTE prompt, som
+  // ikke gemmes af appen). Begrænset til situationer med MINDST 2 matchende
+  // prompts (Opus-review, verificeret ved simulering) — nogle skins' mindste
+  // situation (fx hjaelper's 'kommunikation', kun 1 prompt) ville ellers
+  // tømmes efter én runde og falde tilbage til en anden, ustabil kategori.
   if (!c.guiltySituation) {
     const theme = getThemeContent(state.themeId);
     const shared = c.situations[c.players[0]];
-    const others = theme.situations.filter(s => s !== shared);
-    c.guiltySituation = others.length ? pickRandom(others) : shared;
+    const countByCategory = {};
+    theme.prompts.forEach(p => { countByCategory[p.category] = (countByCategory[p.category] || 0) + 1; });
+    const deep = theme.situations.filter(s => s !== shared && (countByCategory[s] || 0) >= 2);
+    const any = theme.situations.filter(s => s !== shared);
+    c.guiltySituation = pickRandom(deep.length ? deep : (any.length ? any : [shared]));
   }
   const prompts = {};
   // Fejl fundet ved gentagen bot-simulering (quizmaster-audit, se
@@ -75,11 +80,47 @@ function beginComplainRound(state, roundNumber) {
   // looper spillerne igennem, oveni den eksisterende per-spiller historik
   // — samme gradvise fallback-kæde i pickPromptFor (forkert tier → enhver
   // kategori → hele puljen) håndterer stadig et udtømt tilfælde elegant.
+  //
+  // Rækkefølge OG kategori-timing (Opus-review, verificeret ved 4.000
+  // simulerede spil pr. tema): Den Store Brokker trækkes FØRST, ellers kan
+  // de andre spilleres relational-forbrug stjæle deres camouflage-prompt
+  // (se pickPromptFor's fallback-kæde). Og signalet blev tidligere givet i
+  // ÉN KONSTANT kategori hele spillet — målingen viste at det derfor
+  // "eskalerede baglæns": renest i runde 1 (83-88% af spil), stort set væk
+  // i sidste runde (12-33%), fordi den skyldiges lille private kategori
+  // (typisk 2-4 prompts) tømmes og falder tilbage til den samme neutrale
+  // relational-pulje alle andre allerede trækker fra. Rettet ved at gøre
+  // eskaleringen til TIMING i stedet for gradbøjning (puljen har ingen
+  // mellemgrader at gradbøje over): første halvdel af opbygningsrunderne
+  // tvinges den skyldige bevidst på 'relational' (perfekt camouflage, exakt
+  // som alle andre kan trække), og først i anden halvdel afsløres deres
+  // afvigende kategori — netop når bordet er varmt og lytter efter noget.
+  const camouflageRound = roundNumber <= Math.ceil(c.totalRounds / 2);
+  const orderedForPicking = c.guiltyId ? [c.guiltyId, ...c.players.filter(id => id !== c.guiltyId)] : c.players;
   const usedThisRound = [];
-  c.players.forEach(id => {
+  orderedForPicking.forEach(id => {
     const excluded = (c.usedPromptIds[id] || []).concat(usedThisRound);
-    const situationForPrompt = id === c.guiltyId ? c.guiltySituation : c.situations[id];
-    const prompt = pickPromptFor(id, situationForPrompt, roundNumber, c.totalRounds, excluded, state.themeId);
+    const situationForPrompt = id === c.guiltyId
+      ? (camouflageRound ? 'relational' : c.guiltySituation)
+      : c.situations[id];
+    // Rettet (Opus-review, verificeret ved simulering): i den afslørende
+    // fase forsøgte vi at bruge pickPromptFor direkte med guiltySituation —
+    // men dens indbyggede fallback-kæde regner ALTID 'relational' som lige
+    // så gyldigt som den ønskede situation (det er meningen resten af
+    // spillet, se pickPromptFor's egen kommentar), så i temaer hvor den
+    // skyldiges kategori mangler høje tiers (fx hjaelper's 'tid'/'opgave',
+    // kun tier 1-2) endte den ofte i relational alligevel — og signalet
+    // "tændte" aldrig i praksis. For den skyldige i en ikke-camouflage-runde
+    // prøves derfor FØRST en ren kategori-pulje (ignorerer tier — det er
+    // kategorien, ikke eskaleringen inden i den, der bærer signalet), og
+    // først når DEN er tømt for netop denne spiller falder vi tilbage til
+    // den almindelige pickPromptFor.
+    let prompt;
+    if (id === c.guiltyId && !camouflageRound) {
+      const pureCategoryPool = getThemeContent(state.themeId).prompts.filter(p => p.category === c.guiltySituation && !excluded.includes(p.id));
+      prompt = pureCategoryPool.length ? pickRandom(pureCategoryPool) : null;
+    }
+    if (!prompt) prompt = pickPromptFor(id, situationForPrompt, roundNumber, c.totalRounds, excluded, state.themeId);
     // Prompten der reelt VISES kombinerer arketypens promptHook med den
     // valgte situationelle prompt (se composePromptText i _lib/complainer.js)
     // — så en "passiv-aggressiv pilot" og en "udadvendt lærer" ikke længere
@@ -238,11 +279,27 @@ function applyComplainerChallenge(state, actorId) {
 function resolveBet(state) {
   const c = state.complainer;
   const cur = c.current; // type: bet
-  // stakeMultiplier er normalt 1 — kun EXPERIMENTAL "Udfordring" sætter den
-  // til 2 (se applyComplainerChallenge ovenfor). Rører intet andet ved
-  // point-mekanikken.
-  const stake = SUSPECT_POINTS * (cur.stakeMultiplier || 1);
-  if (cur.choice === 'gamble') {
+  // Voksende indsats (Opus-review, gameplay-fund #5): basispointet vokser
+  // med runden — 2 i runde 1, 3 i runde 2, osv. — så de sene runder rent
+  // faktisk gør ondt, i stedet for at hver runde er lige meget værd fra
+  // start til slut. stakeMultiplier er normalt 1 udover dette — kun
+  // EXPERIMENTAL "Udfordring" sætter den til 2 (se applyComplainerChallenge
+  // ovenfor), som en ekstra faktor OVEN PÅ rundens voksende grundbeløb.
+  const roundStake = SUSPECT_POINTS + (cur.round - 1);
+  // Defense-in-depth (Opus-review): api/complainer.js's 'bet'-handler tvinger
+  // allerede choice til 'safe' i den ekstra sidste afstemningsrunde (der er
+  // ingen NÆSTE runde at afregne en gamble imod der, se dommebeslutningen
+  // ovenfor) — men den værn levede kun i API-laget. Ved direkte kald af
+  // denne flow-funktion (fx en fremtidig kaldevej, eller et testscript der
+  // ikke går gennem API'en) kunne et gamble-valg i den ekstra runde stadig
+  // sætte en pendingGamble der ALDRIG bliver afregnet, fordi resolveBet for
+  // round > totalRounds går direkte til beginReveal uden en efterfølgende
+  // afstemning. Samme værn duplikeret her, strukturelt garanteret uanset
+  // kaldested.
+  const isFinalRound = cur.round > c.totalRounds;
+  const choice = isFinalRound ? 'safe' : cur.choice;
+  const stake = roundStake * (cur.stakeMultiplier || 1);
+  if (choice === 'gamble') {
     c.pendingGamble = { playerId: cur.topId, amount: stake, round: cur.round };
   } else {
     c.scores[cur.topId] = (c.scores[cur.topId] || 0) + stake;
@@ -308,20 +365,31 @@ function beginReveal(state) {
 // ved beginReveal ovenfor) — nøjagtig samme tur-baserede verbale mekanik som
 // opbygningsrundernes brok-fase (beginComplainRound/advanceComplain): en
 // delt, shufflet rækkefølge over c.players, kun HVEM der har turen
-// (speakerId/turnIndex), aldrig noget om HVAD der bliver spurgt/svaret —
-// spørgsmålet stilles og besvares HØJT ved bordet, appen genererer og gemmer
-// intet af selve indholdet, samme "sagt højt, ikke skrevet"-filosofi som
-// resten af spillet. Gælder ALLE spillere, ikke kun den skyldige — de skal
-// stadig alle svare i karakter, ellers ville den skyldige stikke ud af ren
-// process-of-elimination selvom ingen sagde noget direkte. c.revealed er
+// (speakerId/turnIndex). Gælder ALLE spillere, ikke kun den skyldige — de
+// skal stadig alle svare i karakter, ellers ville den skyldige stikke ud af
+// ren process-of-elimination selvom ingen sagde noget direkte. c.revealed er
 // allerede true her, men INTET i selve denne runde-state afslører hvem der
 // er skyldig (ingen guiltyId, ingen speciel markering af DEN spiller) — kun
 // c.youAreGuilty (sat i redactComplainerFor) fortæller den enkelte klient om
 // det er dem, akkurat som resten af spillet efter afsløringstidspunktet.
+//
+// c.interrogationQuestion (Opus-review, verificeret ved simulering): runden
+// havde tidligere INTET faktisk spørgsmål — kun tur-mekanikken, mens UI'en
+// bad bordet "stille et spørgsmål højt" uden at appen nogensinde leverede
+// et. Ved et rigtigt bord blev det tre sekunders tavshed og et dårligt
+// improviseret spørgsmål. Rettet med ét delt, forudskrevet spørgsmål —
+// samme "ét fælles indhold pr. runde"-princip som Brokspillets
+// referencestandard (se CLAUDE.md) — valgt ÉN gang for hele runden (ikke
+// pr. spiller), så alle svarer på PRÆCIS det samme, og den nu afslørede Den
+// Store Brokkers svar reelt kan sammenlignes direkte med de andres.
 function beginInterrogationRound(state) {
   const c = state.complainer;
   const order = shuffle(c.players);
-  c.current = { type: 'interrogation', order, turnIndex: 0, speakerId: order[0] };
+  const questions = getThemeContent(state.themeId).interrogationQuestions || [];
+  c.current = {
+    type: 'interrogation', order, turnIndex: 0, speakerId: order[0],
+    question: questions.length ? pickRandom(questions) : null,
+  };
   stampPhaseComplainer(c.current);
 }
 
@@ -334,7 +402,7 @@ function advanceInterrogation(state) {
   const cur = c.current;
   const next = cur.turnIndex + 1;
   if (next < cur.order.length) {
-    c.current = { type: 'interrogation', order: cur.order, turnIndex: next, speakerId: cur.order[next] };
+    c.current = { type: 'interrogation', order: cur.order, turnIndex: next, speakerId: cur.order[next], question: cur.question };
     stampPhaseComplainer(c.current);
   } else {
     beginGuessPhase(state);

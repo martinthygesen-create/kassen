@@ -1027,6 +1027,74 @@ const COMPLAINER_PROMPTS_KONKURRENCE = [
   { id: 'rel4', category: 'relational', tier: 3, text: 'En du står tæt på ville blive overrasket, hvis de hørte hvor meget du reelt praler af sejren, når de ikke er der. Du praler om netop den sejr til en fælles ven. Hvad siger du?' },
 ];
 
+// Forhørsrundens FÆLLES spørgsmål (Opus-review, verificeret ved simulering —
+// se commit-historikken): den ene runde mellem afsløring og gættefinale
+// havde INTET faktisk spørgsmål, kun en tur-mekanik ("bordet stiller dig et
+// spørgsmål højt") — appen leverede aldrig selve spørgsmålet, så runden
+// læste tomt/perfunktorisk ved et rigtigt bord. Løsningen er PRÆCIS
+// Brokspillets referencestandard fra CLAUDE.md: ét delt indhold pr. runde,
+// aldrig individuelle træk — ét spørgsmål, valgt tilfældigt for HELE spillet
+// (ikke pr. spiller), alle svarer på DET SAMME i tur, så den nu afslørede
+// Den Store Brokkers svar reelt kan sammenlignes direkte med de andres.
+// Hvert spørgsmål handler bevidst om at PEGE PÅ MISTANKE ("hvem tror du...",
+// "hvad virkede mindst troværdigt...") frem for om selve temaets domæne
+// (fx ikke endnu et brok/bøde/sladder-spørgsmål) — det er selve pivot-
+// momentet spillet vender om, ikke en syvende opbygningsrunde.
+const COMPLAINER_INTERROGATION_QUESTIONS = [
+  'Hvem her tror du brokker sig mest, når ingen hører efter?',
+  'Hvilket brok fra i aften sad mest fast i dig — og hvorfor lige det?',
+  'Hvis en af os IKKE havde noget at brokke sig over i aften, hvem ville det mest overraske dig var?',
+  'Hvem ved mindst om hvad DU egentlig brokker dig over, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_BODE = [
+  'Hvem tror du slipper lettest fra en bøde, uanset hvad de har gjort?',
+  'Hvilken undskyldning fra i aften troede du mindst på?',
+  'Hvis en af os aldrig har brudt en regel i aften, hvem ville det overraske dig mest?',
+  'Hvem ved mindst om hvilke regler DU selv bryder, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_SLADRE = [
+  'Hvem tror du sladrer mest, når ingen andre lytter?',
+  'Hvilken sladder fra i aften virkede mest opdigtet?',
+  'Hvis en af os ALDRIG sladrer, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvad DU selv sladrer om, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_LOGN = [
+  'Hvem tror du er bedst til at lyve uden at blinke?',
+  'Hvilken historie fra i aften virkede mest opdigtet?',
+  'Hvis en af os ALDRIG lyver, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvornår DU sidst løj om noget, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_HJAELPER = [
+  'Hvem her tror du bedst kan holde en professionel facade, uanset hvad der sker?',
+  'Hvilken påstand fra i aften virkede mest overdrevet?',
+  'Hvis en af os aldrig har en kommentar til en kollegas arbejdsstil, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvordan DU selv håndterer en travl dag, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_VENNE = [
+  'Hvem i vennegruppen tror du brokker sig mest bag ryggen på os andre?',
+  'Hvilket brok fra i aften lød mest som noget du selv kunne finde på at sige?',
+  'Hvis en af os aldrig brokker sig over vennegruppen, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvad DU brokker dig over af vennerne her, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_ROSE = [
+  'Hvem tror du roser mest oprigtigt, uden at overdrive?',
+  'Hvilken ros fra i aften virkede mest overdrevet?',
+  'Hvis en af os aldrig roser nogen, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvordan DU egentlig roser andre, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_DRIK = [
+  'Hvem tror du er mindst ærlig om, hvor meget de har drukket i aften?',
+  'Hvilken undskyldning for en glemt runde troede du mindst på?',
+  'Hvis en af os aldrig glemmer en runde, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvad DU laver, når festen er slut, ud fra det du har sagt i aften?',
+];
+const COMPLAINER_INTERROGATION_QUESTIONS_KONKURRENCE = [
+  'Hvem tror du overdriver mest, når de fortæller om en sejr?',
+  'Hvilken sejrshistorie fra i aften troede du mindst på?',
+  'Hvis en af os aldrig praler af en sejr, hvem ville det overraske dig var?',
+  'Hvem ved mindst om hvad DU egentlig er stolt af at have vundet, ud fra det du har sagt i aften?',
+];
+
 // Kasse-motor-generalisering (Fase 1, se god-finding-men-du-lovely-zephyr.md):
 // tema-keyet indholds-opslag. 'brok' refererer UÆNDRET til arketyper/
 // situationer/prompts ovenfor (ingen indholds-omskrivning, kun et
@@ -1039,6 +1107,7 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS,
     gameName: 'Det Store Brokkeri',
     guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS,
   },
   // Fase 5 bevis-tema. gameName "Bødefælden" (ikke "Det Store Brokkeri" —
   // spilnavne er tema-afhængige, se planen).
@@ -1048,6 +1117,7 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_BODE,
     gameName: 'Bødefælden',
     guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_BODE,
   },
   // Konkurrencekassen: eget indhold (se COMPLAINER_ARCHETYPES_KONKURRENCE's
   // kommentar ovenfor for hvorfor — en tidligere regex-omskrivning af
@@ -1061,6 +1131,7 @@ const CONTENT_BY_THEME = {
     // pralertema (bruger-feedback, samme princip som index.html's
     // THEME_COPY.guiltyAdj for det tilsvarende UI-sprog).
     guiltyRoleLabel: 'Den Pralende',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_KONKURRENCE,
   },
   sladre: {
     archetypes: COMPLAINER_ARCHETYPES_SLADRE,
@@ -1068,6 +1139,7 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_SLADRE,
     gameName: 'Sladrefælden',
     guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_SLADRE,
   },
   logn: {
     archetypes: COMPLAINER_ARCHETYPES_LOGN,
@@ -1075,6 +1147,7 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_LOGN,
     gameName: 'Løgnefælden',
     guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_LOGN,
   },
   hjaelper: {
     archetypes: COMPLAINER_ARCHETYPES_HJAELPER,
@@ -1084,6 +1157,7 @@ const CONTENT_BY_THEME = {
     // Bevidst dæmpet, seriøs arbejdsplads-tone (se themeRegistry.js) — tåler
     // ikke "skyldig"-sprog om en rigtig kollega ved navn (bruger-feedback).
     guiltyRoleLabel: 'Den Afslørede',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_HJAELPER,
   },
   venne: {
     archetypes: COMPLAINER_ARCHETYPES_VENNE,
@@ -1091,6 +1165,7 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_VENNE,
     gameName: 'Vennefælden',
     guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_VENNE,
   },
   rose: {
     archetypes: COMPLAINER_ARCHETYPES_ROSE,
@@ -1099,6 +1174,7 @@ const CONTENT_BY_THEME = {
     gameName: 'Rosefælden',
     // Reward-polaritet — se konkurrence's kommentar ovenfor.
     guiltyRoleLabel: 'Den Overdrevne',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_ROSE,
   },
   drik: {
     archetypes: COMPLAINER_ARCHETYPES_DRIK,
@@ -1106,6 +1182,7 @@ const CONTENT_BY_THEME = {
     prompts: COMPLAINER_PROMPTS_DRIK,
     gameName: 'Skålefælden',
     guiltyRoleLabel: 'Den Store Brokker',
+    interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_DRIK,
   },
 };
 function getThemeContent(themeId) {

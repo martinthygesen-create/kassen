@@ -5782,16 +5782,26 @@ function complainerInterrogationHtml(c, cur){
   const isSpeaker = profile && profile.memberId === cur.speakerId;
   const turnNo = cur.turnIndex + 1, totalTurns = cur.order.length;
   const badge = `<div class="game-badge">🕵️ Sidste spørgerunde · Spørgsmål ${turnNo}/${totalTurns}</div>`;
+  // cur.question (Opus-review, verificeret ved simulering): ét delt,
+  // forudskrevet spørgsmål for hele runden — se beginInterrogationRound i
+  // complainerFlow.js for hvorfor. Vises identisk for alle, uanset tur.
+  const questionBlock = cur.question ? `
+    <div class="game-card" style="text-align:center; margin-bottom:10px; border-color:rgba(255,122,61,0.35); background:rgba(255,122,61,0.06);">
+      <p class="hint" style="margin:0 0 4px; color:rgba(255,247,232,0.5);">Bordets spørgsmål:</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:17px; margin:0;">"${escapeHtml(cur.question)}"</p>
+    </div>
+  ` : '';
 
   if(isSpeaker){
     return `
       ${badge}
       ${complainerRoleBanner(c)}
       ${complainerTurnOrderHtml(c, cur)}
+      ${questionBlock}
       <div class="game-card" id="complainerCard" style="text-align:center; border-color:rgba(255,122,61,0.5); background:rgba(255,122,61,0.08);">
         <div style="font-size:26px;">❓</div>
-        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:4px 0 6px;">Du bliver spurgt ud!</p>
-        <p class="hint" style="color:rgba(255,247,232,0.6); margin:0 0 16px;">Bordet stiller dig et spørgsmål højt lige nu — svar STADIG i karakter, uanset hvad du nu ved.</p>
+        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:4px 0 6px;">Din tur til at svare!</p>
+        <p class="hint" style="color:rgba(255,247,232,0.6); margin:0 0 16px;">Svar højt for bordet — STADIG i karakter, uanset hvad du nu ved.</p>
         <button class="game-btn" id="complainerInterrogationDoneBtn">✅ Færdig, min tur er ovre</button>
       </div>
     `;
@@ -5801,10 +5811,11 @@ function complainerInterrogationHtml(c, cur){
     <div class="mrbrok-dim">
       ${complainerRoleBanner(c)}
       ${complainerTurnOrderHtml(c, cur)}
+      ${questionBlock}
       <div class="empty-state" style="padding:30px 20px;">
         <span class="emoji">❓</span>
         <b style="font-size:26px;">${escapeHtml(speaker?speaker.name:'?')}</b>
-        bliver spurgt ud
+        svarer nu
       </div>
       <p class="hint" style="text-align:center; margin:-14px 0 0; color:rgba(255,247,232,0.5);">Alle svarer stadig i karakter, ikke kun den der er mest mistænkt — ellers stikker man ud ved bare at sammenligne.</p>
     </div>
@@ -5868,7 +5879,10 @@ function complainerBetHtml(c, cur){
   const badge = `<div class="game-badge">${complainerRoundLabel(c, cur)} · 🎰 Rundens mest mistænkte</div>`;
   const topMember = state.members.find(mm=>mm.id===cur.topId);
   const isTop = profile && profile.memberId === cur.topId;
-  const stakePoints = SUSPECT_POINTS_CLIENT * (cur.stakeMultiplier || 1);
+  // Voksende indsats (Opus-review, gameplay-fund #5) — skal matche
+  // roundStake-udregningen i resolveBet i api/_lib/complainerFlow.js:
+  // kun til visningstekst, selve pointtallet afgøres altid server-side.
+  const stakePoints = (SUSPECT_POINTS_CLIENT + (cur.round - 1)) * (cur.stakeMultiplier || 1);
   // Den EKSTRA, sidste afstemningsrunde (se beginFinalVoteRound i
   // complainerFlow.js) har ingen runde EFTER sig til at gamble ind i — der
   // er intet "topmest mistænkt IGEN næste runde" at satse på. Gamble-valget
