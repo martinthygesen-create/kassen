@@ -79,6 +79,12 @@ function getPendingIds(cur, players) {
   if (cur.type === 'rose' && cur.phase === 'match') {
     return players.filter(id => cur.guesses && cur.guesses[id] === undefined);
   }
+  if (cur.type === 'selvindsigt' && cur.phase === 'vote') {
+    return players.filter(id => {
+      if (id === cur.predictorId) return cur.predictorGuess === null || cur.predictorGuess === undefined;
+      return !(cur.votes && cur.votes[id] !== undefined);
+    });
+  }
   return [];
 }
 
@@ -251,6 +257,32 @@ function resolveRoseMatch(state, cur, players) {
   cur.authorForRecipient = authorForRecipient;
 }
 
+// Point til "gætteren" hvis deres forudsigelse rammer gruppens flertals-
+// svar (samme værdi som en almindelig vundet runde, ROUND_POINTS), og et
+// mindre point til hver stemmer der selv stemte med flertallet — samme
+// "tælles med, men lidt mindre" -princip som resten af Brokspillets
+// afstemningsrunder. Uafgjort brydes tilfældigt blandt de tied kandidater,
+// samme mønster som resolveQuiplashVote.
+const SELF_INSIGHT_VOTER_POINTS = 1;
+function resolveSelvindsigt(state, cur, players) {
+  const tally = {};
+  Object.values(cur.votes || {}).forEach(id => { tally[id] = (tally[id] || 0) + 1; });
+  const maxVotes = Math.max(0, ...Object.values(tally));
+  const leaders = maxVotes > 0 ? Object.keys(tally).filter(id => tally[id] === maxVotes) : players.slice();
+  const groupAnswer = leaders[Math.floor(Math.random() * leaders.length)];
+  const predictorHit = cur.predictorGuess === groupAnswer;
+  if (predictorHit) state.game.scores[cur.predictorId] = (state.game.scores[cur.predictorId] || 0) + ROUND_POINTS;
+  Object.keys(cur.votes || {}).forEach(voterId => {
+    if (cur.votes[voterId] === groupAnswer) state.game.scores[voterId] = (state.game.scores[voterId] || 0) + SELF_INSIGHT_VOTER_POINTS;
+  });
+  cur.phase = 'results';
+  cur.groupAnswer = groupAnswer;
+  cur.predictorHit = predictorHit;
+  cur.tally = tally;
+  stampPhase(cur);
+  cur.readyIds = [];
+}
+
 function goToNextRoundOrEnd(state, players) {
   if (state.game.round >= state.game.totalRounds) endGame(state);
   else { beginRound(state, state.members.filter(m => players.includes(m.id))); stampPhase(state.game.current); }
@@ -355,6 +387,21 @@ function forceResolveCurrentPhase(state, cur, players) {
     }
   } else if (cur.type === 'rose' && cur.phase === 'match') {
     resolveRoseMatch(state, cur, players);
+  } else if (cur.type === 'selvindsigt' && cur.phase === 'vote') {
+    // Ingen kan bare "ikke stemme" — udeblevne stemmer/gæt fyldes op
+    // tilfældigt (samme filosofi som casinobrok-bet'ens sikre fallback),
+    // aldrig et tavst spring.
+    players.forEach(id => {
+      if (id === cur.predictorId) {
+        if (cur.predictorGuess === null || cur.predictorGuess === undefined) {
+          const options = players.filter(p => p !== id);
+          cur.predictorGuess = options.length ? options[Math.floor(Math.random() * options.length)] : id;
+        }
+      } else if (cur.votes[id] === undefined) {
+        cur.votes[id] = players[Math.floor(Math.random() * players.length)];
+      }
+    });
+    resolveSelvindsigt(state, cur, players);
   } else if (cur.phase === 'results' || cur.phase === 'skipped') {
     goToNextRoundOrEnd(state, players);
   }
@@ -398,6 +445,7 @@ module.exports = {
   resolveCasinobrokBet,
   transitionRoseToMatch,
   resolveRoseMatch,
+  resolveSelvindsigt,
   goToNextRoundOrEnd,
   endGame,
   expireGamePhaseIfDue,

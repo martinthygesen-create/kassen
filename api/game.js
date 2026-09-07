@@ -14,6 +14,7 @@ const {
   resolveCasinobrokBet,
   transitionRoseToMatch,
   resolveRoseMatch,
+  resolveSelvindsigt,
   goToNextRoundOrEnd,
   expireGamePhaseIfDue,
 } = require('./_lib/gameFlow');
@@ -167,6 +168,20 @@ module.exports = async (req, res) => {
           });
           cur.guesses[actorId] = sanitized;
           if (Object.keys(cur.guesses).length >= players.length) resolveRoseMatch(state, cur, players);
+        } else if (cur.type === 'selvindsigt' && cur.phase === 'vote') {
+          const targetId = players.includes(payload.targetId) ? payload.targetId : null;
+          if (!targetId) throw new ApiError(400, 'ukendt spiller');
+          if (actorId === cur.predictorId) {
+            if (cur.predictorGuess !== null && cur.predictorGuess !== undefined) throw new ApiError(409, 'du har allerede gættet');
+            cur.predictorGuess = targetId;
+          } else {
+            if (cur.votes[actorId] !== undefined) throw new ApiError(409, 'du har allerede stemt');
+            cur.votes[actorId] = targetId;
+          }
+          const votersNeeded = players.length - 1;
+          const votesIn = Object.keys(cur.votes).length;
+          const guessIn = cur.predictorGuess !== null && cur.predictorGuess !== undefined;
+          if (votesIn >= votersNeeded && guessIn) resolveSelvindsigt(state, cur, players);
         } else {
           throw new ApiError(400, 'ugyldig handling lige nu');
         }

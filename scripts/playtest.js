@@ -188,6 +188,18 @@ function botSubmitForRound(state, players) {
     gameFlow.resolveRoseMatch(state, cur, players);
     return;
   }
+  if (cur.type === 'selvindsigt' && cur.phase === 'vote') {
+    players.forEach(id => {
+      if (id === cur.predictorId) {
+        const others = players.filter(p => p !== id);
+        cur.predictorGuess = others.length ? others[0] : id;
+      } else {
+        cur.votes[id] = players[0];
+      }
+    });
+    gameFlow.resolveSelvindsigt(state, cur, players);
+    return;
+  }
   throw new Error(`PLAYTEST-FEJL: ukendt runde-type/fase kombination: ${cur.type}/${cur.phase}`);
 }
 

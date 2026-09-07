@@ -852,6 +852,104 @@ const DECOY_HJAELPER = [
   'Glemte at følge op på en kundehenvendelse',
 ];
 
+// "Selvindsigt"-rundetypen (Opus-review, gameplay-fund): en superlativ-
+// spørgsmålspulje, ikke tilknyttet nogen persons faktiske indhold — gruppen
+// stemmer på hvem der passer bedst, mens én tilfældig spiller ("gætteren")
+// forudsiger gruppens svar, se resolveSelvindsigt i gameFlow.js. Bevidst
+// koldstart-sikker: kræver INGEN historik i kassen og INGEN forudgående
+// indtastet indhold — virker fra runde 1 i et helt tomt rum. 8 spørgsmål
+// pr. skin — samme bevidste v1-størrelse som resten af kassens puljer.
+const SELF_INSIGHT_QUESTIONS_BROK = [
+  'Hvem i gruppen brokker sig mest, uden selv at opdage det?',
+  'Hvem er først til at brokke sig over vejret?',
+  'Hvem ville helst bare have fred og ro fra alt brok?',
+  'Hvem husker mest brok fra sidste ferie?',
+  'Hvem er bedst til at få andre til at grine midt i et brok?',
+  'Hvem bruger kortest tid på at finde noget at brokke sig over?',
+  'Hvem ville aldrig finde på at brokke sig, uanset hvad?',
+  'Hvem er mest overbevisende, når de brokker sig over ingenting?',
+];
+const SELF_INSIGHT_QUESTIONS_BODE = [
+  'Hvem bryder oftest en regel uden selv at opdage det?',
+  'Hvem har altid den bedste undskyldning klar?',
+  'Hvem ville aldrig finde på at bryde en regel med vilje?',
+  'Hvem tager en bøde mest med oprejst pande?',
+  'Hvem er strengest, når andre bryder reglerne?',
+  'Hvem glemmer oftest hvad reglerne egentlig var?',
+  'Hvem ville helst betale sig fra en bøde end at ændre adfærd?',
+  'Hvem er sødest at melde, fordi det aldrig er alvorligt ment?',
+];
+const SELF_INSIGHT_QUESTIONS_SLADRE = [
+  'Hvem ved altid mest om alle andre?',
+  'Hvem er først til at dele en nyhed videre?',
+  'Hvem kan bedst holde på en hemmelighed (hvis nogen kan)?',
+  'Hvem hører mest, uden at spørge om noget?',
+  'Hvem er den man helst ikke fortæller noget hemmeligt til?',
+  'Hvem tror selv de er diskrete, men er det overhovedet ikke?',
+  'Hvem ville aldrig finde på at sladre om nogen?',
+  'Hvem er bedst til at få andre til at åbne op?',
+];
+const SELF_INSIGHT_QUESTIONS_VENNE = [
+  'Hvem i vennegruppen er altid sidst klar?',
+  'Hvem husker alles fødselsdage uden at blive mindet om det?',
+  'Hvem tager altid styringen når planer skal lægges?',
+  'Hvem er sværest at få et svar fra i gruppechatten?',
+  'Hvem ville man ringe til klokken tre om natten?',
+  'Hvem er bedst til at glatte ud, når der er uenighed?',
+  'Hvem foreslår altid den samme aktivitet?',
+  'Hvem er den man kender bedst, uden at have talt med længe?',
+];
+const SELF_INSIGHT_QUESTIONS_ROSE = [
+  'Hvem er bedst til at give en oprigtig kompliment?',
+  'Hvem fortjener mest ros for noget de aldrig får ros for?',
+  'Hvem er sværest at rose, fordi de altid afviser det?',
+  'Hvem lyser mest op, når de bliver rost?',
+  'Hvem giver flest komplimenter uden at tænke over det?',
+  'Hvem har man mest lyst til at rose lige nu?',
+  'Hvem tager bedst imod kritik uden at blive sur?',
+  'Hvem er den mest undervurderede i gruppen?',
+];
+const SELF_INSIGHT_QUESTIONS_DRIK = [
+  'Hvem husker mindst fra sidste fest?',
+  'Hvem er først oppe dagen efter, uanset hvad?',
+  'Hvem glemmer altid sin runde?',
+  'Hvem bliver mest omgængelig efter én drink?',
+  'Hvem er bedst til at blande drinks?',
+  'Hvem har den bedste undskyldning for at gå tidligt?',
+  'Hvem synger altid med, uanset sangen?',
+  'Hvem er sidst i seng, hver eneste gang?',
+];
+const SELF_INSIGHT_QUESTIONS_KONKURRENCE = [
+  'Hvem tager det mest alvorligt, når der er en vinder?',
+  'Hvem praler mest af en lille sejr?',
+  'Hvem er dårligst taber i gruppen?',
+  'Hvem finder altid et smuthul i reglerne?',
+  'Hvem er bedst til at lade som om de er ligeglade med at tabe?',
+  'Hvem husker resultater længst?',
+  'Hvem er farligst at spille imod, selv i et helt uskyldigt spil?',
+  'Hvem giver aldrig op, uanset hvor håbløst det ser ud?',
+];
+const SELF_INSIGHT_QUESTIONS_LOGN = [
+  'Hvem er bedst til at bluffe uden at rødme?',
+  'Hvem gennemskuer altid en løgn først?',
+  'Hvem har den mest overbevisende pokerface?',
+  'Hvem ville aldrig kunne lyve, selv hvis de prøvede?',
+  'Hvem fortæller den bedste (opdigtede) historie?',
+  'Hvem tror man mindst på, selvom de siger sandheden?',
+  'Hvem er lettest at narre?',
+  'Hvem er den man aldrig kan gennemskue?',
+];
+const SELF_INSIGHT_QUESTIONS_HJAELPER = [
+  'Hvem er mest grundig med detaljerne?',
+  'Hvem er bedst til at holde hovedet koldt under pres?',
+  'Hvem glemmer oftest at følge op?',
+  'Hvem er den man altid spørger, når man er i tvivl?',
+  'Hvem er bedst til at sige fra, når der er for meget at gøre?',
+  'Hvem tager mest ansvar, uden at blive bedt om det?',
+  'Hvem er sværest at få et klart svar fra?',
+  'Hvem er den der redder projektet i sidste øjeblik?',
+];
+
 const CONTENT_BY_THEME = {
   brok: {
     quiplashPrompts: QUIPLASH_PROMPTS,
@@ -859,6 +957,7 @@ const CONTENT_BY_THEME = {
     quiplashDecoys: QUIPLASH_DECOYS,
     worldTrivia: getTriviaForSkin('brok'),
     worldTrueFalse: WORLD_TRUEFALSE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_BROK,
     gameName: 'Brokspillet',
   },
   // Fase 5 bevis-tema. winnerTauntPrompts GENBRUGER WINNER_TAUNT_PROMPTS
@@ -872,6 +971,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('bode'),
     worldTrueFalse: WORLD_TRUEFALSE_BODE,
     decoyBrok: DECOY_BODE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_BODE,
     gameName: 'Bødespillet',
   },
   // Tredje tema, Sladrekassen — navnepreset på Gruppekasse-motoren (se
@@ -883,6 +983,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('venne'),
     worldTrueFalse: WORLD_TRUEFALSE_VENNE,
     decoyBrok: DECOY_VENNE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_VENNE,
     gameName: 'Vennespillet',
   },
   rose: {
@@ -892,6 +993,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('rose'),
     worldTrueFalse: WORLD_TRUEFALSE_ROSE,
     decoyBrok: DECOY_ROSE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_ROSE,
     gameName: 'Rosespillet',
   },
   drik: {
@@ -901,6 +1003,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('drik'),
     worldTrueFalse: WORLD_TRUEFALSE_DRIK,
     decoyBrok: DECOY_DRIK,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_DRIK,
     gameName: 'Skålespillet',
   },
   // Konkurrencekassen — poolPolarity:'reward'-motoren. Genbrugte tidligere
@@ -914,6 +1017,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('konkurrence'),
     worldTrueFalse: WORLD_TRUEFALSE_KONKURRENCE,
     decoyBrok: DECOY_KONKURRENCE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_KONKURRENCE,
     gameName: 'Konkurrencespillet',
   },
   sladre: {
@@ -923,6 +1027,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('sladre'),
     worldTrueFalse: WORLD_TRUEFALSE_SLADRE,
     decoyBrok: DECOY_SLADRE,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_SLADRE,
     gameName: 'Sladrespillet',
   },
   // logn/hjaelper: 'spil' er ikke aktiveret for disse to skins i
@@ -937,6 +1042,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('logn'),
     worldTrueFalse: WORLD_TRUEFALSE_LOGN,
     decoyBrok: DECOY_LOGN,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_LOGN,
     gameName: 'Løgnespillet',
   },
   hjaelper: {
@@ -946,6 +1052,7 @@ const CONTENT_BY_THEME = {
     worldTrivia: getTriviaForSkin('hjaelper'),
     worldTrueFalse: WORLD_TRUEFALSE_HJAELPER,
     decoyBrok: DECOY_HJAELPER,
+    selfInsightQuestions: SELF_INSIGHT_QUESTIONS_HJAELPER,
     gameName: 'Kollegaspillet',
   },
 };
@@ -1380,7 +1487,7 @@ function buildRoseDerangement(ids) {
 // medlemmer der reelt er med i DENNE runde af spillet (kan være en delmængde
 // af hele rummet) — trivia-spørgsmål handler stadig om hele rummets rigtige
 // brok-historik, uanset hvem der spiller med lige nu.
-const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose'];
+const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt'];
 
 // Casinobrok (hjul) og rose er rene "held/fyld"-runder uden reelt
 // færdigheds- eller vote-element — begrænses til HØJST ÉN gang pr. HELE
@@ -1526,13 +1633,26 @@ function beginRound(state, players) {
       // camoufleret som et ord-lod i stedet for en direkte navnetrækning.
       state.game.current = { type, phase: 'write', words: {}, chanceVisual };
     }
-  } else {
-    // "Rose" — ikke alt skal handle om brok. Hver spiller skriver en ægte,
-    // kort ros til én tilfældigt tildelt medspiller (aldrig sig selv), og
+  } else if (type === 'rose') {
+    // "Rose" — ikke alt skal handle om brok. Hver spiller skriver en
+    // overdreven ros til én tilfældigt tildelt medspiller (aldrig sig selv,
+    // se omskrivningen af selve prompten i index.html — oprigtig ros var
+    // lav-varians tekst, se kommentaren ved QUIPLASH_PROMPTS_ROSE), og
     // bagefter skal alle gætte hvem der skrev hvad om hvem — se
     // transitionRoseToMatch/resolveRoseMatch i gameFlow.js.
     const targets = buildRoseDerangement(playerIds);
     state.game.current = { type, phase: 'write', targets, compliments: {}, guesses: {} };
+  } else {
+    // "Selvindsigt" (Opus-review, gameplay-fund) — koldstart-sikker rundetype,
+    // kræver INGEN historik i kassen og intet forudgående indtastet indhold.
+    // Ét medlem trækkes som "gætteren"; resten stemmer hemmeligt på hvem i
+    // gruppen der bedst passer et superlativ-spørgsmål, mens gætteren
+    // SAMTIDIG forsøger at forudsige hvem gruppen vælger — se
+    // resolveSelvindsigt i gameFlow.js.
+    const predictor = pickAuthor(state, players, 'selvindsigtPredictorPickCounts');
+    const pool = getThemeContent(state.themeId).selfInsightQuestions || [];
+    const question = pool.length ? pickRandom(pool) : 'Hvem i gruppen er mest sig selv, uanset hvad?';
+    state.game.current = { type, phase: 'vote', predictorId: predictor.id, question, votes: {}, predictorGuess: null };
   }
 }
 

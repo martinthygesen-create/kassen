@@ -2459,6 +2459,11 @@ async function runGameBotAction(cur, botId){
     recipientIds.forEach(rid=>{ guesses[rid] = pickBotFiller(authorIds); });
     return botSubmit('game', botId, { guesses });
   }
+  if(cur.type === 'selvindsigt' && cur.phase === 'vote'){
+    const players = state.game.players || [];
+    const options = players.filter(id=>id!==botId);
+    return botSubmit('game', botId, { targetId: pickBotFiller(options.length?options:players) });
+  }
 }
 
 function driveBotsForMrbrok(m){
@@ -2878,6 +2883,12 @@ function getPendingIdsClient(cur, players){
   if(cur.type === 'rose' && cur.phase === 'match') return players.filter(id=>cur.guesses && cur.guesses[id] === undefined);
   if(cur.type === 'casinobrok' && cur.phase === 'write') return players.filter(id=>!(cur.words && cur.words[id] !== undefined));
   if(cur.type === 'casinobrok' && cur.phase === 'bet') return players.filter(id=>!(cur.bets && cur.bets[id] !== undefined));
+  if(cur.type === 'selvindsigt' && cur.phase === 'vote'){
+    return players.filter(id=>{
+      if(id === cur.predictorId) return cur.predictorGuess === null || cur.predictorGuess === undefined;
+      return !(cur.votes && cur.votes[id] !== undefined);
+    });
+  }
   return [];
 }
 
@@ -3577,6 +3588,7 @@ function gameBodyHtml(g){
   if(cur.type === 'guessbrok') return guessBrokHtml(g, cur);
   if(cur.type === 'casinobrok') return casinobrokHtml(g, cur);
   if(cur.type === 'rose') return roseHtml(g, cur);
+  if(cur.type === 'selvindsigt') return selvindsigtHtml(g, cur);
   return '';
 }
 
@@ -3648,6 +3660,7 @@ function gameLobbyHtml(){
     ['🔍', 'Trivia om jeres egen historik (og lidt verdens-viden ind imellem)'],
     ['🎰', 'Ordhjulet: alle skriver ét ord, og hjulet trækker lod om hvis ord der vinder'],
     ['🌹', 'Rose: skriv den mest overdrevne ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
+    ['🔮', 'Selvindsigt: gruppen stemmer hemmeligt på et superlativ-spørgsmål, mens én forsøger at gætte gruppens svar'],
     ['🏆', 'Point tælles på tværs af alle runder — flest point vinder'],
   ];
   if(gameInstructionsOpen === null) gameInstructionsOpen = !localStorage.getItem('bk_game_seen_instructions');
@@ -4207,6 +4220,75 @@ function roseHtml(g, cur){
   `;
 }
 
+// "Selvindsigt" (Opus-review, gameplay-fund) — koldstart-sikker rundetype,
+// se beginRound i _lib/game.js. Ét medlem ("gætteren") gætter hvem resten
+// af gruppen vælger på et superlativ-spørgsmål, mens resten stemmer
+// hemmeligt (samme click-to-vote-mønster som complainerVoteOptionsHtml).
+function selvindsigtHtml(g, cur){
+  const myId = profile && profile.memberId;
+  const isPredictor = myId === cur.predictorId;
+  const predictorMember = state.members.find(m=>m.id===cur.predictorId);
+  const badge = `<div class="game-badge">Runde ${g.round}/${g.totalRounds} · 🔮 Selvindsigt</div>`;
+  const questionBlock = `
+    <div class="game-card" id="gameCard" style="text-align:center; margin-bottom:10px;">
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px; margin:0;">${escapeHtml(cur.question)}</p>
+    </div>
+  `;
+  if(cur.phase === 'vote'){
+    const voteCount = Object.keys(cur.votes||{}).length;
+    const votersTotal = Math.max(1, g.players.length - 1);
+    if(isPredictor){
+      const already = cur.predictorGuess !== null && cur.predictorGuess !== undefined;
+      if(already){
+        return `${badge}${questionBlock}<div class="empty-state"><span class="emoji">🤔</span><b>Dit gæt er sendt</b>Vent på de andres stemmer.</div>${gameProgressHtml(voteCount, votersTotal, 'har stemt')}${complaintBlockHtml(g, cur)}`;
+      }
+      const options = state.members.filter(m=>g.players.includes(m.id) && m.id !== myId);
+      const chips = options.map(m=>`
+        <div class="bal-row game-pick" data-selvindsigt-guess="${m.id}" style="cursor:pointer;">
+          <div class="avatar">${initials(m.name)}</div>
+          <div class="feed-body"><div class="bal-name">${escapeHtml(m.name)}</div></div>
+        </div>
+      `).join('');
+      return `${badge}${questionBlock}<p class="hint" style="margin:0 0 8px;">Du er gætteren i denne runde — gæt hvem RESTEN af gruppen stemmer på.</p>${chips}${complaintBlockHtml(g, cur)}`;
+    }
+    const already = myId && cur.votes && cur.votes[myId] !== undefined;
+    if(already){
+      return `${badge}${questionBlock}<div class="empty-state"><span class="emoji">🤫</span><b>Din stemme er registreret</b>${escapeHtml(predictorMember?predictorMember.name:'?')} prøver samtidig at gætte gruppens svar.</div>${gameProgressHtml(voteCount, votersTotal, 'har stemt')}${complaintBlockHtml(g, cur)}`;
+    }
+    const options = state.members.filter(m=>g.players.includes(m.id));
+    const chips = options.map(m=>`
+      <div class="bal-row game-pick" data-selvindsigt-vote="${m.id}" style="cursor:pointer;">
+        <div class="avatar">${initials(m.name)}</div>
+        <div class="feed-body"><div class="bal-name">${escapeHtml(m.name)}</div></div>
+      </div>
+    `).join('');
+    return `${badge}${questionBlock}<p class="hint" style="margin:0 0 8px;">Stem hemmeligt — ${escapeHtml(predictorMember?predictorMember.name:'?')} prøver at gætte hvem gruppen vælger.</p>${chips}${gameProgressHtml(voteCount, votersTotal, 'har stemt')}${complaintBlockHtml(g, cur)}`;
+  }
+  // results
+  const groupMember = state.members.find(m=>m.id===cur.groupAnswer);
+  const tallyRows = Object.entries(cur.tally||{}).sort((a,b)=>b[1]-a[1]).map(([id,count])=>{
+    const m = state.members.find(mm=>mm.id===id);
+    return `
+      <div class="bal-row">
+        <div class="avatar" style="width:34px;height:34px;font-size:12.5px;">${initials(m?m.name:'?')}</div>
+        <div class="feed-body"><div class="bal-name">${escapeHtml(m?m.name:'?')}</div></div>
+        <div class="bal-amt">${count} stemme${count===1?'':'r'}</div>
+      </div>
+    `;
+  }).join('');
+  return `
+    ${badge}
+    <div class="game-card" id="gameCard" style="text-align:center; margin-bottom:12px;">
+      <p class="hint" style="margin:0 0 4px;">${escapeHtml(cur.question)}</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin:4px 0;">Gruppen valgte: ${escapeHtml(groupMember?groupMember.name:'?')}</p>
+      <p class="hint" style="margin:6px 0 0;">${escapeHtml(predictorMember?predictorMember.name:'?')} gættede ${cur.predictorHit ? 'RIGTIGT! 🎯' : 'forkert.'}</p>
+    </div>
+    <div class="section-label">Stemmefordeling</div>
+    ${tallyRows}
+    ${gameReadyHtml(g, cur)}
+  `;
+}
+
 function gameOverHtml(g, cur){
   const ranked = state.members.filter(m=>g.players.includes(m.id)).sort((a,b)=>(cur.scores[b.id]||0)-(cur.scores[a.id]||0));
   const losers = (cur.loserIds||[]).map(id=>state.members.find(m=>m.id===id)).filter(Boolean);
@@ -4407,6 +4489,14 @@ function bindGameHandlers(g){
         gameApi('submit', { payload: { guesses: roseMatchSelections } });
       };
     }
+  }
+  if(cur.type === 'selvindsigt' && cur.phase === 'vote'){
+    document.querySelectorAll('[data-selvindsigt-vote]').forEach(el=>{
+      el.onclick = ()=> gameApi('submit', { payload: { targetId: el.dataset.selvindsigtVote } });
+    });
+    document.querySelectorAll('[data-selvindsigt-guess]').forEach(el=>{
+      el.onclick = ()=> gameApi('submit', { payload: { targetId: el.dataset.selvindsigtGuess } });
+    });
   }
 }
 
