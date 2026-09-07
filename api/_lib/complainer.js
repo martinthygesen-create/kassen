@@ -1152,7 +1152,9 @@ const CONTENT_BY_THEME = {
     situations: COMPLAINER_SITUATIONS_LOGN,
     prompts: COMPLAINER_PROMPTS_LOGN,
     gameName: 'Løgnefælden',
-    guiltyRoleLabel: 'Den Store Brokker',
+    // Rettet (Opus-review): stod ved en fejl som "Den Store Brokker" —
+    // domænet er løgn, ikke brok.
+    guiltyRoleLabel: 'Den Store Løgner',
     interrogationQuestions: COMPLAINER_INTERROGATION_QUESTIONS_LOGN,
   },
   hjaelper: {
