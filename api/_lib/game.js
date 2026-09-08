@@ -759,7 +759,13 @@ const DECOY_KONKURRENCE = [
 // gentaget — quizmaster-audit fandt fire af de først tilføjede for ens
 // (ingen tvist der presser svaret et bestemt sted hen), rettet her. Én
 // ("...bag ryggen") droppet helt, ikke omskrevet — samme audit-fund: for
-// let at læse som ægte udhængning frem for åbenlys leg.
+// let at læse som ægte udhængning frem for åbenlys leg. Fordoblet igen
+// (Martins ønske) fra 15 til 30 — de 15 nye følger samme regel: hver har
+// sit eget format-twist (retssag, alibi, dagbog, jobsamtale, efterlyst,
+// dokumentar, horoskop, museum, advarselsmærkat, podcast, skåltale,
+// lykkekiks, Wikipedia, interview, anmeldelse), ingen gentager en vinkel
+// der allerede findes ovenfor, og ingen har en kant der kan læses som
+// ægte udhængning frem for åbenlys, fiktiv leg.
 const QUIPLASH_PROMPTS_LOGN = [
   'Den mest sandsynlige løgn {target} fortalte for nylig er...',
   'Skriv den mest overbevisende (opdigtede) undskyldning for {target}',
@@ -776,6 +782,21 @@ const QUIPLASH_PROMPTS_LOGN = [
   'Den besked der ville få gruppechatten til at eksplodere, hvis den handlede om {target}, er...',
   'Hvis en spåkone spåede {target}s næste pinlige øjeblik, ville hun sige...',
   'Den sladderhistorie om {target}s seneste weekend der ville få hele bordet til at lene sig ind for at høre mere, er...',
+  'I en fiktiv retssag mod {target} ville det mest belastende (opdigtede) vidneudsagn lyde...',
+  'Den mindst troværdige undskyldning {target} nogensinde har brugt for at komme for sent, er...',
+  'Hvis nogen fandt {target}s hemmelige dagbog, ville den mest afslørende linje lyde...',
+  'Til en jobsamtale ville {target} med garanti overdrive at de er gode til...',
+  'Hvis {target} blev efterlyst for noget helt useriøst, ville teksten på plakaten lyde...',
+  'En dokumentar om {target}s liv ville have en fortæller der højtideligt siger...',
+  'Dagens (opdigtede) horoskop for {target} advarer specifikt mod...',
+  'Hvis {target} stod udstillet på et museum, ville skiltet ved siden af forklare at...',
+  'Hvis {target} kom med en advarselsmærkat på, ville den advare mod...',
+  'Hvis der blev lavet en hel podcast-episode om {target}s mest overdrevne historie, ville titlen være...',
+  'Til {target}s næste fødselsdag ville en (venligt overdrevet) skåltale fremhæve at...',
+  'Hvis {target} åbnede en lykkekiks lige nu, ville den mistænkeligt præcise besked lyde...',
+  'Hvis {target} havde en Wikipedia-side, ville sætningen med "kilde mangler" handle om...',
+  'Til et (opdigtet) afsløringsinterview ville {target} til sidst indrømme at...',
+  'Hvis {target} fik en anmeldelse som en restaurant, ville den mest kritiske sætning være...',
 ];
 const QUIPLASH_DECOYS_LOGN = [
   'At sige "jeg var lige på vej" i en time',
@@ -1580,9 +1601,7 @@ const MIN_ABOUT_PER_PLAYER = 2;
 // "på den måde har ethvert spørgsmål duplikator") — en "brugt"-liste PR
 // SPIL (ikke pr. rum) sikrer at samme udsagn+variant-kombination aldrig
 // trækkes to gange inden for ét spil, uden at forhindre at det samme
-// udsagn bruges én gang til hver variant. Nulstilles hvis puljen for en
-// given variant løber tør (samme shuffle-bag-genfyldnings-filosofi som
-// resten af filen), IKKE for hele spillet på én gang.
+// udsagn bruges én gang til hver variant.
 function candidateKey(type, c) { return `${type}:${c.authorId}:${c.targetId}:${c.text}`; }
 // Ren (INGEN "brugt"-filtrering, ingen side-effekter) — bruges BÅDE af
 // isRoundTypeEligible (som kun skal vide om der FUNDAMENTALT er nok
@@ -1639,28 +1658,25 @@ function collectAboutCandidates(state, players, type) {
   });
   return candidates;
 }
-// Trækker ÉT ubrugt udsagn til denne variant, med genfyldning (samme
-// filosofi som roundTypeBag) hvis alt allerede er brugt i DENNE spilcyklus
-// — glemmer kun "brugt"-nøgler for netop denne variant, ikke den anden, så
-// et udsagn stadig kan bruges én gang til hver (Martins "duplikator").
-// Rettet (quizmaster-audit, fund): kan i sjældne tilfælde returnere null i
-// stedet for et udsagn — roundTypeBag'en bygges KUN når den er tom (kan
-// ligge flere runder), mens det personlige lag kan ændres NÅR SOM HELST
-// via action:'personal' (fuld overskrivning af afsenderens entry, ikke en
-// tilføjelse) — så en type der var eligible da posen blev bygget, kan
-// teoretisk have 0 rå kandidater tilbage når den rent faktisk trækkes
-// runder senere. Kaldestedet i beginRound SKAL tjekke for null og falde
-// tilbage til noget der aldrig kan være tomt (selvindsigt), aldrig antage
-// et resultat.
+// Trækker ÉT ubrugt udsagn til denne variant. Rettet (Martins fund, spurgt
+// direkte): puljen blev tidligere GENFYLDT når den løb tør, så samme
+// udsagn+variant kunne dukke op igen SENERE I SAMME SPIL — men på det
+// tidspunkt har alle allerede hørt/gættet det én gang, så genvisningen har
+// ingen reel usikkerhed tilbage (spillerne husker svaret, gættet er ikke
+// længere et gæt). I stedet: når fresh-puljen for denne variant er tom,
+// returneres null i stedet for at genfylde og gentage — kaldestedet i
+// beginRound falder da tilbage til selvindsigt (aldrig tomt) i stedet for
+// at vise en allerede-afsløret påstand igen. Samme null-kontrakt gælder
+// stadig når der slet ingen rå kandidater findes (fx personalLayer
+// overskrevet via action:'personal' mellem pose-bygning og selve
+// trækningen, se beginRound) — begge tilfælde er "intet friskt tilbage",
+// kaldestedet behøver ikke skelne.
 function pickAboutCandidate(state, players, type) {
   const all = collectAboutCandidates(state, players, type);
   if (!all.length) return null;
   if (!state.game.usedAbout) state.game.usedAbout = [];
-  let fresh = all.filter(c => !state.game.usedAbout.includes(candidateKey(type, c)));
-  if (!fresh.length) {
-    state.game.usedAbout = state.game.usedAbout.filter(k => !k.startsWith(type + ':'));
-    fresh = all;
-  }
+  const fresh = all.filter(c => !state.game.usedAbout.includes(candidateKey(type, c)));
+  if (!fresh.length) return null;
   const pick = pickRandom(fresh);
   state.game.usedAbout.push(candidateKey(type, pick));
   return pick;
