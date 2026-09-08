@@ -1068,7 +1068,7 @@ const CONTENT_BY_THEME = {
     worldTrueFalse: WORLD_TRUEFALSE_VENNE,
     decoyBrok: DECOY_VENNE,
     selfInsightQuestions: SELF_INSIGHT_QUESTIONS_VENNE,
-    gameName: 'Kendespillet',
+    gameName: 'Vennespillet',
   },
   // kolleger-varianten må spille Brokspillet (i modsætning til det gamle
   // hjaelper-skin) — men quiplash/rose er udelukket, se
@@ -1081,7 +1081,7 @@ const CONTENT_BY_THEME = {
     worldTrueFalse: WORLD_TRUEFALSE_HJAELPER,
     decoyBrok: DECOY_HJAELPER,
     selfInsightQuestions: SELF_INSIGHT_QUESTIONS_HJAELPER,
-    gameName: 'Kendespillet',
+    gameName: 'Vennespillet',
   },
 };
 function getThemeContent(themeId) {
@@ -1579,12 +1579,28 @@ function collectAboutCandidates(state, players, type) {
       if (type === 'hvemskrev') {
         // "hvemskrev": target vises ÅBENT, resten (INKL. target selv, som
         // ikke kender svaret) gætter forfatteren — kun forfatteren selv er
-        // udelukket. Kræver mindst 3 spillere UDOVER forfatteren, så
-        // options (forfatter + op til 3 distraktorer, se buildOptions)
-        // ikke bliver så tyndt at en gætter trygt kan udelukke sig selv og
-        // stå med et reelt gæt på under 3 kandidater — samme fund/filosofi
-        // som kendskabs eligibleGuessers-krav nedenfor.
-        const eligibleGuessers = players.filter(id => id !== authorId).length;
+        // udelukket fra at GÆTTE. MEN target er ALDRIG en reel kandidat for
+        // "hvem skrev det" (selv-targeting er umuligt, se action:'personal'
+        // i api/brok.js) — udelukkes derfor OGSÅ fra selve distraktor-
+        // puljen i beginRound (ikke kun fra at gætte), for ikke at vise en
+        // "mulighed" enhver opmærksom spiller kan udelukke gratis uden reel
+        // usikkerhed (quizmaster-audit-fund: gjorde ellers 2/3 af gætterne
+        // til et skjult 50/50 ved 4 spillere, target-eliminationen ikke
+        // medregnet i det oprindelige "3 UDOVER forfatteren"-krav). Samme
+        // eligibleGuessers-krav-STRUKTUR som kendskab nedenfor (begge
+        // udelukker nu symmetrisk forfatter+target fra distraktor-puljen),
+        // MEN et højere tal (< 3, ikke < 2): hvemskrev giver hver
+        // ikke-target-gætter TO gratis eliminationer (sig selv OG target,
+        // begge logisk udelukkelige), kendskab giver kun ÉN (sig selv,
+        // forfatteren forbliver skjult under selve gættefasen) — samme
+        // spillerantal ville derfor give hvemskrev et tyndere reelt gæt end
+        // kendskab, selv med identisk pulje-udelukkelse (quizmaster-audit:
+        // målt til 2,33 reelle kandidater/50% ved kun < 2, mod kendskabs
+        // 3,00 ved samme spillerantal). < 3 kræver 5+ spillere i alt, så
+        // en ikke-target-gætter altid har MINDST 3 reelle kandidater
+        // tilbage (spillerantal − sig selv − target), samme kvalitet som
+        // kendskab.
+        const eligibleGuessers = players.filter(id => id !== authorId && id !== item.targetId).length;
         if (eligibleGuessers < 3) return;
       } else {
         // "kendskab": forfatter OG target udelukket fra at gætte — skal
@@ -1608,8 +1624,18 @@ function collectAboutCandidates(state, players, type) {
 // filosofi som roundTypeBag) hvis alt allerede er brugt i DENNE spilcyklus
 // — glemmer kun "brugt"-nøgler for netop denne variant, ikke den anden, så
 // et udsagn stadig kan bruges én gang til hver (Martins "duplikator").
+// Rettet (quizmaster-audit, fund): kan i sjældne tilfælde returnere null i
+// stedet for et udsagn — roundTypeBag'en bygges KUN når den er tom (kan
+// ligge flere runder), mens det personlige lag kan ændres NÅR SOM HELST
+// via action:'personal' (fuld overskrivning af afsenderens entry, ikke en
+// tilføjelse) — så en type der var eligible da posen blev bygget, kan
+// teoretisk have 0 rå kandidater tilbage når den rent faktisk trækkes
+// runder senere. Kaldestedet i beginRound SKAL tjekke for null og falde
+// tilbage til noget der aldrig kan være tomt (selvindsigt), aldrig antage
+// et resultat.
 function pickAboutCandidate(state, players, type) {
   const all = collectAboutCandidates(state, players, type);
+  if (!all.length) return null;
   if (!state.game.usedAbout) state.game.usedAbout = [];
   let fresh = all.filter(c => !state.game.usedAbout.includes(candidateKey(type, c)));
   if (!fresh.length) {
@@ -1645,6 +1671,26 @@ const ONCE_PER_GAME_TYPES = ['casinobrok', 'rose'];
 function isOncePerGame(type, themeId) {
   if (type === 'rose' && themeId === 'rose') return false;
   return ONCE_PER_GAME_TYPES.includes(type);
+}
+
+// "Selvindsigt" (Opus-review, gameplay-fund) — koldstart-sikker rundetype,
+// kræver INGEN historik i kassen og intet forudgående indtastet indhold.
+// Ét medlem trækkes som "gætteren"; resten stemmer hemmeligt på hvem i
+// gruppen der bedst passer et superlativ-spørgsmål, mens gætteren
+// SAMTIDIG forsøger at forudsige hvem gruppen vælger — se
+// resolveSelvindsigt i gameFlow.js. Udtrukket til en selvstændig
+// funktion (ikke kun inline i beginRound) fordi den ALTID er tilgængelig
+// (intet indholds- eller personligt-lag-krav) — bruges derfor også som
+// sikkert fallback fra kendskab/hvemskrev, se pickAboutCandidate.
+// state.game.current.type sættes ALTID til 'selvindsigt' her, uanset
+// hvilken rundetype der oprindeligt blev trukket — klienten dispatcher
+// på cur.type, så et fallback der beholdt fx 'kendskab' ville sende
+// selvindsigt-formede data ind i kendskabHtml og crashe visningen.
+function buildSelvindsigtRound(state, players) {
+  const predictor = pickAuthor(state, players, 'selvindsigtPredictorPickCounts');
+  const pool = getThemeContent(state.themeId).selfInsightQuestions || [];
+  const question = pool.length ? pickRandom(pool) : 'Hvem i gruppen er mest sig selv, uanset hvad?';
+  state.game.current = { type: 'selvindsigt', phase: 'vote', predictorId: predictor.id, question, votes: {}, predictorGuess: null };
 }
 
 // Vennekassens kolleger-variant (Opus-review): får lov til Brokspillet i
@@ -1808,16 +1854,7 @@ function beginRound(state, players) {
     const targets = buildRoseDerangement(playerIds);
     state.game.current = { type, phase: 'write', targets, compliments: {}, guesses: {} };
   } else if (type === 'selvindsigt') {
-    // "Selvindsigt" (Opus-review, gameplay-fund) — koldstart-sikker rundetype,
-    // kræver INGEN historik i kassen og intet forudgående indtastet indhold.
-    // Ét medlem trækkes som "gætteren"; resten stemmer hemmeligt på hvem i
-    // gruppen der bedst passer et superlativ-spørgsmål, mens gætteren
-    // SAMTIDIG forsøger at forudsige hvem gruppen vælger — se
-    // resolveSelvindsigt i gameFlow.js.
-    const predictor = pickAuthor(state, players, 'selvindsigtPredictorPickCounts');
-    const pool = getThemeContent(state.themeId).selfInsightQuestions || [];
-    const question = pool.length ? pickRandom(pool) : 'Hvem i gruppen er mest sig selv, uanset hvad?';
-    state.game.current = { type, phase: 'vote', predictorId: predictor.id, question, votes: {}, predictorGuess: null };
+    buildSelvindsigtRound(state, players);
   } else if (type === 'kendskab') {
     // "Kendskab" — kun i Vennekassen (se KENDSKAB_THEMES/isRoundTypeEligible
     // ovenfor, som allerede har sikret at der er mindst
@@ -1829,6 +1866,12 @@ function beginRound(state, players) {
     // api/game.js's submit-handler) skal gætte hvem i rummet det handler
     // om. Se resolveKendskab i gameFlow.js.
     const pick = pickAboutCandidate(state, playerIds, 'kendskab');
+    // Rettet (quizmaster-audit): pick kan være null hvis puljen tømtes
+    // MELLEM at posen blev bygget og at denne type rent faktisk trækkes
+    // (se pickAboutCandidates kommentar) — falder tilbage til selvindsigt
+    // (altid tilgængelig, intet personligt-lag-krav) i stedet for at
+    // crashe eller sende en tom/ugyldig runde ud til klienterne.
+    if (!pick) { buildSelvindsigtRound(state, players); return; }
     const targetMember = players.find(m => m.id === pick.targetId);
     const distractorNames = shuffle(players.filter(m => m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
     const { options, correctIndex } = buildOptions(targetMember.name, distractorNames);
@@ -1842,8 +1885,14 @@ function beginRound(state, players) {
     // kender svaret) gætter FORFATTEREN. Kun forfatteren er udelukket fra
     // at gætte, se getPendingIds/api/game.js's submit-handler.
     const pick = pickAboutCandidate(state, playerIds, 'hvemskrev');
+    if (!pick) { buildSelvindsigtRound(state, players); return; }
     const authorMember = players.find(m => m.id === pick.authorId);
-    const distractorNames = shuffle(players.filter(m => m.id !== pick.authorId)).slice(0, 3).map(m => m.name);
+    // Target udelukkes OGSÅ fra distraktor-puljen (ikke kun fra selve
+    // gættefeltet) — target kan pr. definition aldrig VÆRE forfatteren
+    // (selv-targeting er umuligt, se collectAboutCandidates ovenfor), så
+    // at vise target som "mulig forfatter" var en gratis, logisk
+    // udelukkelig fejlkandidat, ikke reel usikkerhed (quizmaster-audit-fund).
+    const distractorNames = shuffle(players.filter(m => m.id !== pick.authorId && m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
     const { options, correctIndex } = buildOptions(authorMember.name, distractorNames);
     state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, targetId: pick.targetId, options, correctIndex, guesses: {} };
   }

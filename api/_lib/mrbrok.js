@@ -350,7 +350,7 @@ const CONTENT_BY_THEME = {
   // Vennekassens venner-variant (Opus-review) — genbruger venne's emner
   // uændret, kun gameName er nyt. Kolleger-varianten har INGEN entry her —
   // MrBrok forbliver udelukket for den, se themeRegistry.js.
-  kende_venner: { mrbrokTopics: MRBROK_TOPICS_VENNE, mrbrokClueTips: MRBROK_CLUE_TIPS_VENNE, gameName: 'Mr. Kende' },
+  kende_venner: { mrbrokTopics: MRBROK_TOPICS_VENNE, mrbrokClueTips: MRBROK_CLUE_TIPS_VENNE, gameName: 'Mr. Ven' },
 };
 function getThemeContent(themeId) {
   return CONTENT_BY_THEME[themeId] || CONTENT_BY_THEME.brok;

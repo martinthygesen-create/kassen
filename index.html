@@ -1348,7 +1348,7 @@ const SKIN_PRESETS = [
     unit: '€', unitOptions: [{ value: '€', label: '💶 Penge' }, { value: 'point', label: '🎯 Point' }],
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Påstande om hinanden',
-    gameNames: { spil: 'Kendespillet', mrbrok: 'Mr. Kende', complainer: 'Kendefælden' },
+    gameNames: { spil: 'Vennespillet', mrbrok: 'Mr. Ven', complainer: 'Vennefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
@@ -1362,7 +1362,7 @@ const SKIN_PRESETS = [
     ruleTagline: 'Udfordr venner og kollegaer.', unit: 'point',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
     smaatText: 'Påstande om hinanden',
-    gameNames: { spil: 'Kendespillet', mrbrok: 'MrBrok', complainer: 'Kendefælden' },
+    gameNames: { spil: 'Vennespillet', mrbrok: 'MrBrok', complainer: 'Vennefælden' },
     allowedGames: ['spil', 'complainer'],
   },
   {
@@ -2500,7 +2500,7 @@ async function ensureTestBots(){
   // Vennekassens 'kendskab'-runde (se KENDSKAB_THEMES i api/_lib/game.js)
   // kræver rigtigt indhold i state.personalLayer — uden dette ville
   // "🤖 Test-spil med bots" ALDRIG kunne trække runden, fordi bots ikke har
-  // nogen anden vej til at udfylde deres kendskabsark end via den
+  // nogen anden vej til at udfylde deres venneark end via den
   // menu-sheet et menneske selv åbner. Fundet under quizmaster-audit
   // (se test_kendskab_stress.js) — bots seedes derfor her med samme
   // action:'personal' som et rigtigt menneske ville sende, kun med
@@ -2872,7 +2872,7 @@ function openAppMenuSheet(){
       <div class="app-pick-scroll-hint right">›</div>
     </div>
     <div class="menu-row-list">
-      ${isKendekasse() ? `<div class="menu-row" id="menuPersonalLayerBtn"><div class="menu-row-icon">🧑‍🤝‍🧑</div><div class="menu-row-label">Udfyld dit kendskabsark</div><span class="menu-row-chevron">${myPersonalLayerEntry() ? '✅' : ((state.personalLayer && state.personalLayer.submittedCount) || 0) + '/' + state.members.filter(m=>!m.isBot).length}</span></div>` : ''}
+      ${isKendekasse() ? `<div class="menu-row" id="menuPersonalLayerBtn"><div class="menu-row-icon">🧑‍🤝‍🧑</div><div class="menu-row-label">Udfyld dit venneark</div><span class="menu-row-chevron">${myPersonalLayerEntry() ? '✅' : ((state.personalLayer && state.personalLayer.submittedCount) || 0) + '/' + state.members.filter(m=>!m.isBot).length}</span></div>` : ''}
       ${showPushBell ? `<div class="menu-row" id="menuPushBtn"><div class="menu-row-icon">🔔</div><div class="menu-row-label">Slå push til</div><span class="menu-row-chevron">›</span></div>` : ''}
       <div class="menu-row" id="menuShareBtn"><div class="menu-row-icon">📤</div><div class="menu-row-label">Del link</div><span class="menu-row-chevron">›</span></div>
       <div class="menu-row" id="menuLeaveBtn"><div class="menu-row-icon">🚪</div><div class="menu-row-label">Skift/forlad rum</div><span class="menu-row-chevron">›</span></div>
@@ -3868,7 +3868,7 @@ function gameLobbyHtml(){
     ['🎰', 'Ordhjulet: alle skriver ét ord, og hjulet trækker lod om hvis ord der vinder'],
     ['🌹', 'Rose: skriv den mest overdrevne ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
     ['🔮', 'Selvindsigt: gruppen stemmer hemmeligt på et superlativ-spørgsmål, mens én forsøger at gætte gruppens svar'],
-    ['🕵️', 'Kendskab (kun Vennekassen): et anonymt udsagn fra jeres kendskabsark — resten gætter hvem det handler om'],
+    ['🕵️', 'Kendskab (kun Vennekassen): et anonymt udsagn fra jeres venneark — resten gætter hvem det handler om'],
     ['✍️', 'Hvem skrev det? (kun Vennekassen): samme udsagn, men nu vises hvem det handler om — resten gætter i stedet hvem der skrev det'],
     ['🏆', 'Point tælles på tværs af alle runder — flest point vinder'],
   ];
@@ -6139,7 +6139,7 @@ function complainerBrokApproveHtml(c, cur){
   if(already){
     // "tur", IKKE "brok" (Martins fund) — ubetinget, viste "brok" i ALLE
     // temaers Fælden-spil, ikke kun de faktiske brok-temaer (fx også
-    // Vennekassens "Kendefælden").
+    // Vennekassens "Vennefælden").
     return `<p class="hint" style="text-align:center; margin-top:10px; color:rgba(255,201,60,0.7);">🔥 Du gav ros for ${escapeHtml(prevMember?prevMember.name:'?')}s tur</p>`;
   }
   return `<button class="game-btn ghost" id="complainerApproveBrokBtn" data-target="${prevId}" style="margin-top:10px;">🔥 Godt gået, ${escapeHtml(prevMember?prevMember.name:'?')}!</button>`;
@@ -7121,7 +7121,7 @@ function openPersonalLayerSheet(){
   }
 
   openSheet(`
-    <h2>🧑‍🤝‍🧑 Dit kendskabsark</h2>
+    <h2>🧑‍🤝‍🧑 Dit venneark</h2>
     <p class="hint">Bruges senere i spillet til at gætte hvem der er hvem — kort og til punktet er bedst. Du kan altid rette det igen.</p>
     <p class="hint" style="margin:14px 0 4px;">Om dig selv</p>
     <textarea id="klSelf" rows="2" maxlength="120" placeholder="Skriv et kort, sandt udsagn om dig selv...">${existing ? escapeHtml(existing.self) : ''}</textarea>
@@ -7172,7 +7172,7 @@ function openPersonalLayerSheet(){
       try{
         const r = await api('brok', { action: 'personal', roomId, actorId: profile.memberId, selfText, aboutTexts });
         state = r.state;
-        toast('Kendskabsark gemt ✅');
+        toast('Venneark gemt ✅');
         closeSheet();
         render();
       }catch(e){

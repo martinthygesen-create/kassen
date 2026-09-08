@@ -256,13 +256,25 @@ async function playtestBrokspillet(themeId, botNames) {
   assert(state.game.current.phase === 'results', `forventede fase 'results', fik '${state.game.current && state.game.current.phase}'`);
   log(`✅ Runde-type '${startType}' fuldført til resultat-fasen uden fejl`);
 
-  // Kendekasse-temaer: kør en ekstra, dedikeret 'kendskab'-runde (personal-
-  // lag-seedet ovenfor gør den eligible) i stedet for kun at stole på at
-  // shuffle-posen tilfældigt trækker den — ellers kan denne rundetype
-  // sagtens gå udækket i mange kørsler i træk.
+  // Kendekasse-temaer: kør ekstra, dedikerede 'kendskab'/'hvemskrev'-runder
+  // (personal-lag-seedet ovenfor gør dem eligible) i stedet for kun at
+  // stole på at shuffle-posen tilfældigt trækker dem — ellers kan disse
+  // rundetyper sagtens gå udækket i mange kørsler i træk.
   if (KENDSKAB_THEMES_TEST.includes(themeId)) {
+    // Begge kræver flere spillere end de sædvanlige 3 test-bots giver:
+    // kendskab kræver 4+ (eligibleGuessers>=2 udover forfatter+target),
+    // hvemskrev kræver 5+ (eligibleGuessers>=3 — to gratis eliminationer
+    // pr. ikke-target-gætter, sig selv OG target, se collectAboutCandidates
+    // i game.js, quizmaster-audit-fund). To ekstra medlemmer tilføjes KUN
+    // til denne dedikerede test, dækker begge krav i ét hug.
+    state.members.push({ id: store.uid(), name: 'TestBot Dagny', isBot: true });
+    state.members.push({ id: store.uid(), name: 'TestBot Erik', isBot: true });
+    seedPersonalLayer(state);
+    const players5 = state.members.map(m => m.id);
+    state.game.players = players5;
+
     // Forcer trækningen i stedet for at stole på shuffle-bag-lotteriet
-    // (~10% chance pr. forsøg blandt 8 rundetyper) — ellers ville denne
+    // (~10% chance pr. forsøg blandt 9-10 rundetyper) — ellers ville denne
     // dedikerede dækning selv være flaky på tværs af CI-kørsler.
     state.game.round = 0;
     state.game.usedOnceTypes = [];
@@ -273,20 +285,12 @@ async function playtestBrokspillet(themeId, botNames) {
     let guard2 = 0;
     while (state.game.current && state.game.current.phase !== 'results' && guard2 < 10) {
       await sleep(REALISTIC_DELAY_MS());
-      botSubmitForRound(state, players);
+      botSubmitForRound(state, players5);
       guard2++;
     }
     assert(guard2 < 10, `'kendskab'-runden nåede aldrig 'results'-fasen inden for ${guard2} forsøg`);
     log(`✅ Runde-type 'kendskab' fuldført til resultat-fasen uden fejl`);
 
-    // 'hvemskrev' kræver mindst 4 spillere (eligibleGuessers>=3, se
-    // collectAboutCandidates i game.js — kun forfatteren er udelukket, så
-    // der skal være nok distraktor-diversitet). De sædvanlige 3 test-bots
-    // er ikke nok, så et 4. medlem tilføjes KUN til denne dedikerede test.
-    state.members.push({ id: store.uid(), name: 'TestBot Dagny', isBot: true });
-    seedPersonalLayer(state);
-    const players4 = state.members.map(m => m.id);
-    state.game.players = players4;
     state.game.round = 0;
     state.game.usedOnceTypes = [];
     state.game.roundTypeBag = ['hvemskrev'];
@@ -296,7 +300,7 @@ async function playtestBrokspillet(themeId, botNames) {
     let guard3 = 0;
     while (state.game.current && state.game.current.phase !== 'results' && guard3 < 10) {
       await sleep(REALISTIC_DELAY_MS());
-      botSubmitForRound(state, players4);
+      botSubmitForRound(state, players5);
       guard3++;
     }
     assert(guard3 < 10, `'hvemskrev'-runden nåede aldrig 'results'-fasen inden for ${guard3} forsøg`);
