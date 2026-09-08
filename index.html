@@ -2041,23 +2041,29 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
     ` : ''}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
       <div class="onboard-card" style="padding:14px;">
-        <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Hvor længe</label>
+        <!-- Rettet (Martins fund): "Hvor længe" + "udløb"-sprog var en
+             forkert kategori for hvad dette rent faktisk styrer. INGEN af
+             de to rum-typer udløber eller lukker automatisk — begge lever
+             til nogen manuelt trykker "Luk" (se autoSettleIfDue/
+             checkSilenceNudge i api/_lib/store.js, som er de eneste
+             steder dailyRhythm bruges: streaks, den daglige gratis-
+             lodtrækning, "Dag X"-tælleren og 24t-stille-påmindelsen —
+             REGNSKABET/puljen tømmes ALDRIG automatisk, uanset dette valg,
+             kun ved en bevidst "Gør op"). Så "hvor længe kører den" var
+             simpelthen det forkerte spørgsmål — begge varianter kører
+             lige længe, valget er om de daglige ekstra-funktioner er
+             tændt. Omdøbt til "Daglige funktioner" for at spørge om DET,
+             i stedet for at antyde en levetidsforskel der ikke findes. -->
+        <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Daglige funktioner</label>
         <div class="app-pick-row wrap-pick-row" id="rhythmPickRow" style="margin:8px 0 6px; gap:6px;">
-          <!-- Default er ALTID "Enkelt Event", uanset skin.dailyRhythm
-               (Martins rettelse: "Løbende Kasse" var forvirrende som
-               forvalg — en enkelt, afgrænset gang er nemmere at forstå og
-               committe sig til end en potentielt uendelig kasse). Selve
-               skin.dailyRhythm-feltet bruges stadig andre steder (fx som
-               "Opret selv"s base-værdi), kun selve TRIN 3-forvalget er
-               hardkodet her. -->
           <div class="onboard-pick toggle-pick app-pick selected" data-daily-rhythm="0" style="background:var(--sea); color:#fff; padding:10px 6px;">
-            <div class="app-pick-label" style="font-size:11px;">Enkelt Event</div>
+            <div class="app-pick-label" style="font-size:11px;">Fra</div>
           </div>
           <div class="onboard-pick toggle-pick app-pick" data-daily-rhythm="1" style="background:var(--sea); color:#fff; padding:10px 6px;">
-            <div class="app-pick-label" style="font-size:11px;">Løbende Kasse</div>
+            <div class="app-pick-label" style="font-size:11px;">Til</div>
           </div>
         </div>
-        <p class="hint" id="rhythmSubtext" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.58);">For denne ene gang — ingen daglig nulstilling. I lukker den selv når I er færdige, med én samlet kåring.</p>
+        <p class="hint" id="rhythmSubtext" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.58);">Uden: bare ét samlet regnskab — I lukker den selv når I er færdige, med én samlet kåring.</p>
       </div>
       <div class="onboard-card" style="padding:14px; margin-top:0;">
         <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Adgang</label>
@@ -2100,10 +2106,11 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
         if(id === 'rhythmPickRow'){
           const isDaily = el.dataset.dailyRhythm === '1';
           const subtext = document.getElementById('rhythmSubtext');
-          // "Intet udløb" gentaget eksplicit for begge (Martins rettelse) —
-          // forskellen er IKKE om den slutter automatisk (det gør ingen af
-          // dem), kun om den nulstiller hver nat undervejs eller ej.
-          if(subtext) subtext.textContent = isDaily ? 'Intet udløb — kører til I selv lukker den. Nulstiller hver nat kl. 03:00, klar til en ny dag.' : 'For denne ene gang — ingen daglig nulstilling. I lukker den selv når I er færdige, med én samlet kåring.';
+          // Navngiver eksplicit HVAD der nulstiller hver nat (streaks,
+          // gratis-lodtrækning, dag-tælleren) — IKKE selve regnskabet,
+          // som først tømmes ved en bevidst "Gør op"/lukning, uanset dette
+          // valg. Det var netop uklarheden Martin påpegede.
+          if(subtext) subtext.textContent = isDaily ? 'Til: tilføjer streaks (dage uden brok), en daglig gratis-vinder-lodtrækning og en "Dag X"-tæller — det er DEM der nulstiller hver nat kl. 03, ikke selve regnskabet.' : 'Uden: bare ét samlet regnskab — I lukker den selv når I er færdige, med én samlet kåring.';
         }
       };
     });
