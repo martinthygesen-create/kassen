@@ -248,22 +248,23 @@ function resolveHvemskrev(state, cur) {
   cur.readyIds = [];
 }
 
-// "Udsagn" — strukturelt tættest på kendskab (kun forfatteren kender
-// allerede svaret, ingen separat target-reveal der halverer usikkerheden),
-// samme fulde forfatterbonus-model. Se collectSecretCandidates/
-// pickSecretCandidate i _lib/game.js for hvorfor udsagnet ALDRIG kan
-// genbruges (i modsætning til kendskab/hvemskrev's per-spil "brugt"-liste,
-// er dette permanent — det er en engangsafsløring).
+// "Udsagn" — INGEN forfatterbonus (Opus-audit-fund, rettet efter bygning):
+// kendskab/hvemskrevs forfatterbonus belønner en SKRIVE-færdighed (at
+// beskrive en anden genkendeligt, eller skrive i en genkendelig egen
+// stemme) udøvet I DEN RUNDE. Her er forfatteren selv emnet, teksten blev
+// skrevet uger forinden, og "skriv noget FÅ kender" + "få point for at
+// blive GENKENDT" modsiger hinanden lige så snart nogen lægger mærke til
+// det. Forfatteren udøver ingen færdighed i selve gætterunden — kun
+// gætterne gør. Se collectSecretCandidates/pickSecretCandidate i
+// _lib/game.js for hvorfor udsagnet ALDRIG kan genbruges (permanent
+// engangsafsløring, i modsætning til kendskab/hvemskrevs per-spil
+// "brugt"-liste).
 function resolveUdsagn(state, cur) {
   const correctGuessers = Object.keys(cur.guesses || {}).filter(id => cur.guesses[id] === cur.correctIndex);
-  const totalGuessers = Object.keys(cur.guesses || {}).length;
   correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
-  const authorPoints = totalGuessers ? Math.round(ROUND_POINTS * correctGuessers.length / totalGuessers) : 0;
-  if (authorPoints && cur.authorId) state.game.scores[cur.authorId] = (state.game.scores[cur.authorId] || 0) + authorPoints;
   cur.phase = 'results';
   stampPhase(cur);
   cur.correctGuessers = correctGuessers;
-  cur.authorPoints = authorPoints;
   cur.readyIds = [];
 }
 

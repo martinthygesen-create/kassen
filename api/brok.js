@@ -133,7 +133,14 @@ module.exports = async (req, res) => {
         if (!fresh.members.find(m => m.id === actorId)) throw new ApiError(400, 'ukendt medlem');
         if (!fresh.personalLayer) fresh.personalLayer = { entries: {} };
         const prevEntry = fresh.personalLayer.entries[actorId];
-        if (prevEntry && prevEntry.secret) throw new ApiError(409, 'kan ikke ændres når det først er gemt');
+        // Låst KUN mens det stadig er ubrugt (usedAt er null) — Martins
+        // krav var at et GEMT udsagn ikke må kunne ÆNDRES, ikke at man
+        // aldrig må skrive et nyt. Når det gamle først er trukket i en
+        // runde er det allerede afsløret for hele rummet, der er intet
+        // tilbage at beskytte — og uden denne åbning ville rundetypen dø
+        // permanent efter (antal spillere − 2) gange nogensinde (Opus-
+        // audit-fund: målt til præcis dette i simulering).
+        if (prevEntry && prevEntry.secret && !prevEntry.secret.usedAt) throw new ApiError(409, 'kan ikke ændres når det først er gemt');
         const cleanText = (text || '').toString().trim().slice(0, 140);
         if (!cleanText) throw new ApiError(400, 'skriv et udsagn');
         fresh.personalLayer.entries[actorId] = { ...prevEntry, secret: { text: cleanText, submittedAt: Date.now(), usedAt: null } };

@@ -1,5 +1,5 @@
 const { mutateState, redactStateFor, ApiError } = require('./_lib/store');
-const { beginRound, buildOptions, pickDecoyBroks, pickQuiplashDecoys, computeAssignedTargets, mergeAboutEntries, KENDSKAB_THEMES } = require('./_lib/game');
+const { beginRound, buildOptions, pickDecoyBroks, pickQuiplashDecoys, computeAssignedTargets, mergeAboutEntries, KENDSKAB_THEMES, hasAboutEntry } = require('./_lib/game');
 const { pushToMembers } = require('./_lib/push');
 const {
   MIN_COMPLAIN_AGE_MS,
@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
         // venneark via ☰-menuen er stadig åbent — bidraget er ikke tabt,
         // bare gemt til et senere, større spil.
         const missingLayer = (KENDSKAB_THEMES.includes(state.themeId) && players.length >= 4)
-          ? state.members.filter(m => players.includes(m.id) && !m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]))
+          ? state.members.filter(m => players.includes(m.id) && !m.isBot && !hasAboutEntry(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]))
           : [];
         if (missingLayer.length) {
           const nonBotPlayerIds = state.members.filter(m => players.includes(m.id) && !m.isBot).map(m => m.id);

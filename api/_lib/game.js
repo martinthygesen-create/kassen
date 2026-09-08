@@ -1587,6 +1587,16 @@ const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok
 // — for lidt indsamlet indhold, og spørgsmålet giver ikke mening endnu.
 const KENDSKAB_THEMES = ['kende_venner', 'kende_kolleger'];
 const KENDSKAB_FAMILY = ['kendskab', 'hvemskrev'];
+// Bredere end KENDSKAB_FAMILY — bruges UDELUKKENDE til at sprede visuelt/
+// mekanisk ens "gæt hvem"-runder fra hinanden (se de-klyngningen i
+// beginRound nedenfor), ALDRIG til kvote/vægtning (det styrer
+// KENDSKAB_FAMILY fortsat alene, uændret). 'udsagn' er identisk opbygget
+// for spilleren (anonym tekst → vælg ét navn blandt 4) selvom den trækker
+// fra en helt anden kilde (personalLayer.entries[*].secret, ikke .about) —
+// Opus-audit (efter 'udsagn' blev bygget) målte at to sådanne runder i
+// træk i Vennekassen steg fra 56-88% (afhængig af spillængde) uden denne
+// spredning.
+const GUESS_WHO_FAMILY = ['kendskab', 'hvemskrev', 'udsagn'];
 const MIN_ABOUT_FOR_KENDSKAB = 3;
 // Minimum antal "om andre"-udsagn pr. deltager (Martins fund: "måske skal
 // alle lave et minimum antal") — håndhæves server-side i api/brok.js's
@@ -1636,6 +1646,19 @@ function computeAssignedTargets(playerIds) {
 // delene mister data (se den tidligere fejl: action:'personal' overskrev før
 // hele fresh.personalLayer.entries[actorId], hvilket ville have slettet
 // runde 0's tildelte udsagn i det øjeblik nogen tilføjede ét mere selv).
+// Rettet (Opus-audit, quizmaster-fund efter bygning af 'udsagn'): en
+// personalLayer-entry kan nu eksistere med KUN et 'secret'-felt (se
+// action:'secret' i api/brok.js) og INTET 'about' — flere steder tjekkede
+// tidligere bare om entryen fandtes overhovedet, som fejlagtigt talte det
+// som et udfyldt venneark. Målt konsekvens: 5 spillere der kun havde gemt
+// et udsagn fik runde 0 til at blive sprunget helt over i Vennekassen, og
+// "5/5 udfyldt" blev vist når 0 reelt havde skrevet noget om nogen. Denne
+// ene funktion er nu den ENESTE kilde til "har personen et rigtigt
+// venneark" — server (api/game.js, api/_lib/store.js) og klient
+// (index.html) skal begge bruge den, aldrig `!!entries[id]` alene.
+function hasAboutEntry(entry) {
+  return !!(entry && entry.about && entry.about.length);
+}
 function mergeAboutEntries(existingAbout, incoming) {
   const merged = (existingAbout || []).slice();
   (incoming || []).forEach(item => {
@@ -1864,7 +1887,7 @@ function beginRound(state, players) {
     // Udvidet til FAMILIE-niveau (ikke kun eksakt samme type) — kendskab
     // og hvemskrev ligner hinanden nok (begge "gæt om et personligt
     // udsagn") at de heller ikke bør ligge lige efter hinanden.
-    const sameFamily = (a, b) => a === b || (KENDSKAB_FAMILY.includes(a) && KENDSKAB_FAMILY.includes(b));
+    const sameFamily = (a, b) => a === b || (GUESS_WHO_FAMILY.includes(a) && GUESS_WHO_FAMILY.includes(b));
     if (lastType && bag.length > 1 && sameFamily(bag[bag.length - 1], lastType)) {
       const swapIdx = bag.findIndex((t, idx) => idx !== bag.length - 1 && !sameFamily(t, lastType));
       if (swapIdx !== -1) {
@@ -1885,6 +1908,28 @@ function beginRound(state, players) {
       const tmp = bag[triviaIdx];
       bag[triviaIdx] = bag[targetIdx];
       bag[targetIdx] = tmp;
+    }
+    // De-klyngning AF SELVE POSEN (Opus-audit-fund) — sameFamily-swappet
+    // ovenfor dækker kun GRÆNSEN til forrige pose, ikke to nabo-pladser
+    // midt i denne pose. Et rent forlæns gennemløb: hver gang to
+    // nabo-pladser begge er i GUESS_WHO_FAMILY, byttes den ENE med den
+    // første senere plads der hverken selv er family ELLER ville skabe en
+    // NY nabo-kollision der (tjekker begge dens naboer) — undgår at bytte
+    // ét sammenstød til et andet. Ingen garanti for et helt klyngefrit
+    // resultat (kan findes indlejrede tilfælde uden nogen sikker swap), men
+    // Opus' prototype af netop denne algoritme målte "to i træk"-andelen
+    // ned fra 87,8% til 66,0% ved 12 runder (5-runders spil har for få
+    // pladser til at klynger overhovedet er hyppige).
+    for (let i = 0; i < bag.length - 1; i++) {
+      if (!GUESS_WHO_FAMILY.includes(bag[i]) || !GUESS_WHO_FAMILY.includes(bag[i + 1])) continue;
+      const swapIdx = bag.findIndex((t, idx) => idx > i + 1 && !GUESS_WHO_FAMILY.includes(t)
+        && !(idx > 0 && GUESS_WHO_FAMILY.includes(bag[idx - 1]))
+        && !(idx < bag.length - 1 && GUESS_WHO_FAMILY.includes(bag[idx + 1])));
+      if (swapIdx !== -1) {
+        const tmp = bag[i + 1];
+        bag[i + 1] = bag[swapIdx];
+        bag[swapIdx] = tmp;
+      }
     }
     state.game.roundTypeBag = bag;
   }
@@ -2068,4 +2113,4 @@ function beginRound(state, players) {
   }
 }
 
-module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER, computeAssignedTargets, mergeAboutEntries, isRoundTypeEligible, KENDSKAB_FAMILY, MIN_SECRETS_FOR_ROUND };
+module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER, computeAssignedTargets, mergeAboutEntries, isRoundTypeEligible, KENDSKAB_FAMILY, MIN_SECRETS_FOR_ROUND, hasAboutEntry };

@@ -12,7 +12,7 @@ const { redactComplainerFor, CONTENT_BY_THEME: COMPLAINER_CONTENT_BY_THEME } = r
 // selv kræver store.js (kun complainerFlow.js/mrbrokFlow.js gør, og de er
 // separate filer fra selve indholds-filerne).
 const { CONTENT_BY_THEME: MRBROK_CONTENT_BY_THEME } = require('./mrbrok');
-const { CONTENT_BY_THEME: GAME_CONTENT_BY_THEME } = require('./game');
+const { CONTENT_BY_THEME: GAME_CONTENT_BY_THEME, hasAboutEntry } = require('./game');
 
 // Fejl med en HTTP-statuskode knyttet til sig — kastes inde fra en
 // mutateState-mutator for at afbryde MED DET SAMME (ingen retry, en
@@ -587,7 +587,12 @@ function redactPersonalLayerFor(personalLayer, viewerId) {
   if (!personalLayer) return personalLayer;
   const entries = personalLayer.entries || {};
   const mine = viewerId && entries[viewerId] ? { [viewerId]: entries[viewerId] } : {};
-  return { entries: mine, submittedCount: Object.keys(entries).length };
+  // Rettet (Opus-audit): en entry kan nu eksistere med KUN et 'secret'-felt
+  // (se action:'secret' i api/brok.js) — talte tidligere med i
+  // submittedCount, selvom personen intet har skrevet om nogen andre. Se
+  // hasAboutEntry i _lib/game.js.
+  const submittedCount = Object.values(entries).filter(hasAboutEntry).length;
+  return { entries: mine, submittedCount };
 }
 
 function redactStateFor(state, viewerId) {

@@ -60,7 +60,7 @@ async function setupRoom(memberCount, themeId) {
 
 async function testLockedAfterSave() {
   log('--- 1. Gemt udsagn er permanent låst ---');
-  const { roomId, memberIds } = await setupRoom(4, 'bod');
+  const { roomId, memberIds } = await setupRoom(4, 'bode');
   const r = await call(brokHandler, { action: 'secret', roomId, actorId: memberIds[0], text: 'Jeg har aldrig set den mest kendte film i mit hjem' });
   assert(r.state.personalLayer.entries[memberIds[0]].secret.text === 'Jeg har aldrig set den mest kendte film i mit hjem', 'skal gemme teksten uredigeret');
   const err = await callExpectError(brokHandler, { action: 'secret', roomId, actorId: memberIds[0], text: 'Et forsøg på at ændre det' });
@@ -71,12 +71,12 @@ async function testLockedAfterSave() {
 }
 
 async function testGenericNotThemeGated() {
-  log('--- 2. Generisk: virker i et IKKE-Vennekassen-tema (bod), ikke gated af KENDSKAB_THEMES ---');
-  const { roomId, memberIds } = await setupRoom(5, 'bod');
+  log('--- 2. Generisk: virker i et IKKE-Vennekassen-tema (bode), ikke gated af KENDSKAB_THEMES ---');
+  const { roomId, memberIds } = await setupRoom(5, 'bode');
   for (let i = 0; i < 4; i++) {
     await call(brokHandler, { action: 'secret', roomId, actorId: memberIds[i], text: 'Hemmelig-agtigt udsagn nr ' + i });
   }
-  // Kør mange runder og se om 'udsagn' nogensinde trækkes i et 'bod'-rum
+  // Kør mange runder og se om 'udsagn' nogensinde trækkes i et 'bode'-rum
   let sawUdsagn = false;
   let res = await call(gameHandler, { action: 'start', roomId, actorId: memberIds[0], playerIds: memberIds, totalRounds: 12 });
   let guard = 0;
@@ -109,7 +109,7 @@ async function testGenericNotThemeGated() {
     if (!res.state.game.active) break;
   }
   assert(sawUdsagn, 'udsagn-rundetypen skal kunne trækkes i et almindeligt (ikke-Vennekassen) tema, blev aldrig trukket over 12 runder');
-  log('✅ "udsagn" trukket i et bod-rum — bekræftet generisk, ikke temabundet');
+  log('✅ "udsagn" trukket i et bode-rum — bekræftet generisk, ikke temabundet');
 }
 
 async function testCoherenceAndPermanentBurn() {
@@ -201,6 +201,16 @@ async function testCoherenceAndPermanentBurn() {
   }
   assert(!sawBurnedAgain, 'det allerede-afslørede udsagn må ALDRIG blive trukket igen, heller ikke i et nyt spil i samme rum');
   log('✅ Permanent engangsbrug bekræftet på tværs af to separate spil i samme rum');
+
+  // Genopfyldning (Opus-audit-fund, rettet): den der blev trukket kan nu
+  // skrive et NYT udsagn, siden det gamle allerede er afsløret. Det skal
+  // både være TILLADT (intet 409) og adskilt fra det gamle (ikke bare en
+  // stille no-op).
+  const newText = 'Helt nyt udsagn efter det gamle blev brugt — ' + Math.random().toString(36).slice(2, 8);
+  const afterRewrite = await call(brokHandler, { action: 'secret', roomId, actorId: drawnFor, text: newText });
+  assert(afterRewrite.state.personalLayer.entries[drawnFor].secret.text === newText, 'skal kunne skrive et NYT udsagn efter det gamle er brugt');
+  assert(!afterRewrite.state.personalLayer.entries[drawnFor].secret.usedAt, 'det nye udsagn skal starte ubrugt (usedAt null)');
+  log('✅ Genopfyldning: kan skrive et nyt udsagn efter det gamle er blevet trukket/afsløret');
 }
 
 async function testRedactionHidesOthersSecrets() {

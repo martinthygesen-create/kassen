@@ -1524,6 +1524,7 @@ const THEME_COPY = {
     sheetPlaceholder: 'F.eks. "for at bære al bagagen..." (påkrævet)', listLabel: 'Roselisten',
     emptyTitle: 'Ingen roser endnu', emptyTitleList: 'Ingen roser registreret endnu',
     emptyBodyList: 'Så snart nogen roses, vises regnskabet her.',
+    udsagnHint: 'Noget få ved om en i rummet — hvem?',
   },
   drik: {
     feedLabel: 'Runde-feed',
@@ -1535,6 +1536,7 @@ const THEME_COPY = {
     sheetPlaceholder: 'F.eks. "glemte at det var min tur..." (påkrævet)', listLabel: 'Rundelisten',
     emptyTitle: 'Ingen rundefejl endnu', emptyTitleList: 'Ingen rundefejl registreret endnu',
     emptyBodyList: 'Så snart nogen glemmer en runde, vises regnskabet her.',
+    udsagnHint: 'Én af jer har skrevet det her — hvem?',
   },
   konkurrence: {
     feedLabel: 'Sejrs-feed',
@@ -1548,6 +1550,7 @@ const THEME_COPY = {
     sheetPlaceholder: 'F.eks. "vandt kortspillet..." (påkrævet)', listLabel: 'Sejrslisten',
     emptyTitle: 'Ingen sejre endnu', emptyTitleList: 'Ingen sejre registreret endnu',
     emptyBodyList: 'Så snart nogen vinder, vises regnskabet her.',
+    udsagnHint: 'Hvem gemmer på denne?',
   },
   logn: {
     feedLabel: 'Løgne-feed',
@@ -1559,6 +1562,12 @@ const THEME_COPY = {
     sheetPlaceholder: 'F.eks. "påstod at have mødt en kendis..." (påkrævet)', listLabel: 'Løgnelisten',
     emptyTitle: 'Ingen løgne endnu', emptyTitleList: 'Ingen løgne registreret endnu',
     emptyBodyList: 'Så snart en løgn afsløres, vises regnskabet her.',
+    // Rettet (Opus-audit): Løgnerkassens hele identitet er OPDIGTET indhold
+    // — et generisk "et udsagn få kender om dig" ville modsige selve
+    // temaets præmis (er DETTE mon en løgn eller ægte?). Vendt til temaets
+    // egen joke i stedet for at udelukke rundetypen: udsagnet ER ægte,
+    // netop fordi alt andet i Løgnerkassen typisk ikke er.
+    udsagnHint: 'Ét udsagn her er faktisk SANDT — hvem er det?',
   },
   hjaelper: {
     // Ændret fra "Noter en fejl" til påstands-sprog (produktejer-feedback,
@@ -1630,6 +1639,14 @@ const KENDSKAB_THEMES_CLIENT = ['kende_venner', 'kende_kolleger'];
 function isKendekasse(){ return KENDSKAB_THEMES_CLIENT.includes(state && state.themeId); }
 function myPersonalLayerEntry(){
   return (profile && state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[profile.memberId]) || null;
+}
+// Rettet (Opus-audit): en entry kan nu eksistere med KUN et 'secret'-felt
+// (se action:'secret' i api/brok.js) og INTET 'about' — spejler
+// hasAboutEntry i api/_lib/game.js. Brug DENNE, ikke myPersonalLayerEntry()
+// alene, alle steder der reelt spørger "har personen udfyldt sit venneark".
+function hasFilledPersonalLayer(){
+  const entry = myPersonalLayerEntry();
+  return !!(entry && entry.about && entry.about.length);
 }
 // "Udsagn" (se action:'secret' i api/brok.js) — GENERISK, ikke bundet til
 // isKendekasse()/KENDSKAB_THEMES_CLIENT (i modsætning til venneark ovenfor),
@@ -2504,7 +2521,7 @@ const BOT_FILLER_WORDS = ['regnvejr', 'morgenmad', 'myggestik', 'trafikkø', 'sn
 const BOT_FILLER_STATEMENTS = ['Jeg har prøvet det tre gange i denne uge', 'Det skete faktisk i går aftes', 'Alle andre vidste det, bare ikke mig'];
 const BOT_FILLER_COMPLIMENTS = ['Du er altid god til at få humøret op igen', 'Du lytter bedre end de fleste jeg kender', 'Du finder altid en løsning, uanset hvad'];
 const BOT_FILLER_ABOUT = ['Er svær at overraske, uanset hvad man finder på', 'Har altid en plan B klar, selv når ingen spurgte', 'Kan snakke sig ud af næsten alt'];
-const BOT_FILLER_SECRET = ['Har aldrig kunnet lide den mest oplagte snack i skabet', 'Øvede sig i hemmelighed på noget helt ubrugeligt engang', 'Har et sted de altid går hen for at være helt alene'];
+const BOT_FILLER_SECRET = ['Har aldrig kunnet lide den mest oplagte snack i skabet', 'Øvede sig i årevis på noget helt ubrugeligt engang', 'Har et sted de altid går hen for at være helt alene'];
 function pickBotFiller(list){ return list[Math.floor(Math.random()*list.length)]; }
 function isBotMember(id){ const mm = state.members.find(m=>m.id===id); return !!(mm && mm.isBot); }
 
@@ -2524,7 +2541,11 @@ async function ensureTestBots(){
   // action:'personal' som et rigtigt menneske ville sende, kun med
   // opdigtet tekst, og kun én gang pr. bot (ikke ved hvert nyt testspil).
   if(isKendekasse()){
-    const botsNeedingEntry = state.members.filter(m=>m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]));
+    // Rettet (Opus-audit): tjekkede tidligere kun om entryen fandtes
+    // overhovedet — en bot med et 'secret' men intet 'about' ville aldrig
+    // få sit venneark seedet, selvom den nye action:'secret' i teorien kan
+    // ramme bots (via botsNeedingSecret nedenfor) FØR denne kørsel.
+    const botsNeedingEntry = state.members.filter(m=>m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id] && state.personalLayer.entries[m.id].about && state.personalLayer.entries[m.id].about.length));
     for(const bot of botsNeedingEntry){
       try{
         // Frit målvalg (Martins rettelse) — serveren tildeler ikke længere
@@ -2904,8 +2925,8 @@ function openAppMenuSheet(){
       <div class="app-pick-scroll-hint right">›</div>
     </div>
     <div class="menu-row-list">
-      ${isKendekasse() ? `<div class="menu-row" id="menuPersonalLayerBtn"><div class="menu-row-icon">🧑‍🤝‍🧑</div><div class="menu-row-label">Udfyld dit venneark</div><span class="menu-row-chevron">${myPersonalLayerEntry() ? '✅' : ((state.personalLayer && state.personalLayer.submittedCount) || 0) + '/' + state.members.filter(m=>!m.isBot).length}</span></div>` : ''}
-      <div class="menu-row" id="menuSecretBtn"><div class="menu-row-icon">🤫</div><div class="menu-row-label">Et udsagn få ved om dig</div><span class="menu-row-chevron">${mySecretEntry() ? '✅' : '›'}</span></div>
+      ${isKendekasse() ? `<div class="menu-row" id="menuPersonalLayerBtn"><div class="menu-row-icon">🧑‍🤝‍🧑</div><div class="menu-row-label">Udfyld dit venneark</div><span class="menu-row-chevron">${hasFilledPersonalLayer() ? '✅' : ((state.personalLayer && state.personalLayer.submittedCount) || 0) + '/' + state.members.filter(m=>!m.isBot).length}</span></div>` : ''}
+      ${state.gameEnabled ? `<div class="menu-row" id="menuSecretBtn"><div class="menu-row-icon">🤫</div><div class="menu-row-label">Et udsagn få ved om dig</div><span class="menu-row-chevron">${(mySecretEntry() && !mySecretEntry().usedAt) ? '✅' : '›'}</span></div>` : ''}
       ${showPushBell ? `<div class="menu-row" id="menuPushBtn"><div class="menu-row-icon">🔔</div><div class="menu-row-label">Slå push til</div><span class="menu-row-chevron">›</span></div>` : ''}
       <div class="menu-row" id="menuShareBtn"><div class="menu-row-icon">📤</div><div class="menu-row-label">Del link</div><span class="menu-row-chevron">›</span></div>
       <div class="menu-row" id="menuLeaveBtn"><div class="menu-row-icon">🚪</div><div class="menu-row-label">Skift/forlad rum</div><span class="menu-row-chevron">›</span></div>
@@ -4341,6 +4362,12 @@ function hvemskrevHtml(g, cur){
 // Bevidst IKKE ordet "hemmelighed" nogen steder i teksten (Martins ønske).
 function udsagnHtml(g, cur){
   const isSpectator = profile && profile.memberId === cur.authorId;
+  // Tema-skinnet hint (Opus-audit-fund): eneste rundetype der ellers var
+  // hardcodet uden tema-tekst, mens alt andet indhold går via THEME_COPY/
+  // CONTENT_BY_THEME. Fallback dækker temaer uden en eksplicit override
+  // (kende_venner/kende_kolleger/venne/brok/sladre/bode — vurderet OK/
+  // neutral pasform i auditen).
+  const udsagnHint = themeCopy().udsagnHint || 'Et udsagn få kender om en i rummet:';
   if(cur.phase === 'guess'){
     const eligible = g.players.filter(id=>id!==cur.authorId).length;
     const guessedCount = Object.keys(cur.guesses||{}).length;
@@ -4359,7 +4386,7 @@ function udsagnHtml(g, cur){
     return `
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🤫 Hvis udsagn er dette?</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card" id="gameCard">
-        <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.6);">Et udsagn få kender om en i rummet:</p>
+        <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.6);">${escapeHtml(udsagnHint)}</p>
         <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;">"${escapeHtml(cur.text)}"</p>
       </div>
       ${isSpectator ? `<div class="empty-state"><span class="emoji">🤐</span><b>Du kender allerede svaret</b>Vent mens de andre gætter.</div>` : opts}
@@ -4376,7 +4403,6 @@ function udsagnHtml(g, cur){
       <p class="hint" style="color:rgba(255,247,232,0.6);">"${escapeHtml(cur.text)}" — det var:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);">✅ ${escapeHtml(author?author.name:'?')}</p>
       <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt' : 'Ingen gættede rigtigt denne gang.'}</p>
-      ${cur.authorPoints ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">🤫 ${escapeHtml(author?author.name:'?')} fik ${cur.authorPoints} point for et genkendeligt udsagn</p>` : ''}
     </div>
     ${gameReadyHtml(g, cur)}
   `;
@@ -6948,7 +6974,7 @@ function renderFeed(main){
   // et tal om RESTEN af gruppen i en besked der handler om DIN EGEN
   // manglende udfyldelse, læses let som kritik af de andre i stedet for en
   // personlig prompt. Ingen social tælling her, kun hvad DU selv mangler.
-  const personalLayerBanner = (isKendekasse() && !myPersonalLayerEntry()) ? `<div class="feed-item" id="personalLayerReminder" style="border-style:dashed; border-color:rgba(120,190,255,0.5); background:rgba(120,190,255,0.1); align-items:center; cursor:pointer;">
+  const personalLayerBanner = (isKendekasse() && !hasFilledPersonalLayer()) ? `<div class="feed-item" id="personalLayerReminder" style="border-style:dashed; border-color:rgba(120,190,255,0.5); background:rgba(120,190,255,0.1); align-items:center; cursor:pointer;">
     <div class="avatar" style="background:linear-gradient(160deg,#7ec8ff,#4a90d9); color:var(--ink);">🧑‍🤝‍🧑</div>
     <div class="feed-body"><div class="feed-name">Udfyld dit venneark</div><div class="feed-msg">Skriv om dine venner — bruges i Vennespillets runder</div></div>
   </div>` : '';
@@ -7372,22 +7398,29 @@ function openPersonalLayerSheet(){
 // ingen redigerings-UI, kun visning, se action:'secret' i api/brok.js.
 function openSecretSheet(){
   const existing = mySecretEntry();
-  if(existing){
+  // Rettet (Opus-audit): et BRUGT udsagn (allerede vist/afsløret i en
+  // runde, se usedAt) er ikke længere noget at beskytte — man kan skrive
+  // et nyt (se action:'secret' i api/brok.js, kun låst mens usedAt er
+  // null). Uden dette ville rundetypen dø permanent i hvert rum efter et
+  // fåtal runder (Opus-audit: målt til (antal bidrag − 2) nogensinde).
+  if(existing && !existing.usedAt){
     openSheet(`
       <h2>🤫 Dit udsagn</h2>
       <div class="onboard-card" style="padding:12px; opacity:.75;">
         <p class="hint" style="margin:0;">${escapeHtml(existing.text)}</p>
       </div>
-      <p class="hint" style="margin:10px 0 0;">Gemt — kan ikke ændres.</p>
+      <p class="hint" style="margin:10px 0 0;">Gemt — kan ikke ændres, og heller ikke slettes af værten. Det forbliver hemmeligt indtil det bliver trukket i et spil.</p>
       <button class="sheet-btn ghost" id="secretCloseBtn" style="margin-top:14px;">Luk</button>
     `, ()=>{
       document.getElementById('secretCloseBtn').onclick = closeSheet;
     });
     return;
   }
+  const usedBefore = existing && existing.usedAt;
   openSheet(`
-    <h2>🤫 Et udsagn få ved om dig</h2>
-    <p class="hint">Skriv ét kort, sandt udsagn kun få kender om dig. Det bliver vist anonymt i et senere spil, og resten skal gætte hvem det handler om — kan ikke ændres, når du har gemt det.</p>
+    <h2>🤫 ${usedBefore ? 'Skriv et nyt udsagn' : 'Et udsagn få ved om dig'}</h2>
+    ${usedBefore ? `<p class="hint">Dit forrige udsagn ("${escapeHtml(existing.text)}") er allerede blevet vist i et spil — her er et nyt.</p>` : ''}
+    <p class="hint">Skriv ét kort, sandt udsagn kun få kender om dig. Det bliver vist anonymt i et senere spil, og resten skal gætte hvem det handler om — kan ikke ændres eller slettes (heller ikke af værten), når du har gemt det.</p>
     <textarea id="secretInput" rows="2" maxlength="140" placeholder="Skriv noget kort og sandt..."></textarea>
     <button class="sheet-btn primary" id="secretSubmitBtn" style="margin-top:14px;" disabled>Gem</button>
     <button class="sheet-btn ghost" id="secretCancelBtn">Luk</button>
