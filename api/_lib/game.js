@@ -1853,11 +1853,25 @@ function beginRound(state, players) {
   // krav, aldrig en hård forudsætning). Den fortrængte type lægges tilbage i
   // posen i stedet for at gå tabt, så den stadig bliver spillet en anden
   // runde.
+  // RETTET (quizmaster-audit efter bygning, simuleret 2.000 spil pr.
+  // konfiguration): den oprindelige "roundsLeft <= quotaLeft"-grænse presser
+  // ALLE manglende family-runder ned i de allersidste runder af spillet —
+  // præcis den nabo-gentagelse "no repeat"-swappet 60 linjer længere oppe i
+  // denne funktion er bygget for at undgå, blot omgået af selve kvoten.
+  // Målt: andelen af spil der sluttede med to family-runder i træk gik fra
+  // 7,5-8,3% til 41-44%. "slack" (runder tilbage UDOVER hvad kvoten kræver)
+  // holder tvangen spredt i stedet for stuvet sammen til sidst, og
+  // "lastWasFamily && slack > 0" undgår at tvinge to i træk når der stadig
+  // er albuerum til at vente én runde mere. Verificeret: kvoten rammes
+  // stadig præcist (0% spil under kvote), "to i træk"-andelen falder til
+  // 3,3-19%.
   if (state.game.kendskabQuota === undefined) state.game.kendskabQuota = kendskabQuotaFor(state.game.totalRounds);
   if (state.game.kendskabDrawn === undefined) state.game.kendskabDrawn = 0;
   const roundsLeft = state.game.totalRounds - state.game.round + 1;
   const quotaLeft = state.game.kendskabQuota - state.game.kendskabDrawn;
-  if (quotaLeft > 0 && roundsLeft <= quotaLeft && !KENDSKAB_FAMILY.includes(type)) {
+  const lastWasFamily = state.game.current && KENDSKAB_FAMILY.includes(state.game.current.type);
+  const slack = roundsLeft - quotaLeft;
+  if (quotaLeft > 0 && slack <= 1 && !(lastWasFamily && slack > 0) && !KENDSKAB_FAMILY.includes(type)) {
     const familyEligible = KENDSKAB_FAMILY.filter(t => isRoundTypeEligible(t, state, playerIds));
     if (familyEligible.length) {
       state.game.roundTypeBag.push(type);

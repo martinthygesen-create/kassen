@@ -60,7 +60,16 @@ module.exports = async (req, res) => {
         // som allerede seedes af ensureTestBots før spilstart) springes
         // stille over. Blokerer ALDRIG spilstart permanent — se nødbremsen
         // i gameFlow.js's forceResolveCurrentPhase.
-        const missingLayer = KENDSKAB_THEMES.includes(state.themeId)
+        // RETTET (quizmaster-audit efter bygning): kendskab kræver 4+
+        // spillere i alt, hvemskrev 5+ (se eligibleGuessers-kravene i
+        // collectAboutCandidates) — ved 3 eller færre kan INGEN af de to
+        // nogensinde trækkes, uanset hvad der tildeles. Uden dette krav blev
+        // alle igennem en op til 87 sekunder lang skriveformular for
+        // indhold der beviseligt aldrig kunne bruges i det spil (værst i
+        // solo+bots: en runde-0-skærm med nul tildelte navne). Det frie
+        // venneark via ☰-menuen er stadig åbent — bidraget er ikke tabt,
+        // bare gemt til et senere, større spil.
+        const missingLayer = (KENDSKAB_THEMES.includes(state.themeId) && players.length >= 4)
           ? state.members.filter(m => players.includes(m.id) && !m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]))
           : [];
         if (missingLayer.length) {
