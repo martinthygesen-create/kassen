@@ -2204,6 +2204,14 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
       const u = new URL(location.href); u.search = '?r=' + roomId;
       history.replaceState(null,'',u.toString());
       localStorage.setItem('bk_lastRoom', roomId);
+      // Nulstilles her (Martins fund) — ellers overlevede det senest
+      // indtastede kassenavn i denne globale variabel på tværs af HELE
+      // sessionen, ikke kun "← Tilbage" inden for SAMME opret-flow (som
+      // var den tilsigtede brug, se kommentaren ved renderCreateFlowStep2).
+      // Opretter man en ny kasse senere i samme browser-session (uden
+      // reload), stod det forrige kassenavn ("Brokkekassen") stadig og
+      // prægede feltet i stedet for kun at vise pladsholderteksten.
+      createFlowDraftName = null;
       state = r.state;
       renderWhoAmI(true);
     }catch(e){ toast('Kunne ikke oprette: ' + e.message); btn.textContent = 'Opret nyt rum'; btn.disabled = false; }
