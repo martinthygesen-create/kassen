@@ -1,5 +1,5 @@
 const { mutateState, redactStateFor, ApiError } = require('./_lib/store');
-const { beginRound, buildOptions, pickDecoyBroks, pickQuiplashDecoys } = require('./_lib/game');
+const { beginRound, buildOptions, pickDecoyBroks, pickQuiplashDecoys, computeAssignedTargets, mergeAboutEntries, KENDSKAB_THEMES } = require('./_lib/game');
 const { pushToMembers } = require('./_lib/push');
 const {
   MIN_COMPLAIN_AGE_MS,
@@ -52,8 +52,27 @@ module.exports = async (req, res) => {
         const scores = {};
         players.forEach(id => (scores[id] = 0));
         state.game = { active: true, wager, players, round: 0, totalRounds, scores, current: null, startedAt: Date.now() };
-        beginRound(state, state.members.filter(m => players.includes(m.id)));
-        stampPhase(state.game.current);
+        // "Runde 0" (Martins ønske: tildelt, ikke frit valgt, for at sikre
+        // afbalanceret dækning — se computeAssignedTargets i _lib/game.js,
+        // Opus-simuleret over 13.200 spil før dette blev bygget) — kun for
+        // Vennekassens temaer, og kun de spillere der reelt IKKE allerede
+        // har et venneark-lag skal tildeles noget. Alle andre (inkl. bots,
+        // som allerede seedes af ensureTestBots før spilstart) springes
+        // stille over. Blokerer ALDRIG spilstart permanent — se nødbremsen
+        // i gameFlow.js's forceResolveCurrentPhase.
+        const missingLayer = KENDSKAB_THEMES.includes(state.themeId)
+          ? state.members.filter(m => players.includes(m.id) && !m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]))
+          : [];
+        if (missingLayer.length) {
+          const nonBotPlayerIds = state.members.filter(m => players.includes(m.id) && !m.isBot).map(m => m.id);
+          const fullAssignment = computeAssignedTargets(nonBotPlayerIds);
+          const assigned = {};
+          missingLayer.forEach(m => { assigned[m.id] = fullAssignment[m.id] || []; });
+          state.game.current = { type: 'assign', phase: 'assign', assigned, submitted: {}, phaseStartedAt: Date.now() };
+        } else {
+          beginRound(state, state.members.filter(m => players.includes(m.id)));
+          stampPhase(state.game.current);
+        }
         const starter = state.members.find(m => m.id === actorId);
         // Kun de FAKTISK VALGTE spillere skal have en "kom med!"-push — ellers
         // inviteres rummets øvrige medlemmer ind i en runde de slet ikke er
@@ -198,6 +217,33 @@ module.exports = async (req, res) => {
           cur.guesses[actorId] = payload.choiceIndex;
           const eligible2 = players.filter(id => id !== cur.authorId).length;
           if (Object.keys(cur.guesses).length >= eligible2) resolveHvemskrev(state, cur);
+        } else if (cur.type === 'assign' && cur.phase === 'assign') {
+          const targets = cur.assigned[actorId];
+          if (!targets) throw new ApiError(403, 'du er ikke en del af runde 0');
+          if (cur.submitted[actorId]) throw new ApiError(409, 'du har allerede indsendt');
+          const selfText = (payload.selfText || '').toString().trim().slice(0, 120);
+          if (!selfText) throw new ApiError(400, 'skriv mindst ét udsagn om dig selv');
+          const rawAbout = Array.isArray(payload.aboutTexts) ? payload.aboutTexts : [];
+          const seenTargets = new Set();
+          const about = [];
+          rawAbout.forEach(item => {
+            const targetId = item && item.targetId;
+            const text = ((item && item.text) || '').toString().trim().slice(0, 120);
+            if (!text || !targetId || !targets.includes(targetId) || seenTargets.has(targetId)) return;
+            seenTargets.add(targetId);
+            about.push({ targetId, text });
+          });
+          if (about.length < targets.length) throw new ApiError(400, `skriv en påstand om alle ${targets.length} tildelte`);
+          if (!state.personalLayer) state.personalLayer = { entries: {} };
+          const prevEntry = state.personalLayer.entries[actorId];
+          const mergedAbout = mergeAboutEntries(prevEntry && prevEntry.about, about);
+          state.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: selfText, about: mergedAbout };
+          cur.submitted[actorId] = true;
+          const stillPending = Object.keys(cur.assigned).filter(id => !cur.submitted[id]);
+          if (!stillPending.length) {
+            beginRound(state, state.members.filter(m => players.includes(m.id)));
+            stampPhase(state.game.current);
+          }
         } else {
           throw new ApiError(400, 'ugyldig handling lige nu');
         }

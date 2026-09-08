@@ -3100,6 +3100,9 @@ function getPendingIdsClient(cur, players){
   if(cur.type === 'hvemskrev' && cur.phase === 'guess'){
     return players.filter(id=>id!==cur.authorId).filter(id=>!(cur.guesses && cur.guesses[id] !== undefined));
   }
+  if(cur.type === 'assign' && cur.phase === 'assign'){
+    return Object.keys(cur.assigned||{}).filter(id=>!(cur.submitted && cur.submitted[id]));
+  }
   return [];
 }
 
@@ -3807,6 +3810,7 @@ function gameBodyHtml(g){
   if(cur.type === 'selvindsigt') return selvindsigtHtml(g, cur);
   if(cur.type === 'kendskab') return kendskabHtml(g, cur);
   if(cur.type === 'hvemskrev') return hvemskrevHtml(g, cur);
+  if(cur.type === 'assign') return assignHtml(g, cur);
   return '';
 }
 
@@ -4177,6 +4181,41 @@ function guessBrokHtml(g, cur){
 // forhånd) gætter hvem i rummet det handler om. Samme opbygning som
 // guessBrokHtml's guess-fase, bare uden en skrive-fase (indholdet findes
 // allerede fra det personlige lag).
+// "Runde 0" (se action:'start' i api/game.js) — den obligatoriske, men
+// TIDSBEGRÆNSEDE tildelte venneark-udfyldelse ved spilstart, kun for de
+// spillere der reelt manglede et lag endnu. Blokerer ALDRIG permanent (se
+// nødbremsen i gameFlow.js's forceResolveCurrentPhase) — kun synlig for de
+// spillere der har fået tildelt noget, se cur.assigned.
+function assignHtml(g, cur){
+  const myTargets = profile ? cur.assigned[profile.memberId] : null;
+  const submittedCount = Object.keys(cur.submitted||{}).length;
+  const totalAssigned = Object.keys(cur.assigned||{}).length;
+  if(!myTargets || cur.submitted[profile.memberId]){
+    const doneAlready = myTargets && cur.submitted[profile.memberId];
+    return `
+      <div class="game-badge">Runde 0 · 🧑‍🤝‍🧑 Venneark</div>
+      <div class="empty-state"><span class="emoji">${doneAlready?'✅':'✍️'}</span><b>${doneAlready?'Du er klar!':'Nogen skriver stadig deres venneark'}</b>${doneAlready?'Venter på de sidste.':'Spillet starter automatisk når alle er klar.'}</div>
+      ${gameProgressHtml(submittedCount, totalAssigned, 'er klar')}
+    `;
+  }
+  const rows = myTargets.map(targetId=>{
+    const m = state.members.find(x=>x.id===targetId);
+    return `<p class="hint" style="margin:12px 0 4px; font-weight:600; color:rgba(255,247,232,0.8);">Skriv en påstand om ${escapeHtml(m?m.name:'?')}</p>
+      <textarea class="assignAboutInput" data-target="${targetId}" rows="2" maxlength="120" placeholder="Fx en sjov vane, noget de altid siger..."></textarea>`;
+  }).join('');
+  return `
+    <div class="game-badge">Runde 0 · 🧑‍🤝‍🧑 Venneark</div>
+    <div class="game-card" id="gameCard">
+      <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.6);">Bruges i spillets "hvem handler det om?"/"hvem skrev det?"-runder.</p>
+      <p class="hint" style="margin:0 0 4px; font-weight:600; color:rgba(255,247,232,0.8);">Skriv ét udsagn om dig selv</p>
+      <textarea id="assignSelfInput" rows="2" maxlength="120" placeholder="Fx noget du altid gør..."></textarea>
+      ${rows}
+      <button class="game-btn" id="assignSubmitBtn" style="margin-top:12px;" disabled>🚀 Send</button>
+    </div>
+    ${gameProgressHtml(submittedCount, totalAssigned, 'er klar')}
+  `;
+}
+
 function kendskabHtml(g, cur){
   const isSpectator = profile && (profile.memberId === cur.authorId || profile.memberId === cur.targetId);
   if(cur.phase === 'guess'){
@@ -4750,6 +4789,24 @@ function bindGameHandlers(g){
     document.querySelectorAll('[data-choice]').forEach(el=>{
       el.onclick = ()=> gameApi('submit', { payload: { choiceIndex: parseInt(el.dataset.choice,10) } });
     });
+  }
+  if(cur.type === 'assign' && cur.phase === 'assign' && profile && cur.assigned[profile.memberId] && !cur.submitted[profile.memberId]){
+    const selfInput = document.getElementById('assignSelfInput');
+    const targetInputs = document.querySelectorAll('.assignAboutInput');
+    const submitBtn = document.getElementById('assignSubmitBtn');
+    const updateSubmitState = ()=>{
+      const allFilled = selfInput.value.trim() && Array.from(targetInputs).every(t=>t.value.trim());
+      submitBtn.disabled = !allFilled;
+    };
+    if(selfInput) selfInput.addEventListener('input', updateSubmitState);
+    targetInputs.forEach(t=>t.addEventListener('input', updateSubmitState));
+    if(submitBtn) submitBtn.onclick = ()=>{
+      const selfText = selfInput.value.trim();
+      const aboutTexts = Array.from(targetInputs).map(t=>({ targetId: t.dataset.target, text: t.value.trim() }));
+      if(!selfText || aboutTexts.some(a=>!a.text)) return;
+      lockSubmitBtn(submitBtn, 'Sender...');
+      gameApi('submit', { payload: { selfText, aboutTexts } });
+    };
   }
   if(cur.type === 'casinobrok' && cur.phase === 'write'){
     const wordInput = document.getElementById('casinoWordInput');

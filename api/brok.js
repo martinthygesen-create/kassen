@@ -1,6 +1,6 @@
 const { getState, setState, mutateState, uid, neededVotes, healPendingVotes, isAdmin, checkPoolMilestone, redactStateFor, ApiError } = require('./_lib/store');
 const { pushToMembers } = require('./_lib/push');
-const { MIN_ABOUT_PER_PLAYER } = require('./_lib/game');
+const { MIN_ABOUT_PER_PLAYER, mergeAboutEntries } = require('./_lib/game');
 
 const MILESTONE_LINES = [
   m => `🎉 Puljen har rundet ${m}€! Det bliver et godt indkøb.`,
@@ -94,11 +94,20 @@ module.exports = async (req, res) => {
           seenTargets.add(targetId);
           about.push({ targetId, text });
         });
+        // Fletter ind i en evt. eksisterende entry PR TARGETID (Opus-
+        // simulering bekræftede: uden dette ville "runde 0"s tildelte
+        // udsagn (se action:'start' i api/game.js) forsvinde i det øjeblik
+        // nogen bagefter tilføjer ét mere via denne sheet — hverken tildelt
+        // eller frit indhold må kunne overskrive det andet).
+        const prevEntry = fresh.personalLayer.entries[actorId];
+        const mergedAbout = mergeAboutEntries(prevEntry && prevEntry.about, about);
         // Kan aldrig kræve flere end der reelt findes andre medlemmer at
-        // skrive om (fx et rum med kun 1 anden person).
+        // skrive om (fx et rum med kun 1 anden person). Tjekkes mod den
+        // FLETTEDE liste, ikke kun denne indsendelse — allerede tildelte
+        // udsagn fra runde 0 tæller med.
         const required = Math.min(MIN_ABOUT_PER_PLAYER, validTargetIds.size);
-        if (about.length < required) throw new ApiError(400, `skriv om mindst ${required} andre`);
-        fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: cleanSelf, about };
+        if (mergedAbout.length < required) throw new ApiError(400, `skriv om mindst ${required} andre`);
+        fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: cleanSelf || (prevEntry && prevEntry.self) || '', about: mergedAbout };
       });
       if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
       return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });

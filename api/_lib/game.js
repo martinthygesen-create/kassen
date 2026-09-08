@@ -1597,6 +1597,54 @@ const MIN_ABOUT_FOR_KENDSKAB = 3;
 // oprindelige "3 faste felter, ingen admin-knap"-beslutning. Loftet er
 // derimod fjernet (frit at "tilføje flere" op til antal medspillere).
 const MIN_ABOUT_PER_PLAYER = 2;
+// Garanteret udtræk (Opus-simulering, 13.200 spil: uden dette endte 11,5% af
+// 5-runders spil med 6 spillere HELT uden en kendskab/hvemskrev-runde, og
+// under halvdelen af 8-runders spil nåede kvoten) — antal kendskab/hvemskrev-
+// runder der SKAL nås inden spillet slutter, hvis der findes kvalificeret
+// indhold. Et BLØDT krav (se beginRound): ved <4 spillere er der 0
+// kvalificerede kandidater uanset kvote (collectAboutCandidates' egne
+// eligibleGuessers-krav), og kvoten skal aldrig kunne blokere eller crashe
+// spillet — den presser bare typen frem når der ER indhold og tiden er ved
+// at løbe ud.
+const KENDSKAB_QUOTA_BY_LENGTH = { 5: 2, 8: 3, 12: 4 };
+function kendskabQuotaFor(totalRounds) { return KENDSKAB_QUOTA_BY_LENGTH[totalRounds] || 0; }
+// Balanceret tildeling af hvem der skal skrive om hvem, brugt af "runde 0"
+// ved spilstart (se api/game.js's action:'start') — en rotation af den
+// (tilfældigt) blandede spillerrækkefølge: spiller ved indeks i tildeles
+// targets ved indeks i+1 og i+2. Matematisk PRÆCIST afbalanceret (bevist ved
+// simulering, min/max target-optræden 0,79-0,94 uden dette, 1,0 med) — hver
+// spiller er target for PRÆCIS 2 forfattere (1 ved kun 2 spillere i alt,
+// ingen ved under 2). Erstatter IKKE frit valg (se mergeAboutEntries
+// nedenfor) — det frie tillæg i openPersonalLayerSheet forbliver åbent
+// ovenpå denne garanterede bund.
+function computeAssignedTargets(playerIds) {
+  const n = playerIds.length;
+  const assigned = {};
+  if (n < 2) return assigned;
+  const order = shuffle(playerIds.slice());
+  const perPlayer = Math.min(MIN_ABOUT_PER_PLAYER, n - 1);
+  order.forEach((id, i) => {
+    const targets = [];
+    for (let k = 1; k <= perPlayer; k++) targets.push(order[(i + k) % n]);
+    assigned[id] = targets;
+  });
+  return assigned;
+}
+// Fletter nye about-elementer ind i en eksisterende liste PR TARGETID, i
+// stedet for at overskrive hele listen — deler samme entry mellem den
+// tildelte "runde 0" og det efterfølgende frie tillæg, uden at nogen af
+// delene mister data (se den tidligere fejl: action:'personal' overskrev før
+// hele fresh.personalLayer.entries[actorId], hvilket ville have slettet
+// runde 0's tildelte udsagn i det øjeblik nogen tilføjede ét mere selv).
+function mergeAboutEntries(existingAbout, incoming) {
+  const merged = (existingAbout || []).slice();
+  (incoming || []).forEach(item => {
+    const idx = merged.findIndex(e => e.targetId === item.targetId);
+    if (idx !== -1) merged[idx] = item;
+    else merged.push(item);
+  });
+  return merged;
+}
 // Hvert "about"-udsagn kan bruges til BEGGE rundevarianter (Martins ønske:
 // "på den måde har ethvert spørgsmål duplikator") — en "brugt"-liste PR
 // SPIL (ikke pr. rum) sikrer at samme udsagn+variant-kombination aldrig
@@ -1798,7 +1846,24 @@ function beginRound(state, players) {
     }
     state.game.roundTypeBag = bag;
   }
-  const type = state.game.roundTypeBag.pop();
+  let type = state.game.roundTypeBag.pop();
+  // Garanteret udtræk (se KENDSKAB_QUOTA_BY_LENGTH ovenfor): når der er
+  // færre runder tilbage end kvoten der mangler, presses en family-type frem
+  // — men KUN hvis der reelt findes kvalificeret indhold lige nu (blødt
+  // krav, aldrig en hård forudsætning). Den fortrængte type lægges tilbage i
+  // posen i stedet for at gå tabt, så den stadig bliver spillet en anden
+  // runde.
+  if (state.game.kendskabQuota === undefined) state.game.kendskabQuota = kendskabQuotaFor(state.game.totalRounds);
+  if (state.game.kendskabDrawn === undefined) state.game.kendskabDrawn = 0;
+  const roundsLeft = state.game.totalRounds - state.game.round + 1;
+  const quotaLeft = state.game.kendskabQuota - state.game.kendskabDrawn;
+  if (quotaLeft > 0 && roundsLeft <= quotaLeft && !KENDSKAB_FAMILY.includes(type)) {
+    const familyEligible = KENDSKAB_FAMILY.filter(t => isRoundTypeEligible(t, state, playerIds));
+    if (familyEligible.length) {
+      state.game.roundTypeBag.push(type);
+      type = pickRandom(familyEligible);
+    }
+  }
   if (isOncePerGame(type, state.themeId) && !state.game.usedOnceTypes.includes(type)) {
     state.game.usedOnceTypes.push(type);
   }
@@ -1907,6 +1972,7 @@ function beginRound(state, players) {
     // (altid tilgængelig, intet personligt-lag-krav) i stedet for at
     // crashe eller sende en tom/ugyldig runde ud til klienterne.
     if (!pick) { buildSelvindsigtRound(state, players); return; }
+    state.game.kendskabDrawn = (state.game.kendskabDrawn || 0) + 1;
     const targetMember = players.find(m => m.id === pick.targetId);
     const distractorNames = shuffle(players.filter(m => m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
     const { options, correctIndex } = buildOptions(targetMember.name, distractorNames);
@@ -1921,6 +1987,7 @@ function beginRound(state, players) {
     // at gætte, se getPendingIds/api/game.js's submit-handler.
     const pick = pickAboutCandidate(state, playerIds, 'hvemskrev');
     if (!pick) { buildSelvindsigtRound(state, players); return; }
+    state.game.kendskabDrawn = (state.game.kendskabDrawn || 0) + 1;
     const authorMember = players.find(m => m.id === pick.authorId);
     // Target udelukkes OGSÅ fra distraktor-puljen (ikke kun fra selve
     // gættefeltet) — target kan pr. definition aldrig VÆRE forfatteren
@@ -1933,4 +2000,4 @@ function beginRound(state, players) {
   }
 }
 
-module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER };
+module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER, computeAssignedTargets, mergeAboutEntries, isRoundTypeEligible, KENDSKAB_FAMILY };

@@ -95,6 +95,12 @@ function getPendingIds(cur, players) {
     const eligible = players.filter(id => id !== cur.authorId);
     return eligible.filter(id => !(cur.guesses && cur.guesses[id] !== undefined));
   }
+  if (cur.type === 'assign' && cur.phase === 'assign') {
+    // "Runde 0" (se action:'start' i api/game.js) — kun de spillere der
+    // reelt fik tildelt targets (dvs. manglede et venneark-lag) skal
+    // indsende noget her, ikke hele spillerlisten.
+    return Object.keys(cur.assigned || {}).filter(id => !(cur.submitted && cur.submitted[id]));
+  }
   return [];
 }
 
@@ -461,6 +467,15 @@ function forceResolveCurrentPhase(state, cur, players) {
     resolveKendskab(state, cur);
   } else if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
     resolveHvemskrev(state, cur);
+  } else if (cur.type === 'assign' && cur.phase === 'assign') {
+    // Nødbremse for runde 0 — ALDRIG et hård-gate (se CLAUDE.md/tidligere
+    // beslutning): uanset hvor mange der nåede at indsende deres tildelte
+    // udsagn inden for BROKSPILLET_AUTO_MS + COMPLAINT_COUNTDOWN_MS, går
+    // selve spillet i gang med det der er indsamlet. De der ikke nåede det
+    // kan stadig bidrage bagefter via det frie tillæg (openPersonalLayerSheet
+    // — merges ind, se mergeAboutEntries, intet går tabt).
+    beginRound(state, state.members.filter(m => players.includes(m.id)));
+    stampPhase(state.game.current);
   } else if (cur.phase === 'results' || cur.phase === 'skipped') {
     goToNextRoundOrEnd(state, players);
   }
