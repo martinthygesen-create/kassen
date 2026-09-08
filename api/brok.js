@@ -106,7 +106,37 @@ module.exports = async (req, res) => {
         // udsagn fra runde 0 tæller med.
         const required = Math.min(MIN_ABOUT_PER_PLAYER, validTargetIds.size);
         if (mergedAbout.length < required) throw new ApiError(400, `skriv om mindst ${required} andre`);
-        fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), about: mergedAbout };
+        // Spreder prevEntry FØRST — ellers ville et allerede gemt udsagn
+        // (se action:'secret' nedenfor, et helt andet felt på samme entry)
+        // blive slettet hver gang nogen opdaterer deres venneark, fordi
+        // objektet ellers blev erstattet helt i stedet for kun de to felter
+        // der reelt ændres her.
+        fresh.personalLayer.entries[actorId] = { ...prevEntry, submittedAt: Date.now(), about: mergedAbout };
+      });
+      if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
+      return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
+    }
+
+    // Et enkelt, frivilligt udsagn "få kender om dig" — IKKE bundet til
+    // Vennekassen (se MIN_SECRETS_FOR_ROUND/collectSecretCandidates i
+    // _lib/game.js: rundetypen er bevidst generisk). Bevidst IKKE kaldt
+    // "hemmelighed" i nogen bruger-tekst (Martins ønske) — kun internt.
+    // Låst permanent når det først er gemt (Martins krav: "kan naturligvis
+    // ikke ændres når man har klikket ok") — modsat 'personal' ovenfor, som
+    // gerne må opdateres/udvides. Ingen mutateState-race at bekymre sig om
+    // udover selve CAS'en: kun forfatteren selv kan nogensinde skrive til
+    // sit eget secret-felt.
+    if (action === 'secret') {
+      const { actorId, text } = req.body || {};
+      if (!actorId) return res.status(400).json({ error: 'mangler data' });
+      const mutated = await mutateState(roomId, async (fresh) => {
+        if (!fresh.members.find(m => m.id === actorId)) throw new ApiError(400, 'ukendt medlem');
+        if (!fresh.personalLayer) fresh.personalLayer = { entries: {} };
+        const prevEntry = fresh.personalLayer.entries[actorId];
+        if (prevEntry && prevEntry.secret) throw new ApiError(409, 'kan ikke ændres når det først er gemt');
+        const cleanText = (text || '').toString().trim().slice(0, 140);
+        if (!cleanText) throw new ApiError(400, 'skriv et udsagn');
+        fresh.personalLayer.entries[actorId] = { ...prevEntry, secret: { text: cleanText, submittedAt: Date.now(), usedAt: null } };
       });
       if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
       return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
@@ -164,6 +194,11 @@ module.exports = async (req, res) => {
 
     res.status(200).json({ state: redactStateFor(state, actorId) });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    // Rettet (fundet af scripts/test_udsagn_round.js): manglede "e.status
+    // ||", så ENHVER ApiError herfra (400/403/409, fx den nye "kan ikke
+    // ændres når det først er gemt") kom tilbage som 500 til klienten — de
+    // andre API-filer (game.js, admin.js, mrbrok.js, complainer.js) havde
+    // allerede det rigtige mønster.
+    res.status(e.status || 500).json({ error: e.message });
   }
 };

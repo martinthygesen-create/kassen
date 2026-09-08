@@ -95,6 +95,12 @@ function getPendingIds(cur, players) {
     const eligible = players.filter(id => id !== cur.authorId);
     return eligible.filter(id => !(cur.guesses && cur.guesses[id] !== undefined));
   }
+  if (cur.type === 'udsagn' && cur.phase === 'guess') {
+    // Ingen separat target (forfatteren skriver om sig selv) — samme
+    // udelukkelse som kendskab, bare med target === authorId.
+    const eligible = players.filter(id => id !== cur.authorId);
+    return eligible.filter(id => !(cur.guesses && cur.guesses[id] !== undefined));
+  }
   if (cur.type === 'assign' && cur.phase === 'assign') {
     // "Runde 0" (se action:'start' i api/game.js) — kun de spillere der
     // reelt fik tildelt targets (dvs. manglede et venneark-lag) skal
@@ -234,6 +240,25 @@ function resolveHvemskrev(state, cur) {
   const totalGuessers = Object.keys(cur.guesses || {}).length;
   correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
   const authorPoints = totalGuessers ? Math.round((ROUND_POINTS / 2) * correctGuessers.length / totalGuessers) : 0;
+  if (authorPoints && cur.authorId) state.game.scores[cur.authorId] = (state.game.scores[cur.authorId] || 0) + authorPoints;
+  cur.phase = 'results';
+  stampPhase(cur);
+  cur.correctGuessers = correctGuessers;
+  cur.authorPoints = authorPoints;
+  cur.readyIds = [];
+}
+
+// "Udsagn" — strukturelt tættest på kendskab (kun forfatteren kender
+// allerede svaret, ingen separat target-reveal der halverer usikkerheden),
+// samme fulde forfatterbonus-model. Se collectSecretCandidates/
+// pickSecretCandidate i _lib/game.js for hvorfor udsagnet ALDRIG kan
+// genbruges (i modsætning til kendskab/hvemskrev's per-spil "brugt"-liste,
+// er dette permanent — det er en engangsafsløring).
+function resolveUdsagn(state, cur) {
+  const correctGuessers = Object.keys(cur.guesses || {}).filter(id => cur.guesses[id] === cur.correctIndex);
+  const totalGuessers = Object.keys(cur.guesses || {}).length;
+  correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
+  const authorPoints = totalGuessers ? Math.round(ROUND_POINTS * correctGuessers.length / totalGuessers) : 0;
   if (authorPoints && cur.authorId) state.game.scores[cur.authorId] = (state.game.scores[cur.authorId] || 0) + authorPoints;
   cur.phase = 'results';
   stampPhase(cur);
@@ -467,6 +492,8 @@ function forceResolveCurrentPhase(state, cur, players) {
     resolveKendskab(state, cur);
   } else if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
     resolveHvemskrev(state, cur);
+  } else if (cur.type === 'udsagn' && cur.phase === 'guess') {
+    resolveUdsagn(state, cur);
   } else if (cur.type === 'assign' && cur.phase === 'assign') {
     // Nødbremse for runde 0 — ALDRIG et hård-gate (se CLAUDE.md/tidligere
     // beslutning): uanset hvor mange der nåede at indsende deres tildelte
@@ -522,6 +549,7 @@ module.exports = {
   resolveSelvindsigt,
   resolveKendskab,
   resolveHvemskrev,
+  resolveUdsagn,
   goToNextRoundOrEnd,
   endGame,
   expireGamePhaseIfDue,

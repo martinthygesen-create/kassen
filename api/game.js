@@ -17,6 +17,7 @@ const {
   resolveSelvindsigt,
   resolveKendskab,
   resolveHvemskrev,
+  resolveUdsagn,
   goToNextRoundOrEnd,
   expireGamePhaseIfDue,
 } = require('./_lib/gameFlow');
@@ -226,6 +227,13 @@ module.exports = async (req, res) => {
           cur.guesses[actorId] = payload.choiceIndex;
           const eligible2 = players.filter(id => id !== cur.authorId).length;
           if (Object.keys(cur.guesses).length >= eligible2) resolveHvemskrev(state, cur);
+        } else if (cur.type === 'udsagn' && cur.phase === 'guess') {
+          if (actorId === cur.authorId) throw new ApiError(403, 'du kan ikke gætte på dit eget udsagn');
+          if (cur.guesses[actorId] !== undefined) throw new ApiError(409, 'du har allerede gættet');
+          if (!Number.isInteger(payload.choiceIndex)) throw new ApiError(400, 'ugyldigt gæt');
+          cur.guesses[actorId] = payload.choiceIndex;
+          const eligible3 = players.filter(id => id !== cur.authorId).length;
+          if (Object.keys(cur.guesses).length >= eligible3) resolveUdsagn(state, cur);
         } else if (cur.type === 'assign' && cur.phase === 'assign') {
           const targets = cur.assigned[actorId];
           if (!targets) throw new ApiError(403, 'du er ikke en del af runde 0');
@@ -244,7 +252,10 @@ module.exports = async (req, res) => {
           if (!state.personalLayer) state.personalLayer = { entries: {} };
           const prevEntry = state.personalLayer.entries[actorId];
           const mergedAbout = mergeAboutEntries(prevEntry && prevEntry.about, about);
-          state.personalLayer.entries[actorId] = { submittedAt: Date.now(), about: mergedAbout };
+          // Spreder prevEntry FØRST (samme fix som api/brok.js's action:
+          // 'personal') — ellers ville et allerede gemt 'secret'-felt blive
+          // slettet af runde 0.
+          state.personalLayer.entries[actorId] = { ...prevEntry, submittedAt: Date.now(), about: mergedAbout };
           cur.submitted[actorId] = true;
           const stillPending = Object.keys(cur.assigned).filter(id => !cur.submitted[id]);
           if (!stillPending.length) {

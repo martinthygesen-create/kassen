@@ -1631,6 +1631,13 @@ function isKendekasse(){ return KENDSKAB_THEMES_CLIENT.includes(state && state.t
 function myPersonalLayerEntry(){
   return (profile && state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[profile.memberId]) || null;
 }
+// "Udsagn" (se action:'secret' i api/brok.js) — GENERISK, ikke bundet til
+// isKendekasse()/KENDSKAB_THEMES_CLIENT (i modsætning til venneark ovenfor),
+// se begrundelsen ved MIN_SECRETS_FOR_ROUND i api/_lib/game.js.
+function mySecretEntry(){
+  const entry = myPersonalLayerEntry();
+  return (entry && entry.secret) || null;
+}
 // Frit målvalg (Martins rettelse) — erstatter den tidligere deterministiske
 // round-robin-tildeling af præcis 2 personer. Spilleren vælger nu selv HVEM
 // hvert udsagn handler om, og kan tilføje lige så mange som der er
@@ -2497,6 +2504,7 @@ const BOT_FILLER_WORDS = ['regnvejr', 'morgenmad', 'myggestik', 'trafikkø', 'sn
 const BOT_FILLER_STATEMENTS = ['Jeg har prøvet det tre gange i denne uge', 'Det skete faktisk i går aftes', 'Alle andre vidste det, bare ikke mig'];
 const BOT_FILLER_COMPLIMENTS = ['Du er altid god til at få humøret op igen', 'Du lytter bedre end de fleste jeg kender', 'Du finder altid en løsning, uanset hvad'];
 const BOT_FILLER_ABOUT = ['Er svær at overraske, uanset hvad man finder på', 'Har altid en plan B klar, selv når ingen spurgte', 'Kan snakke sig ud af næsten alt'];
+const BOT_FILLER_SECRET = ['Har aldrig kunnet lide den mest oplagte snack i skabet', 'Øvede sig i hemmelighed på noget helt ubrugeligt engang', 'Har et sted de altid går hen for at være helt alene'];
 function pickBotFiller(list){ return list[Math.floor(Math.random()*list.length)]; }
 function isBotMember(id){ const mm = state.members.find(m=>m.id===id); return !!(mm && mm.isBot); }
 
@@ -2528,6 +2536,16 @@ async function ensureTestBots(){
         if(r && r.state) state = r.state;
       }catch(e){ /* en fejlet bot-udfyldelse må ikke stoppe resten */ }
     }
+  }
+  // "Udsagn" er GENERISK (ikke isKendekasse()-gated, se MIN_SECRETS_FOR_ROUND
+  // i api/_lib/game.js) — bots skal derfor have et secret uanset tema, ellers
+  // kan bot-testspil aldrig trække runden i noget andet tema end Vennekassen.
+  const botsNeedingSecret = state.members.filter(m=>m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id] && state.personalLayer.entries[m.id].secret));
+  for(const bot of botsNeedingSecret){
+    try{
+      const r = await api('brok', { action:'secret', roomId, actorId: bot.id, text: pickBotFiller(BOT_FILLER_SECRET) });
+      if(r && r.state) state = r.state;
+    }catch(e){ /* en fejlet bot-udfyldelse må ikke stoppe resten */ }
   }
 }
 
@@ -2662,6 +2680,10 @@ async function runGameBotAction(cur, botId){
     return botSubmit('game', botId, { choiceIndex: Math.floor(Math.random()*n) });
   }
   if(cur.type === 'hvemskrev' && cur.phase === 'guess'){
+    const n = (cur.options||[]).length || 4;
+    return botSubmit('game', botId, { choiceIndex: Math.floor(Math.random()*n) });
+  }
+  if(cur.type === 'udsagn' && cur.phase === 'guess'){
     const n = (cur.options||[]).length || 4;
     return botSubmit('game', botId, { choiceIndex: Math.floor(Math.random()*n) });
   }
@@ -2883,6 +2905,7 @@ function openAppMenuSheet(){
     </div>
     <div class="menu-row-list">
       ${isKendekasse() ? `<div class="menu-row" id="menuPersonalLayerBtn"><div class="menu-row-icon">🧑‍🤝‍🧑</div><div class="menu-row-label">Udfyld dit venneark</div><span class="menu-row-chevron">${myPersonalLayerEntry() ? '✅' : ((state.personalLayer && state.personalLayer.submittedCount) || 0) + '/' + state.members.filter(m=>!m.isBot).length}</span></div>` : ''}
+      <div class="menu-row" id="menuSecretBtn"><div class="menu-row-icon">🤫</div><div class="menu-row-label">Et udsagn få ved om dig</div><span class="menu-row-chevron">${mySecretEntry() ? '✅' : '›'}</span></div>
       ${showPushBell ? `<div class="menu-row" id="menuPushBtn"><div class="menu-row-icon">🔔</div><div class="menu-row-label">Slå push til</div><span class="menu-row-chevron">›</span></div>` : ''}
       <div class="menu-row" id="menuShareBtn"><div class="menu-row-icon">📤</div><div class="menu-row-label">Del link</div><span class="menu-row-chevron">›</span></div>
       <div class="menu-row" id="menuLeaveBtn"><div class="menu-row-icon">🚪</div><div class="menu-row-label">Skift/forlad rum</div><span class="menu-row-chevron">›</span></div>
@@ -2903,6 +2926,8 @@ function openAppMenuSheet(){
     document.getElementById('menuLeaveBtn').onclick = ()=>{ closeSheet(); setTimeout(openLeaveRoomSheet, 230); };
     const personalLayerBtn = document.getElementById('menuPersonalLayerBtn');
     if(personalLayerBtn) personalLayerBtn.onclick = ()=>{ closeSheet(); setTimeout(openPersonalLayerSheet, 230); };
+    const secretBtn = document.getElementById('menuSecretBtn');
+    if(secretBtn) secretBtn.onclick = ()=>{ closeSheet(); setTimeout(openSecretSheet, 230); };
     const adminBtn = document.getElementById('menuAdminBtn');
     if(adminBtn) adminBtn.onclick = ()=>{
       closeSheet();
@@ -3097,6 +3122,9 @@ function getPendingIdsClient(cur, players){
     return players.filter(id=>id!==cur.authorId && id!==cur.targetId).filter(id=>!(cur.guesses && cur.guesses[id] !== undefined));
   }
   if(cur.type === 'hvemskrev' && cur.phase === 'guess'){
+    return players.filter(id=>id!==cur.authorId).filter(id=>!(cur.guesses && cur.guesses[id] !== undefined));
+  }
+  if(cur.type === 'udsagn' && cur.phase === 'guess'){
     return players.filter(id=>id!==cur.authorId).filter(id=>!(cur.guesses && cur.guesses[id] !== undefined));
   }
   if(cur.type === 'assign' && cur.phase === 'assign'){
@@ -3809,6 +3837,7 @@ function gameBodyHtml(g){
   if(cur.type === 'selvindsigt') return selvindsigtHtml(g, cur);
   if(cur.type === 'kendskab') return kendskabHtml(g, cur);
   if(cur.type === 'hvemskrev') return hvemskrevHtml(g, cur);
+  if(cur.type === 'udsagn') return udsagnHtml(g, cur);
   if(cur.type === 'assign') return assignHtml(g, cur);
   return '';
 }
@@ -4305,6 +4334,53 @@ function hvemskrevHtml(g, cur){
   `;
 }
 
+// "Udsagn" — se resolveUdsagn i gameFlow.js og collectSecretCandidates i
+// _lib/game.js. Strukturelt tættest på kendskabHtml (kun forfatteren
+// spectator), men ingen separat target at afsløre — det ER forfatteren.
+// Bevidst IKKE ordet "hemmelighed" nogen steder i teksten (Martins ønske).
+function udsagnHtml(g, cur){
+  const isSpectator = profile && profile.memberId === cur.authorId;
+  if(cur.phase === 'guess'){
+    const eligible = g.players.filter(id=>id!==cur.authorId).length;
+    const guessedCount = Object.keys(cur.guesses||{}).length;
+    const myGuessIndex = (profile && cur.guesses[profile.memberId] !== undefined) ? cur.guesses[profile.memberId] : null;
+    const hasGuessed = myGuessIndex !== null;
+    const opts = (cur.options||[]).map((label,i)=>{
+      const clickable = !isSpectator && !hasGuessed;
+      return `
+      <div class="bal-row${clickable ? ' game-pick' : ''}" ${clickable?`data-choice="${i}"`:''} style="${clickable ? 'cursor:pointer;' : ''} ${myGuessIndex===i?'outline:2px solid var(--coin);':''} ${hasGuessed && myGuessIndex!==i ? 'opacity:.5;':''}">
+        <div class="avatar" style="width:34px;height:34px;font-size:12.5px; background:linear-gradient(160deg, var(--coin), var(--coin-dark)); color:var(--ink);">${String.fromCharCode(65+i)}</div>
+        <div class="feed-body"><div class="bal-name">${escapeHtml(label)}</div></div>
+        ${myGuessIndex===i?'<span style="font-size:18px;">✓</span>':''}
+      </div>
+    `;
+    }).join('');
+    return `
+      <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · 🤫 Hvis udsagn er dette?</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+      <div class="game-card" id="gameCard">
+        <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.6);">Et udsagn få kender om en i rummet:</p>
+        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;">"${escapeHtml(cur.text)}"</p>
+      </div>
+      ${isSpectator ? `<div class="empty-state"><span class="emoji">🤐</span><b>Du kender allerede svaret</b>Vent mens de andre gætter.</div>` : opts}
+      ${gameProgressHtml(guessedCount, eligible, 'har gættet')}
+      ${(hasGuessed && !isSpectator) ? `<div class="waiting-pill"><span class="waiting-dot"></span> Venter på de andre...</div>` : ''}
+      ${complaintBlockHtml(g, cur)}
+    `;
+  }
+  const author = state.members.find(m=>m.id===cur.authorId);
+  const correct = (cur.correctGuessers||[]).map(id=>state.members.find(m=>m.id===id)).filter(Boolean);
+  return `
+    <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · Resultat</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+    <div class="game-card" id="gameCard" style="text-align:center;">
+      <p class="hint" style="color:rgba(255,247,232,0.6);">"${escapeHtml(cur.text)}" — det var:</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);">✅ ${escapeHtml(author?author.name:'?')}</p>
+      <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt' : 'Ingen gættede rigtigt denne gang.'}</p>
+      ${cur.authorPoints ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">🤫 ${escapeHtml(author?author.name:'?')} fik ${cur.authorPoints} point for et genkendeligt udsagn</p>` : ''}
+    </div>
+    ${gameReadyHtml(g, cur)}
+  `;
+}
+
 function triviaHtml(g, cur){
   if(cur.phase === 'answer'){
     const mine = profile && cur.choices[profile.memberId] !== undefined ? cur.choices[profile.memberId] : null;
@@ -4783,6 +4859,11 @@ function bindGameHandlers(g){
     });
   }
   if(cur.type === 'hvemskrev' && cur.phase === 'guess' && profile && profile.memberId !== cur.authorId){
+    document.querySelectorAll('[data-choice]').forEach(el=>{
+      el.onclick = ()=> gameApi('submit', { payload: { choiceIndex: parseInt(el.dataset.choice,10) } });
+    });
+  }
+  if(cur.type === 'udsagn' && cur.phase === 'guess' && profile && profile.memberId !== cur.authorId){
     document.querySelectorAll('[data-choice]').forEach(el=>{
       el.onclick = ()=> gameApi('submit', { payload: { choiceIndex: parseInt(el.dataset.choice,10) } });
     });
@@ -7280,6 +7361,56 @@ function openPersonalLayerSheet(){
       }
     };
     updateEnabled();
+  });
+}
+
+/* ============ "ET UDSAGN FÅ VED OM DIG" ============ */
+// Frivilligt, ét kort udsagn — GENERISK (alle temaer, ikke kun
+// Vennekassen, se mySecretEntry ovenfor). Bevidst IKKE kaldt "hemmelighed"
+// noget sted i teksten (Martins ønske). Låst permanent når det er gemt —
+// ingen redigerings-UI, kun visning, se action:'secret' i api/brok.js.
+function openSecretSheet(){
+  const existing = mySecretEntry();
+  if(existing){
+    openSheet(`
+      <h2>🤫 Dit udsagn</h2>
+      <div class="onboard-card" style="padding:12px; opacity:.75;">
+        <p class="hint" style="margin:0;">${escapeHtml(existing.text)}</p>
+      </div>
+      <p class="hint" style="margin:10px 0 0;">Gemt — kan ikke ændres.</p>
+      <button class="sheet-btn ghost" id="secretCloseBtn" style="margin-top:14px;">Luk</button>
+    `, ()=>{
+      document.getElementById('secretCloseBtn').onclick = closeSheet;
+    });
+    return;
+  }
+  openSheet(`
+    <h2>🤫 Et udsagn få ved om dig</h2>
+    <p class="hint">Skriv ét kort, sandt udsagn kun få kender om dig. Det bliver vist anonymt i et senere spil, og resten skal gætte hvem det handler om — kan ikke ændres, når du har gemt det.</p>
+    <textarea id="secretInput" rows="2" maxlength="140" placeholder="Skriv noget kort og sandt..."></textarea>
+    <button class="sheet-btn primary" id="secretSubmitBtn" style="margin-top:14px;" disabled>Gem</button>
+    <button class="sheet-btn ghost" id="secretCancelBtn">Luk</button>
+  `, ()=>{
+    const input = document.getElementById('secretInput');
+    const submitBtn = document.getElementById('secretSubmitBtn');
+    input.addEventListener('input', ()=>{ submitBtn.disabled = !input.value.trim(); });
+    document.getElementById('secretCancelBtn').onclick = closeSheet;
+    submitBtn.onclick = async ()=>{
+      const text = input.value.trim();
+      if(!text) return;
+      lockSubmitBtn(submitBtn, 'Gemmer...');
+      try{
+        const r = await api('brok', { action: 'secret', roomId, actorId: profile.memberId, text });
+        state = r.state;
+        toast('Udsagn gemt ✅');
+        closeSheet();
+        render();
+      }catch(e){
+        toast(e.message);
+        closeSheet();
+        await refreshState(true);
+      }
+    };
   });
 }
 

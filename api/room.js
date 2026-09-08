@@ -108,6 +108,9 @@ module.exports = async (req, res) => {
     });
     res.status(200).json({ roomId, state });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    // Rettet (samme fund som api/brok.js) — manglede "e.status ||", så
+    // enhver ApiError herfra kom tilbage som 500 i stedet for sin rigtige
+    // kode.
+    res.status(e.status || 500).json({ error: e.message });
   }
 };

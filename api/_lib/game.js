@@ -1575,7 +1575,7 @@ function buildRoseDerangement(ids) {
 // medlemmer der reelt er med i DENNE runde af spillet (kan være en delmængde
 // af hele rummet) — trivia-spørgsmål handler stadig om hele rummets rigtige
 // brok-historik, uanset hvem der spiller med lige nu.
-const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt', 'kendskab', 'hvemskrev'];
+const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt', 'kendskab', 'hvemskrev', 'udsagn'];
 
 // Det personlige lag (Opus-review): hver deltager skriver et par korte
 // udsagn om medspillere ved oprettelse/join (se action:'personal' i
@@ -1729,10 +1729,52 @@ function pickAboutCandidate(state, players, type) {
   state.game.usedAbout.push(candidateKey(type, pick));
   return pick;
 }
+// "Udsagn" (Martins ønske, opfølgning på det fjernede, ubrugte "selv"-felt):
+// hver spiller kan FRIVILLIGT gemme ÉT kort, sandt udsagn "få kender om dig"
+// (se action:'secret' i api/brok.js — bevidst IKKE kaldt "hemmelighed" i
+// nogen bruger-tekst, kun internt som type-navn). I MODSÆTNING til
+// kendskab/hvemskrev er dette IKKE bundet til Vennekassen (Opus-anbefaling:
+// "en overraskende ting ingen ved om mig" giver mening i enhver kasse, kun
+// about-feltets par-relationer forudsætter man kender hinanden) — derfor
+// ingen KENDSKAB_THEMES-gate her. Og i MODSÆTNING til about-udsagn (som kan
+// bruges én gang PR VARIANT PR SPIL, se pickAboutCandidate) er et udsagn
+// brugt PERMANENT når det først er trukket — det ER en afsløring, ikke et
+// genbrugeligt gæt, og kan derfor kun vises for rummet ÉN gang nogensinde
+// (Opus' identificerede forsyningsrisiko: ét udsagn pr. spiller, ikke n×
+// medspillere som about — ubegrænset genopfyldning er bevidst IKKE bygget
+// her, kun selve rundetypen).
+function collectSecretCandidates(state, players) {
+  const entries = (state.personalLayer && state.personalLayer.entries) || {};
+  const candidates = [];
+  Object.keys(entries).forEach(authorId => {
+    if (!players.includes(authorId)) return;
+    const secret = entries[authorId].secret;
+    if (!secret || !secret.text || secret.usedAt) return;
+    candidates.push({ authorId, text: secret.text });
+  });
+  return candidates;
+}
+const MIN_SECRETS_FOR_ROUND = 3;
+// Trækker ét ubrugt udsagn og markerer det brugt MED DET SAMME (ikke først
+// ved resolve) — uanset om selve runden når at blive afgjort normalt eller
+// tvinges videre af nødbremsen, skal udsagnet aldrig kunne trækkes igen.
+function pickSecretCandidate(state, players) {
+  const all = collectSecretCandidates(state, players);
+  if (!all.length) return null;
+  const pick = pickRandom(all);
+  state.personalLayer.entries[pick.authorId].secret.usedAt = Date.now();
+  return pick;
+}
 function isRoundTypeEligible(type, state, players) {
   if (type === 'kendskab' || type === 'hvemskrev') {
     if (!KENDSKAB_THEMES.includes(state.themeId)) return false;
     return collectAboutCandidates(state, players, type).length >= MIN_ABOUT_FOR_KENDSKAB;
+  }
+  if (type === 'udsagn') {
+    // Kræver 4+ spillere i alt (samme tærskel som kendskab) for at kunne
+    // bygge 3 reelle distraktor-navne + det rigtige — ellers et tyndt/50-50
+    // gæt (samme kvalitetsstandard som quizmaster-audit-fixet for kendskab).
+    return players.length >= 4 && collectSecretCandidates(state, players).length >= MIN_SECRETS_FOR_ROUND;
   }
   return true;
 }
@@ -1991,7 +2033,7 @@ function beginRound(state, players) {
     const distractorNames = shuffle(players.filter(m => m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
     const { options, correctIndex } = buildOptions(targetMember.name, distractorNames);
     state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, targetId: pick.targetId, options, correctIndex, guesses: {} };
-  } else {
+  } else if (type === 'hvemskrev') {
     // "Hvem skrev det?" — omvendt retning af kendskab, samme kildepulje
     // (personalLayer.entries[*].about), se pickAboutCandidate/candidateKey
     // ovenfor for hvordan samme udsagn kan bruges til BEGGE varianter
@@ -2011,7 +2053,19 @@ function beginRound(state, players) {
     const distractorNames = shuffle(players.filter(m => m.id !== pick.authorId && m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
     const { options, correctIndex } = buildOptions(authorMember.name, distractorNames);
     state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, targetId: pick.targetId, options, correctIndex, guesses: {} };
+  } else {
+    // "Udsagn" — se collectSecretCandidates/pickSecretCandidate ovenfor.
+    // Ingen separat "target" (forfatteren skriver om sig selv), så
+    // strukturelt tættest på kendskab: kun forfatteren kender allerede
+    // svaret og sidder over, resten gætter hvem det handler om blandt
+    // navngivne muligheder. Se resolveUdsagn i gameFlow.js.
+    const pick = pickSecretCandidate(state, playerIds);
+    if (!pick) { buildSelvindsigtRound(state, players); return; }
+    const authorMember = players.find(m => m.id === pick.authorId);
+    const distractorNames = shuffle(players.filter(m => m.id !== pick.authorId)).slice(0, 3).map(m => m.name);
+    const { options, correctIndex } = buildOptions(authorMember.name, distractorNames);
+    state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, options, correctIndex, guesses: {} };
   }
 }
 
-module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER, computeAssignedTargets, mergeAboutEntries, isRoundTypeEligible, KENDSKAB_FAMILY };
+module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER, computeAssignedTargets, mergeAboutEntries, isRoundTypeEligible, KENDSKAB_FAMILY, MIN_SECRETS_FOR_ROUND };
