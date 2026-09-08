@@ -6868,9 +6868,13 @@ function renderFeed(main){
   // "resten af rummet mangler"-nag, kun synlig for den det faktisk gælder.
   // Peger direkte på samme sheet som ☰-menu-punktet (openPersonalLayerSheet),
   // bare mere synlig end nede i menuen, hvor Martin oplevede den blev overset.
+  // Ren egen-handling (Opus-audit-fund): viste tidligere "x/y har udfyldt" —
+  // et tal om RESTEN af gruppen i en besked der handler om DIN EGEN
+  // manglende udfyldelse, læses let som kritik af de andre i stedet for en
+  // personlig prompt. Ingen social tælling her, kun hvad DU selv mangler.
   const personalLayerBanner = (isKendekasse() && !myPersonalLayerEntry()) ? `<div class="feed-item" id="personalLayerReminder" style="border-style:dashed; border-color:rgba(120,190,255,0.5); background:rgba(120,190,255,0.1); align-items:center; cursor:pointer;">
     <div class="avatar" style="background:linear-gradient(160deg,#7ec8ff,#4a90d9); color:var(--ink);">🧑‍🤝‍🧑</div>
-    <div class="feed-body"><div class="feed-name">Udfyld dit venneark</div><div class="feed-msg">${((state.personalLayer && state.personalLayer.submittedCount) || 0)}/${state.members.filter(m=>!m.isBot).length} har udfyldt — bruges i Vennespillets runder</div></div>
+    <div class="feed-body"><div class="feed-name">Udfyld dit venneark</div><div class="feed-msg">Skriv om dine venner — bruges i Vennespillets runder</div></div>
   </div>` : '';
   const pendingCards = (state.pendingList||[]).slice().sort((a,b)=>a.openedAt-b.openedAt).map(renderPendingCard).join('');
   // Ekstra sikkerhedsnet: en bot skal ALDRIG vises som vinder her, uanset
