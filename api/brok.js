@@ -1,5 +1,6 @@
 const { getState, setState, mutateState, uid, neededVotes, healPendingVotes, isAdmin, checkPoolMilestone, redactStateFor, ApiError } = require('./_lib/store');
 const { pushToMembers } = require('./_lib/push');
+const { MIN_ABOUT_PER_PLAYER } = require('./_lib/game');
 
 const MILESTONE_LINES = [
   m => `🎉 Puljen har rundet ${m}€! Det bliver et godt indkøb.`,
@@ -58,16 +59,19 @@ module.exports = async (req, res) => {
       return res.status(200).json({ state: redactStateFor(state, voterId), confirmed, free, double });
     }
 
-    // Vennekassens personlige lag (Opus-review): hver deltager skriver ét
-    // kort udsagn om sig selv (påkrævet) og op til to om andre, tildelt
-    // deterministisk ud fra egen position i medlemslisten (round-robin,
-    // ikke perfekt derangement — det behøver den ikke være, kun rimeligt
-    // spredt over tid). Fødes ind i den nye "kendskab"-rundetype, se
-    // MIN_ABOUT_FOR_KENDSKAB i _lib/game.js. mutateState (CAS), IKKE den
-    // simple getState/setState resten af filen bruger — flere medlemmer
-    // udfylder typisk laget samtidig lige efter de joiner, hvilket er
-    // netop det scenarie CAS beskytter imod (se api/admin.js's tilsvarende
-    // begrundelse for approveMember/rejectMember).
+    // Vennekassens personlige lag: hver deltager skriver ét kort udsagn om
+    // sig selv (påkrævet) og FRIT VALGTE udsagn om andre — MINDST
+    // MIN_ABOUT_PER_PLAYER (se _lib/game.js), intet loft udover antal
+    // medspillere (Martins fund/ønske: "måske skal alle lave et minimum
+    // antal... og kan så tilføje flere" — erstatter den tidligere
+    // deterministiske round-robin-tildeling af præcis 2, hvor spilleren
+    // ikke selv valgte target). Fødes ind i "kendskab"/"hvemskrev"-
+    // rundetyperne, se MIN_ABOUT_FOR_KENDSKAB/collectAboutCandidates i
+    // _lib/game.js. mutateState (CAS), IKKE den simple getState/setState
+    // resten af filen bruger — flere medlemmer udfylder typisk laget
+    // samtidig lige efter de joiner, hvilket er netop det scenarie CAS
+    // beskytter imod (se api/admin.js's tilsvarende begrundelse for
+    // approveMember/rejectMember).
     if (action === 'personal') {
       const { actorId, selfText, aboutTexts } = req.body || {};
       if (!actorId) return res.status(400).json({ error: 'mangler data' });
@@ -76,20 +80,24 @@ module.exports = async (req, res) => {
         if (!fresh.personalLayer) fresh.personalLayer = { entries: {} };
         const cleanSelf = (selfText || '').toString().trim().slice(0, 120);
         if (!cleanSelf) throw new ApiError(400, 'skriv mindst ét udsagn om dig selv');
-        const memberIds = fresh.members.map(m => m.id);
-        const others = memberIds.filter(id => id !== actorId);
-        let targets = [];
-        if (others.length === 1) {
-          targets = [others[0]];
-        } else if (others.length >= 2) {
-          const offset = memberIds.indexOf(actorId);
-          targets = [...new Set([others[offset % others.length], others[(offset + 1) % others.length]])];
-        }
+        const validTargetIds = new Set(fresh.members.map(m => m.id).filter(id => id !== actorId));
         const rawAbout = Array.isArray(aboutTexts) ? aboutTexts : [];
-        const about = targets.map((targetId, i) => {
-          const text = ((rawAbout[i] && rawAbout[i].text) || '').toString().trim().slice(0, 120);
-          return text ? { targetId, text } : null;
-        }).filter(Boolean);
+        const seenTargets = new Set();
+        const about = [];
+        // Loft på 40 rå indsendelser er et sanity-loft mod et opblæst
+        // payload, IKKE en reel UX-grænse — antallet af GYLDIGE, unikke
+        // targets er allerede naturligt begrænset af antal medspillere.
+        rawAbout.slice(0, 40).forEach(item => {
+          const targetId = item && item.targetId;
+          const text = ((item && item.text) || '').toString().trim().slice(0, 120);
+          if (!text || !targetId || !validTargetIds.has(targetId) || seenTargets.has(targetId)) return;
+          seenTargets.add(targetId);
+          about.push({ targetId, text });
+        });
+        // Kan aldrig kræve flere end der reelt findes andre medlemmer at
+        // skrive om (fx et rum med kun 1 anden person).
+        const required = Math.min(MIN_ABOUT_PER_PLAYER, validTargetIds.size);
+        if (about.length < required) throw new ApiError(400, `skriv om mindst ${required} andre`);
         fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: cleanSelf, about };
       });
       if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });

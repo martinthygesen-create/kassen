@@ -16,6 +16,7 @@ const {
   resolveRoseMatch,
   resolveSelvindsigt,
   resolveKendskab,
+  resolveHvemskrev,
   goToNextRoundOrEnd,
   expireGamePhaseIfDue,
 } = require('./_lib/gameFlow');
@@ -190,6 +191,13 @@ module.exports = async (req, res) => {
           cur.guesses[actorId] = payload.choiceIndex;
           const eligible = players.filter(id => id !== cur.authorId && id !== cur.targetId).length;
           if (Object.keys(cur.guesses).length >= eligible) resolveKendskab(state, cur);
+        } else if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
+          if (actorId === cur.authorId) throw new ApiError(403, 'du kan ikke gætte på dit eget udsagn');
+          if (cur.guesses[actorId] !== undefined) throw new ApiError(409, 'du har allerede gættet');
+          if (!Number.isInteger(payload.choiceIndex)) throw new ApiError(400, 'ugyldigt gæt');
+          cur.guesses[actorId] = payload.choiceIndex;
+          const eligible2 = players.filter(id => id !== cur.authorId).length;
+          if (Object.keys(cur.guesses).length >= eligible2) resolveHvemskrev(state, cur);
         } else {
           throw new ApiError(400, 'ugyldig handling lige nu');
         }

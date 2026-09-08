@@ -89,6 +89,12 @@ function getPendingIds(cur, players) {
     const eligible = players.filter(id => id !== cur.authorId && id !== cur.targetId);
     return eligible.filter(id => !(cur.guesses && cur.guesses[id] !== undefined));
   }
+  if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
+    // Kun forfatteren er udelukket — target ER med (target kender ikke
+    // svaret på "hvem skrev dette om mig?").
+    const eligible = players.filter(id => id !== cur.authorId);
+    return eligible.filter(id => !(cur.guesses && cur.guesses[id] !== undefined));
+  }
   return [];
 }
 
@@ -185,23 +191,48 @@ function resolveGuessBrok(state, cur) {
   cur.readyIds = [];
 }
 
-// "Kendskab" — kun gætterne får point (ROUND_POINTS ved korrekt gæt).
-// BEVIDST INGEN forfatter-bonus for at "stumpe" alle, i modsætning til
-// resolveGuessBrok's ellers identiske opbygning (se guessbrok's authorWon
-// ovenfor) — der giver en overbevisende, stumpende tekst mening som en
-// skrive-færdighed at belønne. Her ville det belønne det STIK MODSATTE af
-// Vennekassens formål: et vagt, ugenkendeligt udsagn om en medspiller er
-// et MISLYKKET udsagn, ikke et snedigt et, og en point-bonus for det er en
-// reel spilbar strategi der underminerer selve pointen med at kende
-// hinanden godt (fund fra quizmaster-audit, se test_kendskab_stress.js —
-// simulering viste forfatterbonussen udløste 24-51% af tiden ved bevidst
-// vage udsagn, mod 0-8% ved genkendelige).
+// "Kendskab" — gætterne får point (ROUND_POINTS ved korrekt gæt), OG
+// forfatteren får en PROPORTIONAL bonus (Martins ønske: "begge kunne få
+// point"). Historik, IKKE bare fjernet: en tidligere model gav forfatteren
+// point når INGEN gættede rigtigt — fjernet efter en quizmaster-audit fandt
+// at den belønnede det STIK MODSATTE af Vennekassens formål (simulering:
+// udløste 24-51% af tiden ved bevidst VAGE, ugenkendelige udsagn, mod 0-8%
+// ved genkendelige — se test_kendskab_stress.js). Den begrundelse gælder
+// stadig, og er netop argumentet for DENNE model, ikke imod at have en
+// forfatter-bonus overhovedet: `authorPoints` er proportional med hvor
+// MANGE der gættede RIGTIGT (ikke omvendt), så den betaler for et
+// genkendeligt udsagn og intet for et vagt et — ny simulering (Opus,
+// 200k runder) viste en stabil ~3× forskel mellem vagt (~0,56 point) og
+// genkendeligt (~1,70 point) forfatterudbytte, modsat den gamle models
+// 0,53 vs. 0,00.
 function resolveKendskab(state, cur) {
   const correctGuessers = Object.keys(cur.guesses || {}).filter(id => cur.guesses[id] === cur.correctIndex);
+  const totalGuessers = Object.keys(cur.guesses || {}).length;
   correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
+  const authorPoints = totalGuessers ? Math.round(ROUND_POINTS * correctGuessers.length / totalGuessers) : 0;
+  if (authorPoints && cur.authorId) state.game.scores[cur.authorId] = (state.game.scores[cur.authorId] || 0) + authorPoints;
   cur.phase = 'results';
   stampPhase(cur);
   cur.correctGuessers = correctGuessers;
+  cur.authorPoints = authorPoints;
+  cur.readyIds = [];
+}
+
+// "Hvem skrev det?" — samme proportionale forfatterbonus-model som
+// resolveKendskab, men til HALV sats (Opus' anbefaling): her belønner en
+// høj gæt-rate at forfatteren skrev i en genkendelig EGEN stemme, en
+// svagere/mindre central færdighed end kendskabs "beskrev target
+// præcist" — så den vægtes lavere, ikke fjernes.
+function resolveHvemskrev(state, cur) {
+  const correctGuessers = Object.keys(cur.guesses || {}).filter(id => cur.guesses[id] === cur.correctIndex);
+  const totalGuessers = Object.keys(cur.guesses || {}).length;
+  correctGuessers.forEach(id => { state.game.scores[id] = (state.game.scores[id] || 0) + ROUND_POINTS; });
+  const authorPoints = totalGuessers ? Math.round((ROUND_POINTS / 2) * correctGuessers.length / totalGuessers) : 0;
+  if (authorPoints && cur.authorId) state.game.scores[cur.authorId] = (state.game.scores[cur.authorId] || 0) + authorPoints;
+  cur.phase = 'results';
+  stampPhase(cur);
+  cur.correctGuessers = correctGuessers;
+  cur.authorPoints = authorPoints;
   cur.readyIds = [];
 }
 
@@ -428,6 +459,8 @@ function forceResolveCurrentPhase(state, cur, players) {
     resolveSelvindsigt(state, cur, players);
   } else if (cur.type === 'kendskab' && cur.phase === 'guess') {
     resolveKendskab(state, cur);
+  } else if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
+    resolveHvemskrev(state, cur);
   } else if (cur.phase === 'results' || cur.phase === 'skipped') {
     goToNextRoundOrEnd(state, players);
   }
@@ -473,6 +506,7 @@ module.exports = {
   resolveRoseMatch,
   resolveSelvindsigt,
   resolveKendskab,
+  resolveHvemskrev,
   goToNextRoundOrEnd,
   endGame,
   expireGamePhaseIfDue,

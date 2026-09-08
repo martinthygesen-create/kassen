@@ -1535,46 +1535,95 @@ function buildRoseDerangement(ids) {
 // medlemmer der reelt er med i DENNE runde af spillet (kan være en delmængde
 // af hele rummet) — trivia-spørgsmål handler stadig om hele rummets rigtige
 // brok-historik, uanset hvem der spiller med lige nu.
-const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt', 'kendskab'];
+const ROUND_TYPES = ['quiplash', 'truefalse', 'trivia', 'guessbrok', 'casinobrok', 'rose', 'selvindsigt', 'kendskab', 'hvemskrev'];
 
 // Det personlige lag (Opus-review): hver deltager skriver et par korte
 // udsagn om medspillere ved oprettelse/join (se action:'personal' i
-// api/brok.js) — "kendskab"-rundetypen bruger dem til "hvem handler det
-// om?"-gæt. Bundet EKSKLUSIVT til Vennekassen (se dommens begrundelse:
-// laget ER selve Vennekassens definerende mekanik, ikke en generisk
-// tilvalgs-toggle andre skins også skal bære). Samme minimumstærskel-
-// filosofi som MIN_EVENTS_FOR_ROOM_TRIVIA — for lidt indsamlet indhold, og
-// spørgsmålet giver ikke mening endnu.
+// api/brok.js) — "kendskab"/"hvemskrev"-rundetyperne bruger dem til hhv.
+// "hvem handler det om?" og "hvem skrev det?"-gæt. Bundet EKSKLUSIVT til
+// Vennekassen (se dommens begrundelse: laget ER selve Vennekassens
+// definerende mekanik, ikke en generisk tilvalgs-toggle andre skins også
+// skal bære). Samme minimumstærskel-filosofi som MIN_EVENTS_FOR_ROOM_TRIVIA
+// — for lidt indsamlet indhold, og spørgsmålet giver ikke mening endnu.
 const KENDSKAB_THEMES = ['kende_venner', 'kende_kolleger'];
+const KENDSKAB_FAMILY = ['kendskab', 'hvemskrev'];
 const MIN_ABOUT_FOR_KENDSKAB = 3;
-function collectAboutCandidates(state, players) {
+// Minimum antal "om andre"-udsagn pr. deltager (Martins fund: "måske skal
+// alle lave et minimum antal") — håndhæves server-side i api/brok.js's
+// action:'personal'. 2 er nok til at 5 spillere alene giver 10 rå udsagn
+// (20 med "duplikatoren", se pickAboutCandidate), rigeligt til
+// MIN_ABOUT_FOR_KENDSKAB, uden at kræve mere end 3 tekstfelter minimum
+// (1 selv + 2 om andre) — stadig under friktionsgrænsen fra den
+// oprindelige "3 faste felter, ingen admin-knap"-beslutning. Loftet er
+// derimod fjernet (frit at "tilføje flere" op til antal medspillere).
+const MIN_ABOUT_PER_PLAYER = 2;
+// Hvert "about"-udsagn kan bruges til BEGGE rundevarianter (Martins ønske:
+// "på den måde har ethvert spørgsmål duplikator") — en "brugt"-liste PR
+// SPIL (ikke pr. rum) sikrer at samme udsagn+variant-kombination aldrig
+// trækkes to gange inden for ét spil, uden at forhindre at det samme
+// udsagn bruges én gang til hver variant. Nulstilles hvis puljen for en
+// given variant løber tør (samme shuffle-bag-genfyldnings-filosofi som
+// resten af filen), IKKE for hele spillet på én gang.
+function candidateKey(type, c) { return `${type}:${c.authorId}:${c.targetId}:${c.text}`; }
+// Ren (INGEN "brugt"-filtrering, ingen side-effekter) — bruges BÅDE af
+// isRoundTypeEligible (som kun skal vide om der FUNDAMENTALT er nok
+// indhold, uanset om noget af det tilfældigvis er brugt op i netop denne
+// spilcyklus) og af selve trækningen i beginRound (som selv anvender
+// "brugt"-filteret og genfylder ved behov, se pickAboutCandidate).
+function collectAboutCandidates(state, players, type) {
   const entries = (state.personalLayer && state.personalLayer.entries) || {};
   const candidates = [];
   Object.keys(entries).forEach(authorId => {
     (entries[authorId].about || []).forEach(item => {
       if (!players.includes(item.targetId) || !item.text) return;
-      // Skal efterlade mindst TO spillere der hverken er forfatter eller
-      // target til at gætte — ikke bare én. Med kun én tilbage (præcis 3
-      // aktive spillere) er valgmulighederne i beginRound (options bygget
-      // fra ALLE ikke-target-spillere, inkl. gætteren selv, se
-      // distractorNames nedenfor) reelt kun target+forfatter, fordi
-      // gætteren trygt kan udelukke sit eget navn — et 50/50-gæt uden reel
-      // usikkerhed (fund fra quizmaster-audit, se test_kendskab_stress.js).
-      // Ved 4+ tilbageværende gættere fortynder eget-navn-eliminationen sig
-      // nok blandt de øvrige distraktorer til at gættet stadig er reelt.
-      // Kravet om mindst 1 (ikke 0) var kun en hæng-beskyttelse — dette er
-      // en skærpelse af SAMME grænse, ikke en ny mekanisme.
-      const eligibleGuessers = players.filter(id => id !== authorId && id !== item.targetId).length;
-      if (eligibleGuessers < 2) return;
+      if (type === 'hvemskrev') {
+        // "hvemskrev": target vises ÅBENT, resten (INKL. target selv, som
+        // ikke kender svaret) gætter forfatteren — kun forfatteren selv er
+        // udelukket. Kræver mindst 3 spillere UDOVER forfatteren, så
+        // options (forfatter + op til 3 distraktorer, se buildOptions)
+        // ikke bliver så tyndt at en gætter trygt kan udelukke sig selv og
+        // stå med et reelt gæt på under 3 kandidater — samme fund/filosofi
+        // som kendskabs eligibleGuessers-krav nedenfor.
+        const eligibleGuessers = players.filter(id => id !== authorId).length;
+        if (eligibleGuessers < 3) return;
+      } else {
+        // "kendskab": forfatter OG target udelukket fra at gætte — skal
+        // efterlade mindst TO spillere der hverken er forfatter eller
+        // target til at gætte, ikke bare én. Med kun én tilbage (præcis 3
+        // aktive spillere) er valgmulighederne i beginRound (options bygget
+        // fra ALLE ikke-target-spillere, inkl. gætteren selv, se
+        // distractorNames nedenfor) reelt kun target+forfatter, fordi
+        // gætteren trygt kan udelukke sit eget navn — et 50/50-gæt uden
+        // reel usikkerhed (fund fra quizmaster-audit, se
+        // test_kendskab_stress.js).
+        const eligibleGuessers = players.filter(id => id !== authorId && id !== item.targetId).length;
+        if (eligibleGuessers < 2) return;
+      }
       candidates.push({ authorId, targetId: item.targetId, text: item.text });
     });
   });
   return candidates;
 }
+// Trækker ÉT ubrugt udsagn til denne variant, med genfyldning (samme
+// filosofi som roundTypeBag) hvis alt allerede er brugt i DENNE spilcyklus
+// — glemmer kun "brugt"-nøgler for netop denne variant, ikke den anden, så
+// et udsagn stadig kan bruges én gang til hver (Martins "duplikator").
+function pickAboutCandidate(state, players, type) {
+  const all = collectAboutCandidates(state, players, type);
+  if (!state.game.usedAbout) state.game.usedAbout = [];
+  let fresh = all.filter(c => !state.game.usedAbout.includes(candidateKey(type, c)));
+  if (!fresh.length) {
+    state.game.usedAbout = state.game.usedAbout.filter(k => !k.startsWith(type + ':'));
+    fresh = all;
+  }
+  const pick = pickRandom(fresh);
+  state.game.usedAbout.push(candidateKey(type, pick));
+  return pick;
+}
 function isRoundTypeEligible(type, state, players) {
-  if (type === 'kendskab') {
+  if (type === 'kendskab' || type === 'hvemskrev') {
     if (!KENDSKAB_THEMES.includes(state.themeId)) return false;
-    return collectAboutCandidates(state, players).length >= MIN_ABOUT_FOR_KENDSKAB;
+    return collectAboutCandidates(state, players, type).length >= MIN_ABOUT_FOR_KENDSKAB;
   }
   return true;
 }
@@ -1627,14 +1676,26 @@ function beginRound(state, players) {
     if (!state.game.usedOnceTypes) state.game.usedOnceTypes = [];
     const excluded = excludedRoundTypesFor(state.themeId);
     const pool = ROUND_TYPES.filter(t => !state.game.usedOnceTypes.includes(t) && !excluded.includes(t) && isRoundTypeEligible(t, state, playerIds));
+    // Vægtning (Martins fund: "50/50 er for meget, måske 1/3-1/4") — uden
+    // dette ville kendskab+hvemskrev sammen udgøre 2/9 ≈ 22% helt af sig
+    // selv (Vennekassens 2 nye typer blandt 9 ligeværdige). Én ekstra
+    // pose-plads til et tilfældigt familiemedlem løfter det til 3/10 = 30%,
+    // uden en helt ny bag-struktur (den tidligere "kendskab dominerer
+    // halvdelen"-idé er droppet igen, unødvendig kompleksitet for målet).
+    const eligibleFamily = pool.filter(t => KENDSKAB_FAMILY.includes(t));
+    if (eligibleFamily.length === 2) pool.push(pickRandom(KENDSKAB_FAMILY));
     const bag = shuffle(pool.slice());
     // pop() trækker fra ENDEN af arrayet — så bag[bag.length-1] er den
     // NÆSTE der bliver trukket. Uden dette tjek kunne en frisk pose (8+
     // runder, ny cyklus efter alle 6 er brugt) tilfældigvis starte med
     // PRÆCIS samme type som lige blev spillet — en synlig gentagelse i
     // gentagelse, selvom det teknisk set er to uafhængige cyklusser.
-    if (lastType && bag.length > 1 && bag[bag.length - 1] === lastType) {
-      const swapIdx = bag.findIndex((t, idx) => idx !== bag.length - 1 && t !== lastType);
+    // Udvidet til FAMILIE-niveau (ikke kun eksakt samme type) — kendskab
+    // og hvemskrev ligner hinanden nok (begge "gæt om et personligt
+    // udsagn") at de heller ikke bør ligge lige efter hinanden.
+    const sameFamily = (a, b) => a === b || (KENDSKAB_FAMILY.includes(a) && KENDSKAB_FAMILY.includes(b));
+    if (lastType && bag.length > 1 && sameFamily(bag[bag.length - 1], lastType)) {
+      const swapIdx = bag.findIndex((t, idx) => idx !== bag.length - 1 && !sameFamily(t, lastType));
       if (swapIdx !== -1) {
         const tmp = bag[bag.length - 1];
         bag[bag.length - 1] = bag[swapIdx];
@@ -1757,7 +1818,7 @@ function beginRound(state, players) {
     const pool = getThemeContent(state.themeId).selfInsightQuestions || [];
     const question = pool.length ? pickRandom(pool) : 'Hvem i gruppen er mest sig selv, uanset hvad?';
     state.game.current = { type, phase: 'vote', predictorId: predictor.id, question, votes: {}, predictorGuess: null };
-  } else {
+  } else if (type === 'kendskab') {
     // "Kendskab" — kun i Vennekassen (se KENDSKAB_THEMES/isRoundTypeEligible
     // ovenfor, som allerede har sikret at der er mindst
     // MIN_ABOUT_FOR_KENDSKAB kandidater før denne type overhovedet kan
@@ -1767,13 +1828,25 @@ function beginRound(state, players) {
     // kender svaret, se den ekskluderende gætteliste i getPendingIds/
     // api/game.js's submit-handler) skal gætte hvem i rummet det handler
     // om. Se resolveKendskab i gameFlow.js.
-    const candidates = collectAboutCandidates(state, playerIds);
-    const pick = pickRandom(candidates);
+    const pick = pickAboutCandidate(state, playerIds, 'kendskab');
     const targetMember = players.find(m => m.id === pick.targetId);
     const distractorNames = shuffle(players.filter(m => m.id !== pick.targetId)).slice(0, 3).map(m => m.name);
     const { options, correctIndex } = buildOptions(targetMember.name, distractorNames);
     state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, targetId: pick.targetId, options, correctIndex, guesses: {} };
+  } else {
+    // "Hvem skrev det?" — omvendt retning af kendskab, samme kildepulje
+    // (personalLayer.entries[*].about), se pickAboutCandidate/candidateKey
+    // ovenfor for hvordan samme udsagn kan bruges til BEGGE varianter
+    // (Martins "duplikator"). Target vises ÅBENT i selve rundeteksten (se
+    // index.html's hvemskrevHtml) — resten (INKL. target selv, som ikke
+    // kender svaret) gætter FORFATTEREN. Kun forfatteren er udelukket fra
+    // at gætte, se getPendingIds/api/game.js's submit-handler.
+    const pick = pickAboutCandidate(state, playerIds, 'hvemskrev');
+    const authorMember = players.find(m => m.id === pick.authorId);
+    const distractorNames = shuffle(players.filter(m => m.id !== pick.authorId)).slice(0, 3).map(m => m.name);
+    const { options, correctIndex } = buildOptions(authorMember.name, distractorNames);
+    state.game.current = { type, phase: 'guess', text: pick.text, authorId: pick.authorId, targetId: pick.targetId, options, correctIndex, guesses: {} };
   }
 }
 
-module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates };
+module.exports = { pickRandom, shuffle, pickWeighted, buildOptions, pickFromBag, pickQuiplashPrompt, pickWinnerTauntPrompt, pickChanceVisual, pickWorldTrivia, pickWorldTrueFalse, pickDecoyBroks, pickQuiplashDecoys, generateTriviaQuestion, buildRoseDerangement, beginRound, CONTENT_BY_THEME, getThemeContent, QUESTION_TEMPLATES_BY_THEME, getQuestionTemplates, KENDSKAB_THEMES, MIN_ABOUT_FOR_KENDSKAB, MIN_ABOUT_PER_PLAYER };

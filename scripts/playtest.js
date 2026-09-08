@@ -206,6 +206,12 @@ function botSubmitForRound(state, players) {
     gameFlow.resolveKendskab(state, cur);
     return;
   }
+  if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
+    cur.guesses = cur.guesses || {};
+    players.forEach(id => { if (id !== cur.authorId) cur.guesses[id] = cur.correctIndex; });
+    gameFlow.resolveHvemskrev(state, cur);
+    return;
+  }
   throw new Error(`PLAYTEST-FEJL: ukendt runde-type/fase kombination: ${cur.type}/${cur.phase}`);
 }
 
@@ -272,6 +278,29 @@ async function playtestBrokspillet(themeId, botNames) {
     }
     assert(guard2 < 10, `'kendskab'-runden nåede aldrig 'results'-fasen inden for ${guard2} forsøg`);
     log(`✅ Runde-type 'kendskab' fuldført til resultat-fasen uden fejl`);
+
+    // 'hvemskrev' kræver mindst 4 spillere (eligibleGuessers>=3, se
+    // collectAboutCandidates i game.js — kun forfatteren er udelukket, så
+    // der skal være nok distraktor-diversitet). De sædvanlige 3 test-bots
+    // er ikke nok, så et 4. medlem tilføjes KUN til denne dedikerede test.
+    state.members.push({ id: store.uid(), name: 'TestBot Dagny', isBot: true });
+    seedPersonalLayer(state);
+    const players4 = state.members.map(m => m.id);
+    state.game.players = players4;
+    state.game.round = 0;
+    state.game.usedOnceTypes = [];
+    state.game.roundTypeBag = ['hvemskrev'];
+    game.beginRound(state, state.members);
+    assert(state.game.current.type === 'hvemskrev', `forventede tvungen 'hvemskrev'-runde, fik '${state.game.current.type}'`);
+    gameFlow.stampPhase(state.game.current);
+    let guard3 = 0;
+    while (state.game.current && state.game.current.phase !== 'results' && guard3 < 10) {
+      await sleep(REALISTIC_DELAY_MS());
+      botSubmitForRound(state, players4);
+      guard3++;
+    }
+    assert(guard3 < 10, `'hvemskrev'-runden nåede aldrig 'results'-fasen inden for ${guard3} forsøg`);
+    log(`✅ Runde-type 'hvemskrev' fuldført til resultat-fasen uden fejl`);
   }
   return state;
 }

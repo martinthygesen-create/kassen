@@ -1,20 +1,24 @@
 #!/usr/bin/env node
-// Stress-test af Kendekassens nye personlige lag + "kendskab"-rundetype
-// (se CLAUDE.md, "Mini-spil-kvalitet"-afsnittet — samme filosofi som
-// quizmaster-audit'en: KØR mange rigtige simulerede spil direkte mod
-// _lib-motorerne, ikke bare læs koden). Dækker tre ting, adskilt fra
-// scripts/playtest.js (som kun kører ÉN runde, ikke et helt spil):
+// Stress-test af Vennekassens personlige lag + "kendskab"/"hvemskrev"-
+// rundetyperne (se CLAUDE.md, "Mini-spil-kvalitet"-afsnittet — samme
+// filosofi som quizmaster-audit'en: KØR mange rigtige simulerede spil
+// direkte mod _lib-motorerne, ikke bare læs koden). Dækker fire ting,
+// adskilt fra scripts/playtest.js (som kun kører ÉN runde, ikke et helt
+// spil):
 //
 //  1. FLOW: hænger et helt spil sammen fra start til gameover, over mange
-//     kørsler, forskellige spillerantal (inkl. lige præcis 2, som er den
-//     kendte kant hvor forfatter+target kunne opsluge alle spillere) og
+//     kørsler, forskellige spillerantal (inkl. lige præcis 2/3, de kendte
+//     kanter hvor forfatter(+target) kunne opsluge alle spillere) og
 //     varierende mængder personligt-lag-indhold (under/på/over tærsklen)?
-//  2. TEMA: bliver 'kendskab' KUN trukket i Kendekassens to temaer, og
+//  2. TEMA: bliver 'kendskab'/'hvemskrev' KUN trukket i Vennekassens to
+//     themeId'er (kende_venner, det legacy-alias kende_kolleger), og
 //     respekterer kende_kolleger sin egen ekskluderingsliste (quiplash/rose)?
 //     Ingen tema-"spring" ind i forkert indhold.
-//  3. INDHOLD: er der nogensinde 0 gyldige gættere til en trukket kendskab-
+//  3. INDHOLD: er der nogensinde for få gyldige gættere til en trukket
 //     kandidat (ville hænge runden permanent, se collectAboutCandidates'
-//     eligibleGuessers-filter)?
+//     eligibleGuessers-krav)?
+//  4. VÆGTNING: udgør kendskab+hvemskrev samlet ~22-30% af trukne runder i
+//     spil hvor de er eligible (Martins ønske: 1/3-1/4, ikke 50%)?
 //
 // Kører KUN mod _lib-funktionerne (samme begrænsning som playtest.js — se
 // dets header for hvorfor: ingen live Redis i dette miljø).
@@ -149,6 +153,14 @@ function autoSubmitRound(state, players) {
     gameFlow.resolveKendskab(state, cur);
     return;
   }
+  if (cur.type === 'hvemskrev' && cur.phase === 'guess') {
+    cur.guesses = cur.guesses || {};
+    const eligible = players.filter(id => id !== cur.authorId);
+    assert(eligible.length >= 3, `hvemskrev-runde trukket med under 3 gyldige gættere (spillere=${players.length}, author=${cur.authorId})`);
+    eligible.forEach(id => { cur.guesses[id] = Math.random() < 0.5 ? cur.correctIndex : 0; });
+    gameFlow.resolveHvemskrev(state, cur);
+    return;
+  }
   throw new Error(`STRESS-FEJL: ukendt runde-type/fase kombination: ${cur.type}/${cur.phase}`);
 }
 
@@ -202,7 +214,17 @@ function run() {
   const DENSITIES = ['none', 'sparse', 'full'];
   let totalGames = 0;
   let kendskabDraws = 0;
+  let hvemskrevDraws = 0;
+  // Vægtnings-tælling holdes KUN for spil hvor familien reelt er eligible
+  // (4+ spillere, 'full' density) — 2-3-spiller-spil og none/sparse-spil
+  // kan STRUKTURELT aldrig trække kendskab/hvemskrev (se
+  // MIN_ABOUT_FOR_KENDSKAB/eligibleGuessers-kravene), så de ville bare
+  // udvande en samlet %-måling hen mod et lavt, meningsløst tal uden at
+  // sige noget om selve vægtnings-MEKANIKKEN.
+  let eligibleFamilyDraws = 0;
+  let eligibleAllDraws = 0;
   const kendskabByPlayerCount = {};
+  const hvemskrevByPlayerCount = {};
   const excludedViolations = [];
 
   console.log('=== Kendskab/personligt-lag stress-test (fulde spil, ikke kun én runde) ===\n');
@@ -214,13 +236,18 @@ function run() {
         for (let i = 0; i < RUNS_PER_CONFIG; i++) {
           totalGames++;
           const { typesSeen } = playOneGame(themeId, playerCount, density, 12);
+          const isEligibleConfig = playerCount >= 4 && density === 'full';
+          if (isEligibleConfig) eligibleAllDraws += typesSeen.length;
           typesSeen.forEach(t => {
             if (t === 'kendskab') {
               kendskabDraws++;
+              if (isEligibleConfig) eligibleFamilyDraws++;
               kendskabByPlayerCount[playerCount] = (kendskabByPlayerCount[playerCount] || 0) + 1;
-              // Tema-tjek: 'kendskab' må KUN forekomme i Kendekasse-temaer
-              // (selvfølgelig sandt her, da vi kun looper over dem — den
-              // reelle negative kontrol køres i checkNeverInOtherThemes).
+            }
+            if (t === 'hvemskrev') {
+              hvemskrevDraws++;
+              if (isEligibleConfig) eligibleFamilyDraws++;
+              hvemskrevByPlayerCount[playerCount] = (hvemskrevByPlayerCount[playerCount] || 0) + 1;
             }
             const excluded = EXCLUDED_BY_THEME[themeId] || [];
             if (excluded.includes(t)) excludedViolations.push({ themeId, playerCount, density, type: t });
@@ -234,42 +261,56 @@ function run() {
   assert(excludedViolations.length === 0, `EKSKLUDEREDE rundetyper blev alligevel trukket: ${JSON.stringify(excludedViolations.slice(0, 5))}`);
   console.log(`  ✅ Ingen ekskluderede rundetyper (quiplash/rose i kende_kolleger) trukket i ${totalGames} spil`);
 
-  // 'none'/'sparse'-density skal ALDRIG udløse kendskab (under tærsklen) —
-  // tjekkes separat, med rent tema+density, mange kørsler.
+  // Vægtningskontrol (Martins fund: "50/50 er for meget, 1/3-1/4") —
+  // kendskab+hvemskrev SAMLET skal ligge i nærheden af 22-33% af alle
+  // trukne runder, MÅLT KUN blandt spil hvor de reelt kunne være trukket
+  // (9 ligeværdige typer + evt. 1 boost-plads, se KENDSKAB_FAMILY i
+  // game.js), ikke tæt på 50%.
+  const familyShare = eligibleFamilyDraws / eligibleAllDraws;
+  assert(familyShare > 0.15 && familyShare < 0.40, `kendskab+hvemskrev udgjorde ${(familyShare * 100).toFixed(1)}% af trukne runder i eligible spil — forventede et sted mellem 15-40% (Martins ønske: 1/3-1/4, ikke 50%)`);
+  console.log(`  ✅ Vægtning: kendskab+hvemskrev udgjorde ${(familyShare * 100).toFixed(1)}% af trukne runder i eligible spil (mål: ~22-30%)`);
+
+  // 'none'/'sparse'-density skal ALDRIG udløse kendskab ELLER hvemskrev
+  // (under tærsklen) — tjekkes separat, med rent tema+density, mange
+  // kørsler. hvemskrev kræver 4+ spillere i sig selv (se
+  // collectAboutCandidates), så testes ved præcis 4 for at ramme grænsen.
   console.log('\n--- Tærskel-kontrol (MIN_ABOUT_FOR_KENDSKAB) ---');
   for (const themeId of KENDSKAB_THEMES) {
     for (const density of ['none', 'sparse']) {
-      let drawn = 0;
+      let drawnKendskab = 0, drawnHvemskrev = 0;
       for (let i = 0; i < 60; i++) {
         const { typesSeen } = playOneGame(themeId, 4, density, 12);
-        if (typesSeen.includes('kendskab')) drawn++;
+        if (typesSeen.includes('kendskab')) drawnKendskab++;
+        if (typesSeen.includes('hvemskrev')) drawnHvemskrev++;
       }
-      assert(drawn === 0, `'kendskab' blev trukket ${drawn} gange trods density='${density}' (under tærsklen på ${themeId})`);
+      assert(drawnKendskab === 0, `'kendskab' blev trukket ${drawnKendskab} gange trods density='${density}' (under tærsklen på ${themeId})`);
+      assert(drawnHvemskrev === 0, `'hvemskrev' blev trukket ${drawnHvemskrev} gange trods density='${density}' (under tærsklen på ${themeId})`);
     }
   }
-  console.log('  ✅ Under tærsklen (none/sparse) blev "kendskab" ALDRIG trukket, i nogen kørsel');
+  console.log('  ✅ Under tærsklen (none/sparse) blev hverken "kendskab" eller "hvemskrev" ALDRIG trukket, i nogen kørsel');
 
-  // Negativ kontrol: 'kendskab' må ALDRIG forekomme i et ikke-Kendekasse-tema,
-  // selv med et (kunstigt) fyldt personligt lag — beviser isRoundTypeEligible's
-  // KENDSKAB_THEMES-gate reelt håndhæves, ikke bare tilfældigvis aldrig rammes.
+  // Negativ kontrol: hverken 'kendskab' eller 'hvemskrev' må ALDRIG
+  // forekomme i et ikke-Kendekasse-tema, selv med et (kunstigt) fyldt
+  // personligt lag — beviser isRoundTypeEligible's KENDSKAB_THEMES-gate
+  // reelt håndhæves, ikke bare tilfældigvis aldrig rammes.
   console.log('\n--- Negativ tema-kontrol (andre temaer) ---');
   const otherThemes = ['brok', 'bode', 'rose', 'venne', 'hjaelper', 'sladre', 'konkurrence', 'logn', 'drik'];
   let leaked = 0;
   for (const themeId of otherThemes) {
     for (let i = 0; i < 20; i++) {
       const { typesSeen } = playOneGame(themeId, 4, 'full', 12);
-      if (typesSeen.includes('kendskab')) leaked++;
+      if (typesSeen.includes('kendskab') || typesSeen.includes('hvemskrev')) leaked++;
     }
   }
-  assert(leaked === 0, `'kendskab' lækkede ind i ${leaked} spil UDEN for Kendekassen`);
-  console.log(`  ✅ 'kendskab' optrådte ALDRIG i ${otherThemes.length * 20} spil i de øvrige ${otherThemes.length} temaer`);
+  assert(leaked === 0, `'kendskab'/'hvemskrev' lækkede ind i ${leaked} spil UDEN for Kendekassen`);
+  console.log(`  ✅ Hverken 'kendskab' eller 'hvemskrev' optrådte i ${otherThemes.length * 20} spil i de øvrige ${otherThemes.length} temaer`);
 
-  console.log('\n--- Trækningsstatistik (kendskab pr. spillerantal, alle densities) ---');
+  console.log('\n--- Trækningsstatistik (kendskab/hvemskrev pr. spillerantal, alle densities) ---');
   PLAYER_COUNTS.forEach(pc => {
-    console.log(`  ${pc} spillere: ${kendskabByPlayerCount[pc] || 0} trækninger`);
+    console.log(`  ${pc} spillere: kendskab=${kendskabByPlayerCount[pc] || 0}, hvemskrev=${hvemskrevByPlayerCount[pc] || 0}`);
   });
-  console.log(`\nSamlet: ${totalGames} fulde spil, ${kendskabDraws} kendskab-runder, 0 hæng, 0 tema-lækager, 0 tærskel-brud.`);
-  console.log('\n✅ Alle tre kontroller (flow, tema-overholdelse, gyldig-gætter-invariant) bestået.');
+  console.log(`\nSamlet: ${totalGames} fulde spil, ${kendskabDraws} kendskab-runder, ${hvemskrevDraws} hvemskrev-runder, 0 hæng, 0 tema-lækager, 0 tærskel-brud.`);
+  console.log('\n✅ Alle kontroller (flow, tema-overholdelse, gyldig-gætter-invariant, vægtning) bestået.');
 }
 
 run();

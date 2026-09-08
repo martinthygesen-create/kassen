@@ -1327,61 +1327,43 @@ const SKIN_PRESETS = [
     allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   // Vennekassen (Martins navn/begrundelse: "man KENDER dem") — venne+hjaelper
-  // slået sammen til ÉT skin med to kreds-varianter, valgt i trin 3 (se
-  // renderCreateFlowStep3's kendeVariants-toggle). Implementeret som to
-  // ADSKILTE themeId'er (kende_venner/kende_kolleger), ikke et nyt tag-lag —
-  // genbruger den samme getThemeContent(themeId)-mønster resten af
-  // kodebasen allerede bruger. kende_venner ER trin 1-kortet ("Vennekassen"),
-  // kende_kolleger er kun tilgængelig via kreds-toggeren i trin 3.
+  // slået sammen til ÉT skin. TIDLIGERE havde den en venner/kolleger-
+  // kreds-toggle (to ADSKILTE themeId'er, kende_venner/kende_kolleger) der
+  // skiftede confirmationModel/tone/indhold — FJERNET igen (Martins
+  // eksplicitte, gentagne afgørelse): "hvad er grunden til at vi har et
+  // venne og kollega niveau — giver ingen mening... hvis en vært har sagt
+  // at man spiller det er det det man inviterer til." Ingen af de
+  // tilbageværende forskelle (indholdstone, quiplash/rose-udelukkelse,
+  // enhed) holdt som argument mod hans eget, gennemgående princip: værtens
+  // valg om at spille ER samtykket, appen skal ikke gætte på hvad der er
+  // "passende". kende_venner er nu ÉT samlet skin uden gren — kende_kolleger
+  // (nedenfor) lever kun videre som skjult legacy-alias for evt. allerede
+  // oprettede rum, nås ALDRIG fra UI'en, ingen ny rum bruger den.
   {
     id: 'kende_venner', name: 'Vennekassen', emoji: '🧑‍🤝‍🧑',
-    // "Udfordr venner og kollegaer" (Martins tagline) — sat på DENNE, det
-    // eneste synlige trin-1-kort for hele familien af skins, netop fordi
-    // den varsler kreds-toggeren (venner/kolleger) man møder i trin 3, i
-    // stedet for kun at nævne den ene halvdel.
-    ruleTagline: 'Udfordr venner og kollegaer.', unit: '€',
+    ruleTagline: 'Udfordr venner og kollegaer.',
+    // unitOptions (samme mønster som 'drik' ovenfor) — enheden er nu
+    // opretterens eget valg i stedet for at appen gætter ud fra en
+    // kreds-tag der ikke længere findes.
+    unit: '€', unitOptions: [{ value: '€', label: '💶 Penge' }, { value: 'point', label: '🎯 Point' }],
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
-    // "Påstande om hinanden", IKKE "Brok, bekræftet af alle" (var en
-    // ureflekteret rest fra 'venne'-skinnet, samme "brok"-lækage som
-    // THEME_COPY ovenfor — smaatText vises direkte i trin 3, se
-    // #skinSmaatText, så dette var formentlig præcis det Martin så under
-    // oprettelse). Heller ikke "...bekræftet af alle" — det ville være
-    // forkert ordlyd hvis opretteren i stedet vælger "Holdlederen afgør" i
-    // den nu uafhængige bekræftelses-indstilling nedenfor.
     smaatText: 'Påstande om hinanden',
     gameNames: { spil: 'Kendespillet', mrbrok: 'Mr. Kende', complainer: 'Kendefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
-    kendeTag: 'venner',
-    kendeVariantIds: { venner: 'kende_venner', kolleger: 'kende_kolleger' },
   },
   {
-    // Navnet holdes til "Vennekassen (kolleger)", IKKE bare "Vennekassen" —
-    // samme kollisions-begrundelse som ved 'venne' ovenfor: dette skin er
-    // kun nået via kreds-toggeren i trin 3, men optræder ufiltreret i
-    // "Opret selv"-basislisten, hvor det ellers ville se identisk ud med
-    // kende_venner.
-    // ruleTagline/smaatText er BEVIDST identiske med kende_venner (Martins
-    // rettelse: sproget må ikke ændre sig afhængig af kreds). Den gamle
-    // tekst ("...holdlederen afgør"/"...bedømt af holdlederen") antog også
-    // fejlagtigt host-approval, selvom confirmationModel nu er sit eget,
-    // uafhængige spørgsmål nedenfor — en opretter der vælger "Kolleger" men
-    // "Alle stemmer" ville ellers have fået en tagline der modsagde sit
-    // eget valg.
-    id: 'kende_kolleger', name: 'Vennekassen (kolleger)', emoji: '🧑‍🤝‍🧑',
+    // Skjult legacy-alias, IKKE længere tilgængelig fra UI'en (hverken
+    // trin 1 eller en kreds-toggle, som ikke findes mere) — kun for
+    // eventuelle allerede oprettede rum med dette themeId, samme princip
+    // som 'venne'/'hjaelper' ovenfor. Indhold uændret, så et sådant rum
+    // fortsat virker identisk.
+    id: 'kende_kolleger', name: 'Vennekassen (kolleger, nedlagt)', emoji: '🧑‍🤝‍🧑',
     hiddenFromPicker: true,
     ruleTagline: 'Udfordr venner og kollegaer.', unit: 'point',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
     smaatText: 'Påstande om hinanden',
-    // allowedGames udelukker STADIG 'mrbrok' — ikke fordi
-    // confirmationModel kræver det (det er nu uafhængigt, se ovenfor), men
-    // fordi api/_lib/mrbrok.js slet ikke har eget indhold for
-    // 'kende_kolleger' endnu (falder tilbage til 'brok'-emner, allerede
-    // flagget af scripts/validate-theme.js). At slå MrBrok til her ville
-    // indføre en NY "brok"-lækage i stedet for at fjerne den gamle.
     gameNames: { spil: 'Kendespillet', mrbrok: 'MrBrok', complainer: 'Kendefælden' },
     allowedGames: ['spil', 'complainer'],
-    kendeTag: 'kolleger',
-    kendeVariantIds: { venner: 'kende_venner', kolleger: 'kende_kolleger' },
   },
   {
     id: 'rose', name: 'Rosekassen', emoji: '🌹',
@@ -1638,22 +1620,16 @@ function isKendekasse(){ return KENDSKAB_THEMES_CLIENT.includes(state && state.t
 function myPersonalLayerEntry(){
   return (profile && state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[profile.memberId]) || null;
 }
-// Spejler PRÆCIS den samme deterministiske round-robin-tildeling som
-// action:'personal' i api/brok.js — klienten skal kende sine 2 tildelte
-// personer FØR indsendelse (for at kunne vise navne på felterne), men
-// serveren regner selv targets ud igen ved selve indsendelsen (og bruger DEN
-// beregning, ikke hvad klienten tror) — så et rum der ændrer sig mellem åbning
-// af arket og indsendelse højst giver let anderledes (men stadig gyldige)
-// targets, aldrig en fejl.
-function myPersonalLayerTargets(){
+// Frit målvalg (Martins rettelse) — erstatter den tidligere deterministiske
+// round-robin-tildeling af præcis 2 personer. Spilleren vælger nu selv HVEM
+// hvert udsagn handler om, og kan tilføje lige så mange som der er
+// medspillere. MIN_ABOUT_PER_PLAYER_CLIENT spejler samme konstant i
+// api/_lib/game.js — kun til klient-UI (disabled submit-knap), serveren
+// håndhæver den uafhængigt og er den reelle autoritet.
+const MIN_ABOUT_PER_PLAYER_CLIENT = 2;
+function otherMembersForPersonalLayer(){
   if(!profile) return [];
-  const memberIds = state.members.map(m=>m.id);
-  const others = memberIds.filter(id=>id!==profile.memberId);
-  if(others.length === 0) return [];
-  if(others.length === 1) return [others[0]];
-  const offset = memberIds.indexOf(profile.memberId);
-  const ids = [...new Set([others[offset % others.length], others[(offset+1) % others.length]])];
-  return ids.map(id=>state.members.find(m=>m.id===id)).filter(Boolean);
+  return state.members.filter(m=>m.id!==profile.memberId);
 }
 
 // Det Store Brokkeris skjulte rolle blev tidligere altid kaldt "den skyldige"
@@ -1955,23 +1931,9 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
       </div>
       <button class="sheet-btn ghost" id="backToNameBtn" style="width:auto; margin:0; padding:6px 12px; font-size:12px; color:rgba(255,247,232,0.7);">← Tilbage</button>
     </div>
-    ${skin.kendeVariantIds ? `
-    <div class="onboard-card">
-      <label class="field-label" style="color:rgba(255,247,232,0.6);">Hvilken kreds er det?</label>
-      <div class="app-pick-row wrap-pick-row" id="kendeKredsPickRow" style="margin:10px 0 4px;">
-        <div class="onboard-pick toggle-pick app-pick${skin.kendeTag==='venner'?' selected':''}" data-kende-kreds="venner" style="background:var(--sea); color:#fff;">
-          <div class="app-pick-label">🧑‍🤝‍🧑 Venner</div>
-        </div>
-        <div class="onboard-pick toggle-pick app-pick${skin.kendeTag==='kolleger'?' selected':''}" data-kende-kreds="kolleger" style="background:var(--sea); color:#fff;">
-          <div class="app-pick-label">🤝 Kolleger</div>
-        </div>
-      </div>
-      <p class="hint" style="margin:0; font-size:11.5px; color:rgba(255,247,232,0.58); text-align:center;">Bruges kun til at navngive kredsen — sproget og reglerne er de samme, uanset hvad I vælger.</p>
-    </div>
-    ` : ''}
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
-      ${skin.id === 'hjaelper' || skin.kendeVariantIds ? `
+      ${skin.id === 'hjaelper' || skin.id === 'kende_venner' ? `
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
       <div class="app-pick-row wrap-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
@@ -2152,22 +2114,6 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
     };
   });
   applyHostApprovalGameRestriction();
-  // Vennekassens kreds-toggle (venner/kolleger) skifter reelt HELE skinnet
-  // (confirmationModel/allowedGames/gameNames/unit hænger sammen som ét
-  // sæt, ikke enkeltfelter man kan toggle uafhængigt) — derfor et fuldt
-  // gen-render af trin 3 med den anden variant, i stedet for kun at flytte
-  // en 'selected'-klasse som resten af togglerne her.
-  if(skin.kendeVariantIds){
-    document.querySelectorAll('#kendeKredsPickRow .onboard-pick').forEach(el=>{
-      el.onclick = ()=>{
-        const tag = el.dataset.kendeKreds;
-        if(tag === skin.kendeTag) return;
-        const nextId = skin.kendeVariantIds[tag];
-        const nextSkin = SKIN_PRESETS.find(s => s.id === nextId);
-        if(nextSkin) renderCreateFlowStep3(nextSkin, groupName, isCustom);
-      };
-    });
-  }
   document.getElementById('createBtn').onclick = async ()=>{
     const btn = document.getElementById('createBtn');
     // Kaos-bruger-hærdning: uden disabled her kan et hurtigt dobbeltklik
@@ -2563,7 +2509,12 @@ async function ensureTestBots(){
     const botsNeedingEntry = state.members.filter(m=>m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]));
     for(const bot of botsNeedingEntry){
       try{
-        const r = await api('brok', { action:'personal', roomId, actorId: bot.id, selfText: pickBotFiller(BOT_FILLER_SELF), aboutTexts: [{ text: pickBotFiller(BOT_FILLER_ABOUT) }, { text: pickBotFiller(BOT_FILLER_ABOUT) }] });
+        // Frit målvalg (Martins rettelse) — serveren tildeler ikke længere
+        // targets selv, så bots skal selv vælge, ligesom et menneske ville.
+        // Tager de to (eller færre, i et lille rum) første andre medlemmer.
+        const others = state.members.filter(m=>m.id!==bot.id).slice(0,2);
+        const aboutTexts = others.map(m=>({ targetId: m.id, text: pickBotFiller(BOT_FILLER_ABOUT) }));
+        const r = await api('brok', { action:'personal', roomId, actorId: bot.id, selfText: pickBotFiller(BOT_FILLER_SELF), aboutTexts });
         if(r && r.state) state = r.state;
       }catch(e){ /* en fejlet bot-udfyldelse må ikke stoppe resten */ }
     }
@@ -2697,6 +2648,10 @@ async function runGameBotAction(cur, botId){
     return botSubmit('game', botId, { targetId: pickBotFiller(options.length?options:players) });
   }
   if(cur.type === 'kendskab' && cur.phase === 'guess'){
+    const n = (cur.options||[]).length || 4;
+    return botSubmit('game', botId, { choiceIndex: Math.floor(Math.random()*n) });
+  }
+  if(cur.type === 'hvemskrev' && cur.phase === 'guess'){
     const n = (cur.options||[]).length || 4;
     return botSubmit('game', botId, { choiceIndex: Math.floor(Math.random()*n) });
   }
@@ -3130,6 +3085,9 @@ function getPendingIdsClient(cur, players){
   }
   if(cur.type === 'kendskab' && cur.phase === 'guess'){
     return players.filter(id=>id!==cur.authorId && id!==cur.targetId).filter(id=>!(cur.guesses && cur.guesses[id] !== undefined));
+  }
+  if(cur.type === 'hvemskrev' && cur.phase === 'guess'){
+    return players.filter(id=>id!==cur.authorId).filter(id=>!(cur.guesses && cur.guesses[id] !== undefined));
   }
   return [];
 }
@@ -3837,6 +3795,7 @@ function gameBodyHtml(g){
   if(cur.type === 'rose') return roseHtml(g, cur);
   if(cur.type === 'selvindsigt') return selvindsigtHtml(g, cur);
   if(cur.type === 'kendskab') return kendskabHtml(g, cur);
+  if(cur.type === 'hvemskrev') return hvemskrevHtml(g, cur);
   return '';
 }
 
@@ -3910,6 +3869,7 @@ function gameLobbyHtml(){
     ['🌹', 'Rose: skriv den mest overdrevne ros til en tilfældig medspiller, gæt bagefter hvem der skrev hvad om hvem'],
     ['🔮', 'Selvindsigt: gruppen stemmer hemmeligt på et superlativ-spørgsmål, mens én forsøger at gætte gruppens svar'],
     ['🕵️', 'Kendskab (kun Vennekassen): et anonymt udsagn fra jeres kendskabsark — resten gætter hvem det handler om'],
+    ['✍️', 'Hvem skrev det? (kun Vennekassen): samme udsagn, men nu vises hvem det handler om — resten gætter i stedet hvem der skrev det'],
     ['🏆', 'Point tælles på tværs af alle runder — flest point vinder'],
   ];
   if(gameInstructionsOpen === null) gameInstructionsOpen = !localStorage.getItem('bk_game_seen_instructions');
@@ -4244,6 +4204,55 @@ function kendskabHtml(g, cur){
       <p class="hint" style="color:rgba(255,247,232,0.6);">"${escapeHtml(cur.text)}" — skrevet af ${escapeHtml(author?author.name:'?')} om:</p>
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);">✅ ${escapeHtml(target?target.name:'?')}</p>
       <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt' : 'Ingen gættede rigtigt denne gang.'}</p>
+      ${cur.authorPoints ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">✍️ ${escapeHtml(author?author.name:'?')} fik ${cur.authorPoints} point for et genkendeligt udsagn</p>` : ''}
+    </div>
+    ${gameReadyHtml(g, cur)}
+  `;
+}
+
+// "Hvem skrev det?" — omvendt retning af kendskab, samme kilde. Target
+// vises ÅBENT i selve rundeteksten (i modsætning til kendskab, hvor target
+// er hemmeligt) — resten (INKL. target selv, som ikke kender svaret) gætter
+// FORFATTEREN. Kun forfatteren selv er udelukket, se getPendingIdsClient.
+function hvemskrevHtml(g, cur){
+  const isSpectator = profile && profile.memberId === cur.authorId;
+  const target = state.members.find(m=>m.id===cur.targetId);
+  if(cur.phase === 'guess'){
+    const eligible = g.players.filter(id=>id!==cur.authorId).length;
+    const guessedCount = Object.keys(cur.guesses||{}).length;
+    const myGuessIndex = (profile && cur.guesses[profile.memberId] !== undefined) ? cur.guesses[profile.memberId] : null;
+    const hasGuessed = myGuessIndex !== null;
+    const opts = (cur.options||[]).map((label,i)=>{
+      const clickable = !isSpectator && !hasGuessed;
+      return `
+      <div class="bal-row${clickable ? ' game-pick' : ''}" ${clickable?`data-choice="${i}"`:''} style="${clickable ? 'cursor:pointer;' : ''} ${myGuessIndex===i?'outline:2px solid var(--coin);':''} ${hasGuessed && myGuessIndex!==i ? 'opacity:.5;':''}">
+        <div class="avatar" style="width:34px;height:34px;font-size:12.5px; background:linear-gradient(160deg, var(--coin), var(--coin-dark)); color:var(--ink);">${String.fromCharCode(65+i)}</div>
+        <div class="feed-body"><div class="bal-name">${escapeHtml(label)}</div></div>
+        ${myGuessIndex===i?'<span style="font-size:18px;">✓</span>':''}
+      </div>
+    `;
+    }).join('');
+    return `
+      <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · ✍️ Hvem skrev det?</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+      <div class="game-card" id="gameCard">
+        <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.6);">Nogen har skrevet dette om ${escapeHtml(target?target.name:'?')}:</p>
+        <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;">"${escapeHtml(cur.text)}"</p>
+      </div>
+      ${isSpectator ? `<div class="empty-state"><span class="emoji">🤐</span><b>Du kender allerede svaret</b>Vent mens de andre gætter.</div>` : opts}
+      ${gameProgressHtml(guessedCount, eligible, 'har gættet')}
+      ${(hasGuessed && !isSpectator) ? `<div class="waiting-pill"><span class="waiting-dot"></span> Venter på de andre...</div>` : ''}
+      ${complaintBlockHtml(g, cur)}
+    `;
+  }
+  const author = state.members.find(m=>m.id===cur.authorId);
+  const correct = (cur.correctGuessers||[]).map(id=>state.members.find(m=>m.id===id)).filter(Boolean);
+  return `
+    <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · Resultat</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+    <div class="game-card" id="gameCard" style="text-align:center;">
+      <p class="hint" style="color:rgba(255,247,232,0.6);">"${escapeHtml(cur.text)}" om ${escapeHtml(target?target.name:'?')} — skrevet af:</p>
+      <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--coin);">✅ ${escapeHtml(author?author.name:'?')}</p>
+      <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt' : 'Ingen gættede rigtigt denne gang.'}</p>
+      ${cur.authorPoints ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">✍️ ${escapeHtml(author?author.name:'?')} fik ${cur.authorPoints} point for en genkendelig stemme</p>` : ''}
     </div>
     ${gameReadyHtml(g, cur)}
   `;
@@ -4722,6 +4731,11 @@ function bindGameHandlers(g){
     });
   }
   if(cur.type === 'kendskab' && cur.phase === 'guess' && profile && profile.memberId !== cur.authorId && profile.memberId !== cur.targetId){
+    document.querySelectorAll('[data-choice]').forEach(el=>{
+      el.onclick = ()=> gameApi('submit', { payload: { choiceIndex: parseInt(el.dataset.choice,10) } });
+    });
+  }
+  if(cur.type === 'hvemskrev' && cur.phase === 'guess' && profile && profile.memberId !== cur.authorId){
     document.querySelectorAll('[data-choice]').forEach(el=>{
       el.onclick = ()=> gameApi('submit', { payload: { choiceIndex: parseInt(el.dataset.choice,10) } });
     });
@@ -7077,35 +7091,83 @@ function openBrokSheet(){
 // — se den fulde begrundelse ved KENDSKAB_THEMES i api/_lib/game.js og
 // action:'personal' i api/brok.js. Kan udfyldes når som helst, uafhængigt af
 // om der er nogen historik i kassen endnu.
+// Frit målvalg + minimum ${minRequired}, intet loft (Martins rettelse —
+// erstatter den tidligere faste "1 selv + 2 om andre, tildelt automatisk"-
+// form). Draft-arrayet lever kun mens sheetet er åbent (lukkes/genåbnes
+// sheetet, starter det forfra fra den senest GEMTE indsendelse).
 function openPersonalLayerSheet(){
   const existing = myPersonalLayerEntry();
-  const targets = myPersonalLayerTargets();
-  const aboutFields = targets.map((m,i)=>`
-    <p class="hint" style="margin:14px 0 4px;">Om ${escapeHtml(m.name)} (valgfrit)</p>
-    <textarea id="klAbout${i}" rows="2" maxlength="120" placeholder="Skriv noget kort og sandt om ${escapeHtml(m.name)}...">${existing && existing.about && existing.about[i] ? escapeHtml(existing.about[i].text) : ''}</textarea>
-  `).join('');
+  const others = otherMembersForPersonalLayer();
+  const minRequired = Math.min(MIN_ABOUT_PER_PLAYER_CLIENT, others.length);
+  const draft = (existing && existing.about && existing.about.length)
+    ? existing.about.map(a=>({ targetId: a.targetId, text: a.text }))
+    : Array.from({ length: minRequired }, ()=>({ targetId: '', text: '' }));
+
+  function rowsHtml(){
+    return draft.map((row,i)=>{
+      const usedElsewhere = draft.filter((r,j)=>j!==i).map(r=>r.targetId);
+      const opts = others.map(m=>`<option value="${m.id}" ${row.targetId===m.id?'selected':''} ${usedElsewhere.includes(m.id)?'disabled':''}>${escapeHtml(m.name)}</option>`).join('');
+      return `
+        <div class="onboard-card" style="padding:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
+            <select class="kl-target-select" data-row="${i}" style="flex:1; font-weight:700;">
+              <option value="">Vælg person...</option>${opts}
+            </select>
+            ${draft.length > minRequired ? `<button type="button" class="sheet-btn ghost kl-remove-row" data-row="${i}" style="width:auto; margin:0; padding:6px 10px; font-size:12px;">✕</button>` : ''}
+          </div>
+          <textarea class="kl-text-input" data-row="${i}" rows="2" maxlength="120" placeholder="Skriv noget kort og sandt...">${escapeHtml(row.text)}</textarea>
+        </div>`;
+    }).join('');
+  }
+
   openSheet(`
     <h2>🧑‍🤝‍🧑 Dit kendskabsark</h2>
     <p class="hint">Bruges senere i spillet til at gætte hvem der er hvem — kort og til punktet er bedst. Du kan altid rette det igen.</p>
     <p class="hint" style="margin:14px 0 4px;">Om dig selv</p>
     <textarea id="klSelf" rows="2" maxlength="120" placeholder="Skriv et kort, sandt udsagn om dig selv...">${existing ? escapeHtml(existing.self) : ''}</textarea>
-    ${aboutFields}
-    <button class="sheet-btn primary" id="klSubmitBtn" disabled>Gem</button>
+    <p class="hint" style="margin:14px 0 4px;">Om andre (mindst ${minRequired}, vælg selv hvem)</p>
+    <div id="klRows">${rowsHtml()}</div>
+    <button type="button" class="sheet-btn ghost" id="klAddRowBtn" style="margin-top:8px;">+ Tilføj endnu et udsagn</button>
+    <button class="sheet-btn primary" id="klSubmitBtn" style="margin-top:14px;" disabled>Gem</button>
     <button class="sheet-btn ghost" id="klCancelBtn">Luk</button>
   `, ()=>{
     const submitBtn = document.getElementById('klSubmitBtn');
     const selfInput = document.getElementById('klSelf');
-    const updateEnabled = ()=>{ submitBtn.disabled = !selfInput.value.trim(); };
+    function filledCount(){ return draft.filter(r=>r.targetId && r.text.trim()).length; }
+    function updateEnabled(){
+      const ok = !!selfInput.value.trim() && filledCount() >= minRequired;
+      submitBtn.disabled = !ok;
+      submitBtn.textContent = ok ? 'Gem' : `Gem (${filledCount()}/${minRequired})`;
+    }
+    function bindRows(){
+      document.querySelectorAll('.kl-target-select').forEach(el=>{
+        el.onchange = ()=>{ draft[+el.dataset.row].targetId = el.value; renderRowsInPlace(); };
+      });
+      document.querySelectorAll('.kl-text-input').forEach(el=>{
+        el.oninput = ()=>{ draft[+el.dataset.row].text = el.value; updateEnabled(); };
+      });
+      document.querySelectorAll('.kl-remove-row').forEach(el=>{
+        el.onclick = ()=>{ draft.splice(+el.dataset.row, 1); renderRowsInPlace(); };
+      });
+    }
+    function renderRowsInPlace(){
+      document.getElementById('klRows').innerHTML = rowsHtml();
+      bindRows();
+      updateEnabled();
+    }
     selfInput.addEventListener('input', updateEnabled);
-    updateEnabled();
+    bindRows();
+    document.getElementById('klAddRowBtn').onclick = ()=>{
+      if(draft.length >= others.length){ toast('Du har allerede skrevet om alle i rummet'); return; }
+      draft.push({ targetId: '', text: '' });
+      renderRowsInPlace();
+    };
     document.getElementById('klCancelBtn').onclick = closeSheet;
     submitBtn.onclick = async ()=>{
       const selfText = selfInput.value.trim();
       if(!selfText){ toast('Skriv mindst ét udsagn om dig selv'); return; }
-      const aboutTexts = targets.map((m,i)=>{
-        const el = document.getElementById('klAbout'+i);
-        return { text: el ? el.value.trim() : '' };
-      });
+      const aboutTexts = draft.filter(r=>r.targetId && r.text.trim()).map(r=>({ targetId: r.targetId, text: r.text.trim() }));
+      if(aboutTexts.length < minRequired){ toast(`Skriv om mindst ${minRequired} andre`); return; }
       lockSubmitBtn(submitBtn, 'Gemmer...');
       try{
         const r = await api('brok', { action: 'personal', roomId, actorId: profile.memberId, selfText, aboutTexts });
@@ -7119,6 +7181,7 @@ function openPersonalLayerSheet(){
         await refreshState(true);
       }
     };
+    updateEnabled();
   });
 }
 
