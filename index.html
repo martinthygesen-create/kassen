@@ -6805,6 +6805,16 @@ function feedItemHtml(e, old){
 }
 
 function renderFeed(main){
+  // Blød, ikke-blokerende reminder (Martins ønske, IKKE et hård-gate — folk
+  // skal stadig kunne spille selvom nogen mangler at udfylde) om venneark,
+  // vist for den ENKELTE der selv mangler at udfylde sit — ikke en generel
+  // "resten af rummet mangler"-nag, kun synlig for den det faktisk gælder.
+  // Peger direkte på samme sheet som ☰-menu-punktet (openPersonalLayerSheet),
+  // bare mere synlig end nede i menuen, hvor Martin oplevede den blev overset.
+  const personalLayerBanner = (isKendekasse() && !myPersonalLayerEntry()) ? `<div class="feed-item" id="personalLayerReminder" style="border-style:dashed; border-color:rgba(120,190,255,0.5); background:rgba(120,190,255,0.1); align-items:center; cursor:pointer;">
+    <div class="avatar" style="background:linear-gradient(160deg,#7ec8ff,#4a90d9); color:var(--ink);">🧑‍🤝‍🧑</div>
+    <div class="feed-body"><div class="feed-name">Udfyld dit venneark</div><div class="feed-msg">${((state.personalLayer && state.personalLayer.submittedCount) || 0)}/${state.members.filter(m=>!m.isBot).length} har udfyldt — bruges i Vennespillets runder</div></div>
+  </div>` : '';
   const pendingCards = (state.pendingList||[]).slice().sort((a,b)=>a.openedAt-b.openedAt).map(renderPendingCard).join('');
   // Ekstra sikkerhedsnet: en bot skal ALDRIG vises som vinder her, uanset
   // hvad der ligger i freeBrokMemberId (fx fra før bot-filtreringen i
@@ -6825,7 +6835,8 @@ function renderFeed(main){
     // Fallback bruges kun hvis ruleTagline mangler (bør ikke ske for et
     // rum oprettet via det normale flow, men holdes generisk — IKKE
     // "brok" — af samme grund som sektions-labels ovenfor.
-    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>${escapeHtml(themeCopy().emptyTitle)}</b>${escapeHtml(state.ruleTagline || `Første gang nogen gør noget, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
+    main.innerHTML = personalLayerBanner + winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>${escapeHtml(themeCopy().emptyTitle)}</b>${escapeHtml(state.ruleTagline || `Første gang nogen gør noget, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
+    bindPersonalLayerBannerHandler();
     return;
   }
   const sorted = allEvents.slice().sort((a,b)=>b.ts-a.ts);
@@ -6841,10 +6852,15 @@ function renderFeed(main){
   // (Rosekassen, Vennekassen, Bødekassen osv.), ikke kun de faktiske
   // brok-temaer. Samme generiske ord som allerede etableret andre steder
   // i filen (fx "dage uden hændelser").
-  main.innerHTML = pendingCards + winnerBanner + quietToday
+  main.innerHTML = personalLayerBanner + pendingCards + winnerBanner + quietToday
     + (fresh.length ? `<div class="section-label">Seneste hændelser</div>${freshRows}` : '')
     + (stale.length ? `<div class="section-label" style="margin-top:${fresh.length?22:10}px;">📜 Gamle hændelser</div>${staleRows}` : '');
   bindPendingCardHandlers();
+  bindPersonalLayerBannerHandler();
+}
+function bindPersonalLayerBannerHandler(){
+  const el = document.getElementById('personalLayerReminder');
+  if(el) el.onclick = openPersonalLayerSheet;
 }
 function allTimeTotals(){
   const totals = {};
