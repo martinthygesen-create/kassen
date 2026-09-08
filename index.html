@@ -1409,8 +1409,15 @@ const SKIN_PRESETS = [
     ruleTagline: 'Hvem lyver — og bliver afsløret.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
     smaatText: 'Løgne, afsløret ved afstemning',
-    gameNames: { spil: 'Brokspillet', mrbrok: 'Mr. Løgn', complainer: 'Løgnefælden' },
-    allowedGames: ['mrbrok', 'complainer'],
+    // Rettet (Martins fund, reel fejl i rum-intro): 'spil' manglede fra
+    // allowedGames og gameNames.spil var stadig det generiske 'Brokspillet'
+    // — selvom api/_lib/game.js's CONTENT_BY_THEME.logn ALLEREDE har fuldt,
+    // dedikeret indhold (QUIPLASH_PROMPTS_LOGN m.fl.) og sin egen
+    // gameName:'Løgnespillet'. Logn var det ENESTE synlige (ikke
+    // hiddenFromPicker) skin med denne mangel — indholdet fandtes, det var
+    // bare aldrig slået til.
+    gameNames: { spil: 'Løgnespillet', mrbrok: 'Mr. Løgn', complainer: 'Løgnefælden' },
+    allowedGames: ['spil', 'mrbrok', 'complainer'],
   },
   {
     id: 'hjaelper', name: 'Kollegakassen', emoji: '🤝',
