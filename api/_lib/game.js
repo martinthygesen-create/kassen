@@ -750,11 +750,16 @@ const DECOY_KONKURRENCE = [
 // slags leak-mønster som Konkurrencekassens, blot ikke UI-nåbart endnu).
 // Udvidet (Martins ønske): blander nu løgn, rygter OG sladder som ét
 // samlet "overdriv"-tema i stedet for kun ren løgn-vinkel — matcher den
-// bredere ruleTagline i index.html's SKIN_PRESETS ("Løgne, rygter og
-// sladder — hvem overdriver mest?"). Ingen af de tre kræver et sandheds-
-// element (quiplash er "skriv-og-stem-på-bedste", ikke sandt/falsk, se
-// resolveQuiplashVote i gameFlow.js) — alle tre passer derfor ind i samme
-// mekanik uden modsigelse.
+// bredere ruleTagline i index.html's SKIN_PRESETS ("Løgn, sladder og
+// overdrivelser."). Ingen af de tre kræver et sandhedselement (quiplash er
+// "skriv-og-stem-på-bedste", ikke sandt/falsk, se resolveQuiplashVote i
+// gameFlow.js) — alle tre passer derfor ind i samme mekanik uden
+// modsigelse. Hver prompt har bevidst sit EGET format-twist (titel,
+// eskalering, retssag, spåkone, osv.), ikke bare "skriv et rygte/sladder"
+// gentaget — quizmaster-audit fandt fire af de først tilføjede for ens
+// (ingen tvist der presser svaret et bestemt sted hen), rettet her. Én
+// ("...bag ryggen") droppet helt, ikke omskrevet — samme audit-fund: for
+// let at læse som ægte udhængning frem for åbenlys leg.
 const QUIPLASH_PROMPTS_LOGN = [
   'Den mest sandsynlige løgn {target} fortalte for nylig er...',
   'Skriv den mest overbevisende (opdigtede) undskyldning for {target}',
@@ -764,14 +769,13 @@ const QUIPLASH_PROMPTS_LOGN = [
   '{target}s hemmelige talent er at bluffe om...',
   'Det {target} altid overdriver en lille smule er...',
   'Om 10 år afsløres {target} stadig for at have løjet om...',
-  'Det vildeste rygte om {target}, der aldrig er blevet bekræftet, er...',
   'Ifølge et rygte {target} selv har startet om sig selv, er de faktisk...',
-  'Det rygte der ville sprede sig hurtigst i vennegruppen om {target} er...',
   'Hvis et rygte om {target} blev hvisket videre 10 gange, ville det til sidst lyde sådan her...',
-  'Det sladder om {target} alle kender, men ingen taler højt om, er...',
   'Hvis {target} var hovedpersonen i et sladderblad, ville forsiden hedde...',
-  'Den mest overdrevne sladderhistorie om {target}s seneste weekend er...',
-  'Det {target} bliver sladret allermest om bag ryggen er...',
+  'Hvis der kom en "breaking news"-alarm om {target}, ville teksten lyde...',
+  'Den besked der ville få gruppechatten til at eksplodere, hvis den handlede om {target}, er...',
+  'Hvis en spåkone spåede {target}s næste pinlige øjeblik, ville hun sige...',
+  'Den sladderhistorie om {target}s seneste weekend der ville få hele bordet til at lene sig ind for at høre mere, er...',
 ];
 const QUIPLASH_DECOYS_LOGN = [
   'At sige "jeg var lige på vej" i en time',
