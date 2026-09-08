@@ -1642,11 +1642,14 @@ function myPersonalLayerEntry(){
 }
 // Rettet (Opus-audit): en entry kan nu eksistere med KUN et 'secret'-felt
 // (se action:'secret' i api/brok.js) og INTET 'about' — spejler
-// hasAboutEntry i api/_lib/game.js. Brug DENNE, ikke myPersonalLayerEntry()
-// alene, alle steder der reelt spørger "har personen udfyldt sit venneark".
-function hasFilledPersonalLayer(){
-  const entry = myPersonalLayerEntry();
+// hasAboutEntry i api/_lib/game.js. Ét sted, genbrugt af BÅDE
+// hasFilledPersonalLayer (nedenfor, kun egen profil) og ensureTestBots
+// (som skal kunne spørge om et VILKÅRLIGT medlems entry, ikke kun egen).
+function hasAboutEntryClient(entry){
   return !!(entry && entry.about && entry.about.length);
+}
+function hasFilledPersonalLayer(){
+  return hasAboutEntryClient(myPersonalLayerEntry());
 }
 // "Udsagn" (se action:'secret' i api/brok.js) — GENERISK, ikke bundet til
 // isKendekasse()/KENDSKAB_THEMES_CLIENT (i modsætning til venneark ovenfor),
@@ -2545,7 +2548,7 @@ async function ensureTestBots(){
     // overhovedet — en bot med et 'secret' men intet 'about' ville aldrig
     // få sit venneark seedet, selvom den nye action:'secret' i teorien kan
     // ramme bots (via botsNeedingSecret nedenfor) FØR denne kørsel.
-    const botsNeedingEntry = state.members.filter(m=>m.isBot && !(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id] && state.personalLayer.entries[m.id].about && state.personalLayer.entries[m.id].about.length));
+    const botsNeedingEntry = state.members.filter(m=>m.isBot && !hasAboutEntryClient(state.personalLayer && state.personalLayer.entries && state.personalLayer.entries[m.id]));
     for(const bot of botsNeedingEntry){
       try{
         // Frit målvalg (Martins rettelse) — serveren tildeler ikke længere
