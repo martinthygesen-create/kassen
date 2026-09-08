@@ -1341,7 +1341,14 @@ const SKIN_PRESETS = [
     // stedet for kun at nævne den ene halvdel.
     ruleTagline: 'Udfordr venner og kollegaer.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
-    smaatText: 'Brok, bekræftet af alle',
+    // "Påstande om hinanden", IKKE "Brok, bekræftet af alle" (var en
+    // ureflekteret rest fra 'venne'-skinnet, samme "brok"-lækage som
+    // THEME_COPY ovenfor — smaatText vises direkte i trin 3, se
+    // #skinSmaatText, så dette var formentlig præcis det Martin så under
+    // oprettelse). Heller ikke "...bekræftet af alle" — det ville være
+    // forkert ordlyd hvis opretteren i stedet vælger "Holdlederen afgør" i
+    // den nu uafhængige bekræftelses-indstilling nedenfor.
+    smaatText: 'Påstande om hinanden',
     gameNames: { spil: 'Kendespillet', mrbrok: 'Mr. Kende', complainer: 'Kendefælden' },
     allowedGames: ['spil', 'mrbrok', 'complainer'],
     kendeTag: 'venner',
@@ -1353,11 +1360,24 @@ const SKIN_PRESETS = [
     // kun nået via kreds-toggeren i trin 3, men optræder ufiltreret i
     // "Opret selv"-basislisten, hvor det ellers ville se identisk ud med
     // kende_venner.
+    // ruleTagline/smaatText er BEVIDST identiske med kende_venner (Martins
+    // rettelse: sproget må ikke ændre sig afhængig af kreds). Den gamle
+    // tekst ("...holdlederen afgør"/"...bedømt af holdlederen") antog også
+    // fejlagtigt host-approval, selvom confirmationModel nu er sit eget,
+    // uafhængige spørgsmål nedenfor — en opretter der vælger "Kolleger" men
+    // "Alle stemmer" ville ellers have fået en tagline der modsagde sit
+    // eget valg.
     id: 'kende_kolleger', name: 'Vennekassen (kolleger)', emoji: '🧑‍🤝‍🧑',
     hiddenFromPicker: true,
-    ruleTagline: 'For kollegerne — kom med en påstand, holdlederen afgør.', unit: 'point',
+    ruleTagline: 'Udfordr venner og kollegaer.', unit: 'point',
     poolPolarity: 'punishment', confirmationModel: 'host-approval', dailyRhythm: true,
-    smaatText: 'Påstande om kolleger, bedømt af holdlederen',
+    smaatText: 'Påstande om hinanden',
+    // allowedGames udelukker STADIG 'mrbrok' — ikke fordi
+    // confirmationModel kræver det (det er nu uafhængigt, se ovenfor), men
+    // fordi api/_lib/mrbrok.js slet ikke har eget indhold for
+    // 'kende_kolleger' endnu (falder tilbage til 'brok'-emner, allerede
+    // flagget af scripts/validate-theme.js). At slå MrBrok til her ville
+    // indføre en NY "brok"-lækage i stedet for at fjerne den gamle.
     gameNames: { spil: 'Kendespillet', mrbrok: 'MrBrok', complainer: 'Kendefælden' },
     allowedGames: ['spil', 'complainer'],
     kendeTag: 'kolleger',
@@ -1573,19 +1593,28 @@ const THEME_COPY = {
     emptyBodyList: 'Så snart der kommer en påstand, vises listen her.',
   },
   // Vennekassen (Opus-review) — to ADSKILTE themeId'er (se
-  // themeRegistry.js's kommentar for hvorfor), genbruger venne/hjaelper's
-  // krukke-copy 1:1 (selve UI-teksten nævner ikke skinnets navn, kun
-  // generiske ord som "Broklisten"/"Påstandsliste").
+  // themeRegistry.js's kommentar for hvorfor).
+  // BEVIDST 100% IDENTISK indhold for kende_venner og kende_kolleger
+  // (Martins rettelse: "sproget skal ikke ændre sig om man er kollega
+  // eller ej" — kende_venner arvede tidligere 'venne'-skinnets gamle,
+  // ureviderede "brok"-sprog uændret ("Brok-feed", "Nogen brokker sig…",
+  // "Broklisten" osv.), mens kende_kolleger allerede havde fået et
+  // generisk påstands-sprog. Det gav både en direkte "brok"-ordlækage i
+  // Vennekassen (som slet ikke skal handle om "brok") OG en sprogforskel
+  // mellem de to kredse, som Martin eksplicit har bedt om IKKE at
+  // eksistere. Løsningen er ikke at "temaficere" hver sin tekst — det er
+  // netop det der skabte forskellen — men at lade begge dele PRÆCIS
+  // samme, kreds-neutrale ordlyd.
   kende_venner: {
-    feedLabel: 'Brok-feed',
-    pendingVerb: 'anklaget',
-    guiltyAdj: 'skyldige',
-    quotePrefix: 'brokkede sig over ', guessbrokExample: 'Booked hele sommerhuset uden at spørge nogen',
-    mainBtnText: '📢 Nogen brokker sig…', sheetTitle: 'Hvem brokker sig? 🙄',
-    sheetHint: 'Peg på synderen, og skriv præcis hvad de brokkede sig over — ellers ved ingen hvad de stemmer om.',
-    sheetPlaceholder: 'F.eks. "over hvem der bestemmer planerne..." (påkrævet)', listLabel: 'Broklisten',
-    emptyTitle: 'Ingen brok endnu', emptyTitleList: 'Ingen brok registreret endnu',
-    emptyBodyList: 'Så snart nogen brokker sig, vises regnskabet her.',
+    feedLabel: 'Påstand-feed',
+    pendingVerb: 'nævnt',
+    guiltyAdj: 'afslørede',
+    quotePrefix: '', guessbrokExample: 'Leverede rapporten en hel dag før deadline',
+    mainBtnText: '🤝 Kom med en påstand…', sheetTitle: 'Hvem handler påstanden om? 🤝',
+    sheetHint: 'Peg på personen, og skriv påstanden helt konkret — ellers ved ingen hvad de stemmer om.',
+    sheetPlaceholder: 'F.eks. "leverede uden at følge skabelonen..." (påkrævet)', listLabel: 'Påstandsliste',
+    emptyTitle: 'Ingen påstande endnu', emptyTitleList: 'Ingen påstande registreret endnu',
+    emptyBodyList: 'Så snart der kommer en påstand, vises listen her.',
   },
   kende_kolleger: {
     feedLabel: 'Påstand-feed',
@@ -1937,12 +1966,12 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
           <div class="app-pick-label">🤝 Kolleger</div>
         </div>
       </div>
-      <p class="hint" style="margin:0; font-size:11.5px; color:rgba(255,247,232,0.58); text-align:center;">${skin.kendeTag==='venner' ? 'Alle stemmer sammen — flertallet bestemmer.' : 'Dæmpet, professionel tone — holdlederen godkender alene, ingen navngiven skurk.'}</p>
+      <p class="hint" style="margin:0; font-size:11.5px; color:rgba(255,247,232,0.58); text-align:center;">Bruges kun til at navngive kredsen — sproget og reglerne er de samme, uanset hvad I vælger.</p>
     </div>
     ` : ''}
     <div class="onboard-card">
       <p id="skinSmaatText" style="margin:0 0 14px; font-size:12px; color:rgba(255,247,232,0.75); text-align:center;">${escapeHtml(skin.smaatText)}</p>
-      ${skin.kendeVariantIds ? '' : skin.id === 'hjaelper' ? `
+      ${skin.id === 'hjaelper' || skin.kendeVariantIds ? `
       <label class="field-label" style="color:rgba(255,247,232,0.6);">Bekræfter I det sammen som gruppe, eller er der én der har det sidste ord?</label>
       <div class="app-pick-row wrap-pick-row" id="confirmationPickRow" style="margin:10px 0 4px;">
         <div class="onboard-pick toggle-pick app-pick${skin.confirmationModel==='quorum'?' selected':''}" data-confirmation-model="quorum" style="background:var(--sea); color:#fff;">
@@ -2014,14 +2043,21 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
       <div class="onboard-card" style="padding:14px;">
         <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Hvor længe</label>
         <div class="app-pick-row wrap-pick-row" id="rhythmPickRow" style="margin:8px 0 6px; gap:6px;">
-          <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? '' : ' selected'}" data-daily-rhythm="0" style="background:var(--sea); color:#fff; padding:10px 6px;">
+          <!-- Default er ALTID "Enkelt Event", uanset skin.dailyRhythm
+               (Martins rettelse: "Løbende Kasse" var forvirrende som
+               forvalg — en enkelt, afgrænset gang er nemmere at forstå og
+               committe sig til end en potentielt uendelig kasse). Selve
+               skin.dailyRhythm-feltet bruges stadig andre steder (fx som
+               "Opret selv"s base-værdi), kun selve TRIN 3-forvalget er
+               hardkodet her. -->
+          <div class="onboard-pick toggle-pick app-pick selected" data-daily-rhythm="0" style="background:var(--sea); color:#fff; padding:10px 6px;">
             <div class="app-pick-label" style="font-size:11px;">Enkelt Event</div>
           </div>
-          <div class="onboard-pick toggle-pick app-pick${skin.dailyRhythm ? ' selected' : ''}" data-daily-rhythm="1" style="background:var(--sea); color:#fff; padding:10px 6px;">
+          <div class="onboard-pick toggle-pick app-pick" data-daily-rhythm="1" style="background:var(--sea); color:#fff; padding:10px 6px;">
             <div class="app-pick-label" style="font-size:11px;">Løbende Kasse</div>
           </div>
         </div>
-        <p class="hint" id="rhythmSubtext" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.58);">${skin.dailyRhythm ? 'Nulstiller kl. 03:00 hver nat.' : 'Ingen daglig nulstilling.'}</p>
+        <p class="hint" id="rhythmSubtext" style="margin:0; font-size:10.5px; color:rgba(255,247,232,0.58);">For denne ene gang — ingen daglig nulstilling. I lukker den selv når I er færdige, med én samlet kåring.</p>
       </div>
       <div class="onboard-card" style="padding:14px; margin-top:0;">
         <label class="field-label" style="color:rgba(255,247,232,0.6); font-size:10.5px;">Adgang</label>
@@ -2064,7 +2100,10 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
         if(id === 'rhythmPickRow'){
           const isDaily = el.dataset.dailyRhythm === '1';
           const subtext = document.getElementById('rhythmSubtext');
-          if(subtext) subtext.textContent = isDaily ? 'Kører fast i hverdagen. Nulstiller automatisk hver nat kl. 03:00.' : 'Til I er færdige. Ingen daglig nulstilling — slutter med en samlet kåring.';
+          // "Intet udløb" gentaget eksplicit for begge (Martins rettelse) —
+          // forskellen er IKKE om den slutter automatisk (det gør ingen af
+          // dem), kun om den nulstiller hver nat undervejs eller ej.
+          if(subtext) subtext.textContent = isDaily ? 'Intet udløb — kører til I selv lukker den. Nulstiller hver nat kl. 03:00, klar til en ny dag.' : 'For denne ene gang — ingen daglig nulstilling. I lukker den selv når I er færdige, med én samlet kåring.';
         }
       };
     });
@@ -2076,10 +2115,13 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
   // Dommeren). "Kan den ikke, er den ikke available" — MrBrok-flisen
   // skjules og fravælges, den vises ikke bare deaktiveret.
   function applyHostApprovalGameRestriction(){
-    // confirmationPickRow findes kun for hjaelper-baserede skins (se Del
-    // 1-sanering: "Én bestemmer" er fjernet fra alle rene underholdnings-
-    // skins) — for alle andre er confirmationModel altid 'quorum', så der
-    // er intet at begrænse.
+    // confirmationPickRow findes kun for hjaelper-baserede skins og
+    // Vennekassen (se Del 1-sanering: "Én bestemmer" er fjernet fra alle
+    // rene underholdnings-skins) — for alle andre er confirmationModel
+    // altid 'quorum', så der er intet at begrænse. Rettet (Martins fund):
+    // dette valg var tidligere IKKE sit eget spørgsmål for Vennekassen —
+    // det blev bare afledt tavst af venner/kolleger-toggeren ovenfor, uden
+    // at brugeren nogensinde så det som en selvstændig indstilling.
     const hostApprovalEl = document.querySelector('#confirmationPickRow [data-confirmation-model="host-approval"]');
     const isHostApproval = !!hostApprovalEl && hostApprovalEl.classList.contains('selected');
     const mrbrokTile = document.querySelector('#gamePickRow [data-pick="mrbrok"]');
