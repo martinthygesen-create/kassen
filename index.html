@@ -1406,9 +1406,13 @@ const SKIN_PRESETS = [
     id: 'logn', name: 'Løgnerkassen', emoji: '🎭',
     // Samme "du/din"-tvetydighed som Sladrekassen havde — rettet af samme
     // grund: openBrokSheet lader dig pege på et hvilket som helst medlem.
-    ruleTagline: 'Hvem lyver — og bliver afsløret.', unit: '€',
+    // Udvidet (Martins ønske): beskrivelsen dækker nu eksplicit løgne,
+    // rygter OG sladder som ét samlet "overdriv"-tema, i stedet for kun
+    // "løgn" snævert — matcher det udvidede, blandede quiplash-indhold
+    // nedenfor i game.js (se QUIPLASH_PROMPTS_LOGN).
+    ruleTagline: 'Løgn, sladder og overdrivelser.', unit: '€',
     poolPolarity: 'punishment', confirmationModel: 'quorum', dailyRhythm: true,
-    smaatText: 'Løgne, afsløret ved afstemning',
+    smaatText: 'Løgne og sladder, afsløret ved afstemning',
     // Rettet (Martins fund, reel fejl i rum-intro): 'spil' manglede fra
     // allowedGames og gameNames.spil var stadig det generiske 'Brokspillet'
     // — selvom api/_lib/game.js's CONTENT_BY_THEME.logn ALLEREDE har fuldt,

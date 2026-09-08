@@ -748,6 +748,13 @@ const DECOY_KONKURRENCE = [
 // allowedGames i dag, men getThemeContent faldt tidligere stille tilbage
 // til RÅ brok-indhold for begge, hvis noget nogensinde kaldte dem — samme
 // slags leak-mønster som Konkurrencekassens, blot ikke UI-nåbart endnu).
+// Udvidet (Martins ønske): blander nu løgn, rygter OG sladder som ét
+// samlet "overdriv"-tema i stedet for kun ren løgn-vinkel — matcher den
+// bredere ruleTagline i index.html's SKIN_PRESETS ("Løgne, rygter og
+// sladder — hvem overdriver mest?"). Ingen af de tre kræver et sandheds-
+// element (quiplash er "skriv-og-stem-på-bedste", ikke sandt/falsk, se
+// resolveQuiplashVote i gameFlow.js) — alle tre passer derfor ind i samme
+// mekanik uden modsigelse.
 const QUIPLASH_PROMPTS_LOGN = [
   'Den mest sandsynlige løgn {target} fortalte for nylig er...',
   'Skriv den mest overbevisende (opdigtede) undskyldning for {target}',
@@ -757,6 +764,14 @@ const QUIPLASH_PROMPTS_LOGN = [
   '{target}s hemmelige talent er at bluffe om...',
   'Det {target} altid overdriver en lille smule er...',
   'Om 10 år afsløres {target} stadig for at have løjet om...',
+  'Det vildeste rygte om {target}, der aldrig er blevet bekræftet, er...',
+  'Ifølge et rygte {target} selv har startet om sig selv, er de faktisk...',
+  'Det rygte der ville sprede sig hurtigst i vennegruppen om {target} er...',
+  'Hvis et rygte om {target} blev hvisket videre 10 gange, ville det til sidst lyde sådan her...',
+  'Det sladder om {target} alle kender, men ingen taler højt om, er...',
+  'Hvis {target} var hovedpersonen i et sladderblad, ville forsiden hedde...',
+  'Den mest overdrevne sladderhistorie om {target}s seneste weekend er...',
+  'Det {target} bliver sladret allermest om bag ryggen er...',
 ];
 const QUIPLASH_DECOYS_LOGN = [
   'At sige "jeg var lige på vej" i en time',
