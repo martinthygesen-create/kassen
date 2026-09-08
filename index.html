@@ -2110,7 +2110,14 @@ function renderCreateFlowStep3(skin, groupName, isCustom){
           // gratis-lodtrækning, dag-tælleren) — IKKE selve regnskabet,
           // som først tømmes ved en bevidst "Gør op"/lukning, uanset dette
           // valg. Det var netop uklarheden Martin påpegede.
-          if(subtext) subtext.textContent = isDaily ? 'Til: tilføjer streaks (dage uden brok), en daglig gratis-vinder-lodtrækning og en "Dag X"-tæller — det er DEM der nulstiller hver nat kl. 03, ikke selve regnskabet.' : 'Uden: bare ét samlet regnskab — I lukker den selv når I er færdige, med én samlet kåring.';
+          //
+          // "dage uden hændelser", IKKE "dage uden brok" (Martins fund,
+          // rettet) — denne tekst vises for ALLE skins i trin 3, ikke kun
+          // Brokkekassen/Vennekassen, så "brok" var forkert ordvalg her
+          // uanset hvilken kasse man er ved at oprette. Samme generiske
+          // ord som allerede brugt i den etablerede saldoliste, se
+          // "dag${streak===1?'':'e'} uden hændelser" nedenfor i filen.
+          if(subtext) subtext.textContent = isDaily ? 'Til: tilføjer streaks (dage uden hændelser), en daglig gratis-vinder-lodtrækning og en "Dag X"-tæller — det er DEM der nulstiller hver nat kl. 03, ikke selve regnskabet.' : 'Uden: bare ét samlet regnskab — I lukker den selv når I er færdige, med én samlet kåring.';
         }
       };
     });
@@ -2459,7 +2466,7 @@ function showRoomIntroSplash(){
 
   const items = [];
   const gn = state.gameNames || {};
-  if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'brok dig, og det koster 1€ i puljen'}`]);
+  if(state.kasseEnabled) items.push(['🫙', state.themeName || 'Brokkekassen', `Fælles regnskab — ${state.ruleTagline ? state.ruleTagline.charAt(0).toLowerCase()+state.ruleTagline.slice(1) : 'gør noget, og det koster 1€ i puljen'}`]);
   if(state.gameEnabled) items.push(['👉', gn.spil || 'Brokspillet', 'Hurtige quiz- og afstemningsrunder I spiller sammen']);
   if(state.mrbrokEnabled) items.push(['🕵️', gn.mrbrok || 'MrBrok', `Find den skjulte ${gn.mrbrok || 'MrBrok'}, før de andre bliver afsløret`]);
   if(state.complainerEnabled) items.push(['🪤', gn.complainer || 'Det Store Brokkeri', `Vær i karakter — men ingen ved endnu hvem der er ${complainerGuiltyDef()}`]);
@@ -3143,7 +3150,12 @@ function complaintBlockHtml(g, cur){
   if(age < MIN_COMPLAIN_AGE_MS) return '';
   const growth = Math.min(1, (age - MIN_COMPLAIN_AGE_MS) / 30000);
   const targetName = pending.length === 1 ? (state.members.find(m=>m.id===pending[0])||{}).name : null;
-  const label = targetName ? `🐌 Brok over ${escapeHtml(targetName)}s tempo` : `🐌 Brok over de langsomme`;
+  // "Skynd på ...", IKKE "Brok over ...s tempo" (Martins fund) — denne
+  // nødbremse-knap er FÆLLES for alle tre spil (Brokspillet/MrBrok/Fælden)
+  // og alle 11 temaer, så "brok" lækkede ind selv i fx Rosekassen og
+  // Vennekassen hver gang nogen ventede på en langsom medspiller. Samme
+  // rettelse duplikeret ved MrBroks og Fældens egen version af denne knap.
+  const label = targetName ? `🐌 Skynd på ${escapeHtml(targetName)}` : `🐌 Skynd på de langsomme`;
   return `<button class="complain-btn" id="complainBtn" data-target="${pending[0]}" style="transform:scale(${(1+growth*0.16).toFixed(2)}); opacity:${(0.6+growth*0.4).toFixed(2)};">${label}</button>`;
 }
 
@@ -4075,10 +4087,13 @@ function truefalseHtml(g, cur){
     const eligible = cur.isWorld ? g.players.length : g.players.length - 1;
     const myGuess = profile && cur.guesses[profile.memberId] !== undefined;
     const badgeLabel = isAuthor ? '⚖️ Sandt eller falsk' : (myGuess ? '⚖️ Sandt eller falsk' : '⚖️ Stem nu: sandt eller opdigtet?');
+    // "Fra omverdenen"/"Fra jeres egen historik", IKKE "Verdens-brok"/
+    // "Ægte Brok" (Martins fund) — begge badges var ubetingede, ikke
+    // skin-afhængige, og viste "brok" i truefalse/trivia i ALLE temaer.
     return `
       <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · ${badgeLabel}</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card" id="gameCard" style="text-align:center;">
-        ${cur.isWorld ? `<p class="hint" style="margin:0 0 6px; color:rgba(255,201,60,0.85); font-weight:600;">🌍 Verdens-brok</p>` : cur.reused ? `<p class="hint" style="margin:0 0 6px; color:rgba(255,201,60,0.85); font-weight:600;">♻️ Genbrugt udsagn fra tidligere</p>` : ''}
+        ${cur.isWorld ? `<p class="hint" style="margin:0 0 6px; color:rgba(255,201,60,0.85); font-weight:600;">🌍 Fra omverdenen</p>` : cur.reused ? `<p class="hint" style="margin:0 0 6px; color:rgba(255,201,60,0.85); font-weight:600;">♻️ Genbrugt udsagn fra tidligere</p>` : ''}
         ${cur.isWorld ? '' : `<p class="hint" style="margin:0 0 6px; color:rgba(255,247,232,0.6);">${escapeHtml(author?author.name:'?')} skrev om ${escapeHtml(target?target.name:'?')}:</p>`}
         <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;">"${escapeHtml(cur.statement)}"</p>
         ${(!cur.isWorld && isAuthor) ? '<p class="hint" style="color:rgba(255,247,232,0.6);">Du skrev det — vent på de andres gæt.</p>' : (myGuess ? '' : `
@@ -4099,7 +4114,7 @@ function truefalseHtml(g, cur){
   return `
     <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · Resultat</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
     <div class="game-card" id="gameCard" style="text-align:center;">
-      ${cur.isWorld ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">🌍 Verdens-brok</p>` : `<p class="hint" style="color:rgba(255,247,232,0.6);">${escapeHtml(author?author.name:'?')} skrev om ${escapeHtml(target?target.name:'?')}:</p>`}
+      ${cur.isWorld ? `<p class="hint" style="color:rgba(255,201,60,0.85); font-weight:600;">🌍 Fra omverdenen</p>` : `<p class="hint" style="color:rgba(255,247,232,0.6);">${escapeHtml(author?author.name:'?')} skrev om ${escapeHtml(target?target.name:'?')}:</p>`}
       <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;">"${escapeHtml(cur.statement)}"</p>
       <p style="margin-top:10px; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px; color:${cur.isTrue?'var(--coin)':'var(--coral)'};">${cur.isTrue ? '✅ Det var faktisk SANDT' : '🎭 Det var OPDIGTET'}</p>
       <p class="hint" style="margin-top:8px; color:rgba(255,247,232,0.7);">${correct.length ? '🏆 ' + correct.map(m=>escapeHtml(m.name)).join(', ') + ' gættede rigtigt (+1)' : 'Ingen gættede rigtigt.'}</p>
@@ -4238,7 +4253,7 @@ function triviaHtml(g, cur){
       </div>
     `).join('');
     return `
-      <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · ${cur.isWorld ? '🌍 Verdens-brok' : '🔍 Ægte Brok'}</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
+      <div class="game-badge" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Runde ${g.round}/${g.totalRounds} · ${cur.isWorld ? '🌍 Fra omverdenen' : '🔍 Fra jeres egen historik'}</span><span id="gameTimer" style="font-size:16px; font-weight:800; opacity:1;"></span></div>
       <div class="game-card" id="gameCard">
         <p style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px; margin:0 0 14px; line-height:1.3;">${escapeHtml(cur.question)}</p>
         ${opts}
@@ -4928,7 +4943,7 @@ function mrbrokComplaintBlockHtml(m, cur){
   if(age < MIN_COMPLAIN_AGE_MS) return '';
   const growth = Math.min(1, (age - MIN_COMPLAIN_AGE_MS) / 30000);
   const targetName = !anonymize && pending.length === 1 ? (state.members.find(mm=>mm.id===pending[0])||{}).name : null;
-  const label = targetName ? `🐌 Brok over ${escapeHtml(targetName)}s tempo` : `🐌 Brok over ventetiden`;
+  const label = targetName ? `🐌 Skynd på ${escapeHtml(targetName)}` : `🐌 Skynd på de langsomme`;
   return `<button class="complain-btn" id="complainBtn" data-target="${pending[0]}" style="transform:scale(${(1+growth*0.16).toFixed(2)}); opacity:${(0.6+growth*0.4).toFixed(2)};">${label}</button>`;
 }
 
@@ -5977,8 +5992,12 @@ function complainerLobbyHtml(){
     return `<div class="name-pill ${on?'selected':''}" data-complainer-player="${mm.id}" style="${on?'':'opacity:.5;'}">${on?'✅':'➖'} ${escapeHtml(mm.name)}</div>`;
   }).join('');
   const enough = complainerSelectedPlayers.length >= 3;
+  // "den hemmelige skeptiker", IKKE "den indre brokker" (Martins fund) —
+  // dette tutorial-eksempel er ubetinget, ikke skin-afhængigt, så det
+  // viste "brokker" i alle temaers Fælden-tutorial, ikke kun de faktiske
+  // brok-temaer.
   const steps = [
-    ['🎭', 'Alle får hemmeligt en <b>arketype</b> (fx "den indre brokker") og en hverdags-situation (chef, nabo, familie, kollega, ven)'],
+    ['🎭', 'Alle får hemmeligt en <b>arketype</b> (fx "den hemmelige skeptiker") og en hverdags-situation (chef, nabo, familie, kollega, ven)'],
     ['🗒️', 'Hver opbygningsrunde skriver alle et kort, konkret indlæg i karakter — ud fra et spørgsmål der bliver skarpere for hver runde'],
     ['🤫', `Bagefter stemmer alle HEMMELIGT om hvem der virker mest ${themeCopy().guiltyAdj} lige nu — ingen ved endnu hvem der reelt ER det`],
     ['🎰', 'Rundens topmest mistænkte vælger: bank et lille sikkert point, eller sats det dobbelt op på at være topmest mistænkt IGEN næste runde'],
@@ -6096,9 +6115,12 @@ function complainerBrokApproveHtml(c, cur){
   const key = cur.round + ':' + prevId;
   const already = c.brokApprovals && c.brokApprovals[key] && c.brokApprovals[key][profile.memberId];
   if(already){
-    return `<p class="hint" style="text-align:center; margin-top:10px; color:rgba(255,201,60,0.7);">🔥 Du gav ros for ${escapeHtml(prevMember?prevMember.name:'?')}s brok</p>`;
+    // "tur", IKKE "brok" (Martins fund) — ubetinget, viste "brok" i ALLE
+    // temaers Fælden-spil, ikke kun de faktiske brok-temaer (fx også
+    // Vennekassens "Kendefælden").
+    return `<p class="hint" style="text-align:center; margin-top:10px; color:rgba(255,201,60,0.7);">🔥 Du gav ros for ${escapeHtml(prevMember?prevMember.name:'?')}s tur</p>`;
   }
-  return `<button class="game-btn ghost" id="complainerApproveBrokBtn" data-target="${prevId}" style="margin-top:10px;">🔥 Godt brok, ${escapeHtml(prevMember?prevMember.name:'?')}!</button>`;
+  return `<button class="game-btn ghost" id="complainerApproveBrokBtn" data-target="${prevId}" style="margin-top:10px;">🔥 Godt gået, ${escapeHtml(prevMember?prevMember.name:'?')}!</button>`;
 }
 
 function complainerComplainHtml(c, cur){
@@ -6475,7 +6497,7 @@ function complainerComplaintBlockHtml(c, cur){
   if(age < MIN_COMPLAIN_AGE_MS) return '';
   const growth = Math.min(1, (age - MIN_COMPLAIN_AGE_MS) / 30000);
   const targetName = !anonymize && pending.length === 1 ? (state.members.find(mm=>mm.id===pending[0])||{}).name : null;
-  const label = targetName ? `🐌 Brok over ${escapeHtml(targetName)}s tempo` : `🐌 Brok over ventetiden`;
+  const label = targetName ? `🐌 Skynd på ${escapeHtml(targetName)}` : `🐌 Skynd på de langsomme`;
   return `<button class="complain-btn" id="complainBtn" data-target="${pending[0]}" style="transform:scale(${(1+growth*0.16).toFixed(2)}); opacity:${(0.6+growth*0.4).toFixed(2)};">${label}</button>`;
 }
 
@@ -6767,7 +6789,10 @@ function renderFeed(main){
   const acquittalEvents = (state.acquittals||[]).map(a => ({ ...a, ts: a.expiredAt, acquitted: true }));
   const allEvents = [...historyEvents, ...state.events, ...acquittalEvents];
   if(!allEvents.length && !state.pendingList.length){
-    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>${escapeHtml(themeCopy().emptyTitle)}</b>${escapeHtml(state.ruleTagline || `Første gang nogen brokker sig, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
+    // Fallback bruges kun hvis ruleTagline mangler (bør ikke ske for et
+    // rum oprettet via det normale flow, men holdes generisk — IKKE
+    // "brok" — af samme grund som sektions-labels ovenfor.
+    main.innerHTML = winnerBanner + `<div class="empty-state"><span class="emoji">🤐</span><b>${escapeHtml(themeCopy().emptyTitle)}</b>${escapeHtml(state.ruleTagline || `Første gang nogen gør noget, koster det 1${state.unit || '€'}.`)} Hold øje!</div>`;
     return;
   }
   const sorted = allEvents.slice().sort((a,b)=>b.ts-a.ts);
@@ -6778,9 +6803,14 @@ function renderFeed(main){
   const quietToday = !fresh.length && !!stale.length
     ? `<div class="empty-state" style="padding:24px 20px 10px;"><span class="emoji">🤐</span><b>Stille indtil videre i dag</b>Rul ned og nyd gårsdagens elendighed.</div>`
     : '';
+  // "hændelser", IKKE "brok" (Martins fund) — disse to sektions-labels var
+  // UBETINGEDE, ikke skin-afhængige, så de viste "brok" i EN HVER kasse
+  // (Rosekassen, Vennekassen, Bødekassen osv.), ikke kun de faktiske
+  // brok-temaer. Samme generiske ord som allerede etableret andre steder
+  // i filen (fx "dage uden hændelser").
   main.innerHTML = pendingCards + winnerBanner + quietToday
-    + (fresh.length ? `<div class="section-label">Seneste brok</div>${freshRows}` : '')
-    + (stale.length ? `<div class="section-label" style="margin-top:${fresh.length?22:10}px;">📜 Gammelt brok</div>${staleRows}` : '');
+    + (fresh.length ? `<div class="section-label">Seneste hændelser</div>${freshRows}` : '')
+    + (stale.length ? `<div class="section-label" style="margin-top:${fresh.length?22:10}px;">📜 Gamle hændelser</div>${staleRows}` : '');
   bindPendingCardHandlers();
 }
 function allTimeTotals(){
@@ -7034,7 +7064,7 @@ function openBrokSheet(){
   });
 }
 
-/* ============ KENDEKASSENS PERSONLIGE LAG ============ */
+/* ============ VENNEKASSENS PERSONLIGE LAG ============ */
 // Ét kort udsagn om sig selv (påkrævet) + op til to om medspillere (valgfrit)
 // — se den fulde begrundelse ved KENDSKAB_THEMES i api/_lib/game.js og
 // action:'personal' i api/brok.js. Kan udfyldes når som helst, uafhængigt af
@@ -7351,7 +7381,7 @@ function openAdminMenuSheet(){
     <button class="sheet-btn danger" id="adminResetBtn">🧹 Nulstil alt</button>
     <p class="hint" style="${hintStyle}">Kun regnskab/historik — rummet består.</p>
     ${state.dailyRhythm ? `
-    <button class="sheet-btn danger" id="adminFinalCloseBtn">🔒 Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid</button>
+    <button class="sheet-btn danger" id="adminFinalCloseBtn">🔒 Luk denne ${escapeHtml((state.themeName || 'kasse').toLowerCase())} for altid</button>
     <p class="hint" style="${hintStyle}">Historik bevares.</p>
     ` : `
     <button class="sheet-btn danger" id="adminFinalCloseBtn">🏆 Afslut Spil &amp; Kår Vinder</button>
@@ -7440,8 +7470,10 @@ function openRemoveEventSheet(){
   }).join('');
   openSheet(`
     <h2>Markér mistænkt snyd 🫤</h2>
-    <p class="hint">Et markeret brok bliver stående i feedet, men gråtonet og streget over — og tæller ikke længere med i puljen. Ingen anklage, bare en synlig mistanke, så folk selv regulerer det. Fortryd markeringen igen hvis den var forkert.</p>
-    ${rows || '<p class="hint">Ingen brok i den aktive pulje lige nu.</p>'}
+    <!-- "hændelse(r)", IKKE "brok" (Martins fund) — dette admin-panel er
+         ubetinget, ikke skin-afhængigt, viste derfor "brok" i alle kasser. -->
+    <p class="hint">En markeret hændelse bliver stående i feedet, men gråtonet og streget over — og tæller ikke længere med i puljen. Ingen anklage, bare en synlig mistanke, så folk selv regulerer det. Fortryd markeringen igen hvis den var forkert.</p>
+    ${rows || '<p class="hint">Ingen hændelser i den aktive pulje lige nu.</p>'}
     <button class="sheet-btn ghost" id="cancelRemoveEvent">Luk</button>
   `, ()=>{
     document.getElementById('cancelRemoveEvent').onclick = closeSheet;
@@ -7580,7 +7612,7 @@ function openFinalCloseSheet(){
     }
   }
   openSheet(`
-    <h2>${isSingleEvent ? 'Afslut Spil &amp; Kår Vinder 🏆' : `Luk denne ${escapeHtml((state.themeName || 'brokkekasse').toLowerCase())} for altid 🔒`}</h2>
+    <h2>${isSingleEvent ? 'Afslut Spil &amp; Kår Vinder 🏆' : `Luk denne ${escapeHtml((state.themeName || 'kasse').toLowerCase())} for altid 🔒`}</h2>
     ${winnerHtml}
     <p class="hint">${isSingleEvent ? 'Gemmer det samlede regnskab i historikken og lukker rummet helt af — ingen kan starte flere hændelser herefter. I kan stadig se regnskab og historik.' : 'Gør evt. den sidste åbne pulje op, gemmer den i historikken og lukker helt af — ingen kan starte flere hændelser herefter. I kan stadig se Regnskab og Historik.'} Kan ikke fortrydes.</p>
     <button class="sheet-btn danger" id="doFinalClose">${isSingleEvent ? 'Ja, afslut og kår vinder' : 'Ja, luk for altid'}</button>
