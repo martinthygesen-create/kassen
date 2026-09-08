@@ -92,7 +92,7 @@ async function testBasicAssignFlow() {
     const id = memberIds[i];
     const targets = cur.assigned[id];
     const aboutTexts = targets.map(t => ({ targetId: t, text: 'Udsagn fra ' + id + ' om ' + t }));
-    const r = await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { selfText: 'Om mig selv: ' + id, aboutTexts } });
+    const r = await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { aboutTexts } });
     if (i < 3) assert(r.state.game.current.type === 'assign', 'skal blive i assign-fasen indtil alle 5 har indsendt (kun ' + (i + 1) + '/5 indsendt)');
   }
   const afterFour = await getState(roomId);
@@ -103,7 +103,7 @@ async function testBasicAssignFlow() {
   const lastId = memberIds[4];
   const lastTargets = cur.assigned[lastId];
   const lastAbout = lastTargets.map(t => ({ targetId: t, text: 'Sidste udsagn fra ' + lastId + ' om ' + t }));
-  const finalRes = await call(gameHandler, { action: 'submit', roomId, actorId: lastId, payload: { selfText: 'Om mig selv: ' + lastId, aboutTexts: lastAbout } });
+  const finalRes = await call(gameHandler, { action: 'submit', roomId, actorId: lastId, payload: { aboutTexts: lastAbout } });
   assert(finalRes.state.game.current.type !== 'assign', 'efter 5/5 skal spillet være gået videre til en rigtig runde, ikke stadig assign');
   assert(finalRes.state.game.round === 1, 'runde-tælleren skal stå på 1 efter runde 0');
   log('✅ Spillet går automatisk videre til runde 1 når alle 5 har indsendt: type=' + finalRes.state.game.current.type);
@@ -124,7 +124,7 @@ async function testMergeNotOverwrite() {
   const { roomId, memberIds } = await setupRoom(4, 'kende_venner');
   // P0 udfylder frit på forhånd (opfylder selv brok.js's eget minimumskrav
   // på 2 andre, uafhængigt af runde 0) — om P1 og P2.
-  await call(brokHandler, { action: 'personal', roomId, actorId: memberIds[0], selfText: 'Mit gamle selv-udsagn', aboutTexts: [{ targetId: memberIds[1], text: 'FRIT udsagn om P1, skrevet FØR runde 0' }, { targetId: memberIds[2], text: 'FRIT udsagn om P2, skrevet FØR runde 0' }] });
+  await call(brokHandler, { action: 'personal', roomId, actorId: memberIds[0], aboutTexts: [{ targetId: memberIds[1], text: 'FRIT udsagn om P1, skrevet FØR runde 0' }, { targetId: memberIds[2], text: 'FRIT udsagn om P2, skrevet FØR runde 0' }] });
   const before = await getState(roomId);
   assert(before.personalLayer.entries[memberIds[0]].about.length === 2, 'P0 skal have 2 frie udsagn før runde 0');
 
@@ -139,14 +139,13 @@ async function testMergeNotOverwrite() {
   for (const id of [memberIds[1], memberIds[2], memberIds[3]]) {
     const targets = cur.assigned[id];
     const aboutTexts = targets.map(t => ({ targetId: t, text: 'Nyt tildelt udsagn fra ' + id + ' om ' + t }));
-    await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { selfText: 'Selv: ' + id, aboutTexts } });
+    await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { aboutTexts } });
   }
   const after = await getState(roomId);
   // P0's gamle FRIE udsagn skal stadig eksistere — intet overskrevet
   const p0Entry = after.personalLayer.entries[memberIds[0]];
   assert(p0Entry.about.length === 2, 'P0 må ikke have fået rørt sin entry — skal stadig have 2 udsagn, har ' + p0Entry.about.length);
   assert(p0Entry.about[0].text === 'FRIT udsagn om P1, skrevet FØR runde 0', 'P0s oprindelige tekst må ikke være ændret');
-  assert(p0Entry.self === 'Mit gamle selv-udsagn', 'P0s self-tekst må ikke være overskrevet af runde 0 (P0 var slet ikke med i den)');
   log('✅ P0s frie udsagn fra før runde 0 er uberørt — ' + JSON.stringify(p0Entry.about[0].text));
 
   // Nu lader vi P1 (som fik en tildelt entry) TILFØJE et ekstra frit udsagn
@@ -159,7 +158,7 @@ async function testMergeNotOverwrite() {
   const alreadyAssignedTargets = p1Before.about.map(a => a.targetId);
   const extraTargetId = memberIds.find(id => id !== memberIds[1] && !alreadyAssignedTargets.includes(id));
   assert(extraTargetId, 'skal kunne finde et target P1 ikke allerede er tildelt (4 spillere, 2 tildelte -> mindst 1 tilbage)');
-  await call(brokHandler, { action: 'personal', roomId, actorId: memberIds[1], selfText: p1Before.self, aboutTexts: [...p1Before.about, { targetId: extraTargetId, text: 'EKSTRA frit udsagn, tilføjet EFTER runde 0' }] });
+  await call(brokHandler, { action: 'personal', roomId, actorId: memberIds[1], aboutTexts: [...p1Before.about, { targetId: extraTargetId, text: 'EKSTRA frit udsagn, tilføjet EFTER runde 0' }] });
   const afterExtra = await getState(roomId);
   const p1After = afterExtra.personalLayer.entries[memberIds[1]];
   assert(p1After.about.length === 3, 'P1 skal nu have 3 udsagn (2 tildelte + 1 nyt frit), har ' + p1After.about.length);
@@ -177,7 +176,7 @@ async function testNodbremse() {
     const id = memberIds[i];
     const targets = cur.assigned[id];
     const aboutTexts = targets.map(t => ({ targetId: t, text: 'Udsagn ' + id }));
-    await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { selfText: 'Selv ' + id, aboutTexts } });
+    await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { aboutTexts } });
   }
   const stuck = await getState(roomId);
   assert(stuck.game.current.type === 'assign', 'skal stadig vente på de sidste 2');
@@ -214,7 +213,7 @@ async function testGuaranteedDrawIntegration() {
   for (const id of memberIds) {
     const targets = cur.assigned[id];
     const aboutTexts = targets.map(t => ({ targetId: t, text: 'X om ' + t + ' fra ' + id }));
-    res = await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { selfText: 'Selv ' + id, aboutTexts } });
+    res = await call(gameHandler, { action: 'submit', roomId, actorId: id, payload: { aboutTexts } });
   }
   assert(res.state.game.current.type !== 'assign', 'runde 1 skal være i gang efter runde 0');
   // Spil de 5 rigtige runder igennem med tilfældige/simple svar og tæl kendskab/hvemskrev

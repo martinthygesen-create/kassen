@@ -2496,7 +2496,6 @@ const BOT_FILLER_ANSWERS = ['Det er da til at grine ad, ærlig talt', 'Nogen må
 const BOT_FILLER_WORDS = ['regnvejr', 'morgenmad', 'myggestik', 'trafikkø', 'snorken'];
 const BOT_FILLER_STATEMENTS = ['Jeg har prøvet det tre gange i denne uge', 'Det skete faktisk i går aftes', 'Alle andre vidste det, bare ikke mig'];
 const BOT_FILLER_COMPLIMENTS = ['Du er altid god til at få humøret op igen', 'Du lytter bedre end de fleste jeg kender', 'Du finder altid en løsning, uanset hvad'];
-const BOT_FILLER_SELF = ['Er altid først fremme med en kommentar', 'Kan finde på hvad som helst for at slippe for opvasken', 'Husker aldrig hvor mobilen ligger'];
 const BOT_FILLER_ABOUT = ['Er svær at overraske, uanset hvad man finder på', 'Har altid en plan B klar, selv når ingen spurgte', 'Kan snakke sig ud af næsten alt'];
 function pickBotFiller(list){ return list[Math.floor(Math.random()*list.length)]; }
 function isBotMember(id){ const mm = state.members.find(m=>m.id===id); return !!(mm && mm.isBot); }
@@ -2525,7 +2524,7 @@ async function ensureTestBots(){
         // Tager de to (eller færre, i et lille rum) første andre medlemmer.
         const others = state.members.filter(m=>m.id!==bot.id).slice(0,2);
         const aboutTexts = others.map(m=>({ targetId: m.id, text: pickBotFiller(BOT_FILLER_ABOUT) }));
-        const r = await api('brok', { action:'personal', roomId, actorId: bot.id, selfText: pickBotFiller(BOT_FILLER_SELF), aboutTexts });
+        const r = await api('brok', { action:'personal', roomId, actorId: bot.id, aboutTexts });
         if(r && r.state) state = r.state;
       }catch(e){ /* en fejlet bot-udfyldelse må ikke stoppe resten */ }
     }
@@ -4207,8 +4206,6 @@ function assignHtml(g, cur){
     <div class="game-badge">Runde 0 · 🧑‍🤝‍🧑 Venneark</div>
     <div class="game-card" id="gameCard">
       <p class="hint" style="margin:0 0 8px; color:rgba(255,247,232,0.6);">Bruges i spillets "hvem handler det om?"/"hvem skrev det?"-runder.</p>
-      <p class="hint" style="margin:0 0 4px; font-weight:600; color:rgba(255,247,232,0.8);">Skriv ét udsagn om dig selv</p>
-      <textarea id="assignSelfInput" rows="2" maxlength="120" placeholder="Fx noget du altid gør..."></textarea>
       ${rows}
       <button class="game-btn" id="assignSubmitBtn" style="margin-top:12px;" disabled>🚀 Send</button>
     </div>
@@ -4791,21 +4788,18 @@ function bindGameHandlers(g){
     });
   }
   if(cur.type === 'assign' && cur.phase === 'assign' && profile && cur.assigned[profile.memberId] && !cur.submitted[profile.memberId]){
-    const selfInput = document.getElementById('assignSelfInput');
     const targetInputs = document.querySelectorAll('.assignAboutInput');
     const submitBtn = document.getElementById('assignSubmitBtn');
     const updateSubmitState = ()=>{
-      const allFilled = selfInput.value.trim() && Array.from(targetInputs).every(t=>t.value.trim());
+      const allFilled = Array.from(targetInputs).every(t=>t.value.trim());
       submitBtn.disabled = !allFilled;
     };
-    if(selfInput) selfInput.addEventListener('input', updateSubmitState);
     targetInputs.forEach(t=>t.addEventListener('input', updateSubmitState));
     if(submitBtn) submitBtn.onclick = ()=>{
-      const selfText = selfInput.value.trim();
       const aboutTexts = Array.from(targetInputs).map(t=>({ targetId: t.dataset.target, text: t.value.trim() }));
-      if(!selfText || aboutTexts.some(a=>!a.text)) return;
+      if(aboutTexts.some(a=>!a.text)) return;
       lockSubmitBtn(submitBtn, 'Sender...');
-      gameApi('submit', { payload: { selfText, aboutTexts } });
+      gameApi('submit', { payload: { aboutTexts } });
     };
   }
   if(cur.type === 'casinobrok' && cur.phase === 'write'){
@@ -7175,90 +7169,106 @@ function openBrokSheet(){
 }
 
 /* ============ VENNEKASSENS PERSONLIGE LAG ============ */
-// Ét kort udsagn om sig selv (påkrævet) + op til to om medspillere (valgfrit)
-// — se den fulde begrundelse ved KENDSKAB_THEMES i api/_lib/game.js og
-// action:'personal' i api/brok.js. Kan udfyldes når som helst, uafhængigt af
-// om der er nogen historik i kassen endnu.
-// Frit målvalg + minimum ${minRequired}, intet loft (Martins rettelse —
-// erstatter den tidligere faste "1 selv + 2 om andre, tildelt automatisk"-
-// form). Draft-arrayet lever kun mens sheetet er åbent (lukkes/genåbnes
-// sheetet, starter det forfra fra den senest GEMTE indsendelse).
+// Udsagn om medspillere (mindst ${minRequired}, frit valgt hvem) — se den
+// fulde begrundelse ved KENDSKAB_THEMES i api/_lib/game.js og
+// action:'personal' i api/brok.js. Kan udfyldes/udvides når som helst.
+//
+// Rettet (Martins fund, 3 ting samme runde):
+// 1) Målvalg var en <select>-dropdown — resten af appen bruger klikbare
+//    navne-pills (se openBrokSheet ovenfor) til nøjagtig samme "vælg en
+//    person"-handling. Ingen god grund til at netop dette sted skulle se
+//    anderledes ud.
+// 2) Allerede GEMTE udsagn kunne genåbnes og rettes i — men et udsagn der
+//    allerede er (eller kan blive) brugt i en kendskab/hvemskrev-runde må
+//    ikke kunne ændres bagefter, ellers underminerer det selve gættet.
+//    Gemte udsagn vises nu som låste kort; kun NYE tilføjelser er
+//    redigerbare.
+// 3) Det obligatoriske "om dig selv"-felt blev fjernet helt — verificeret
+//    ved at søge hele kodebasen igennem: INGEN rundetype nogensinde læste
+//    entry.self, det blev kun gemt og aldrig brugt. At kræve det var ren
+//    friktion uden formål (og derfor uforståeligt hvorfor det var der).
 function openPersonalLayerSheet(){
   const existing = myPersonalLayerEntry();
   const others = otherMembersForPersonalLayer();
   const minRequired = Math.min(MIN_ABOUT_PER_PLAYER_CLIENT, others.length);
-  const draft = (existing && existing.about && existing.about.length)
-    ? existing.about.map(a=>({ targetId: a.targetId, text: a.text }))
-    : Array.from({ length: minRequired }, ()=>({ targetId: '', text: '' }));
+  const savedAbout = (existing && existing.about) ? existing.about.slice() : [];
+  const savedTargetIds = savedAbout.map(a=>a.targetId);
+  const neededNew = Math.max(0, minRequired - savedAbout.length);
+  let newRows = Array.from({ length: neededNew }, ()=>({ targetId: '', text: '' }));
 
-  function rowsHtml(){
-    return draft.map((row,i)=>{
-      const usedElsewhere = draft.filter((r,j)=>j!==i).map(r=>r.targetId);
-      const opts = others.map(m=>`<option value="${m.id}" ${row.targetId===m.id?'selected':''} ${usedElsewhere.includes(m.id)?'disabled':''}>${escapeHtml(m.name)}</option>`).join('');
+  function remainingTargetsFor(rowIndex){
+    const usedElsewhere = [...savedTargetIds, ...newRows.filter((r,j)=>j!==rowIndex).map(r=>r.targetId)].filter(Boolean);
+    return others.filter(m=>!usedElsewhere.includes(m.id));
+  }
+
+  function savedRowsHtml(){
+    if(!savedAbout.length) return '';
+    return `<p class="hint" style="margin:14px 0 4px;">Allerede gemt (kan ikke ændres)</p>` + savedAbout.map(a=>{
+      const m = state.members.find(x=>x.id===a.targetId);
       return `
-        <div class="onboard-card" style="padding:12px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
-            <select class="kl-target-select" data-row="${i}" style="flex:1; font-weight:700;">
-              <option value="">Vælg person...</option>${opts}
-            </select>
-            ${draft.length > minRequired ? `<button type="button" class="sheet-btn ghost kl-remove-row" data-row="${i}" style="width:auto; margin:0; padding:6px 10px; font-size:12px;">✕</button>` : ''}
-          </div>
-          <textarea class="kl-text-input" data-row="${i}" rows="2" maxlength="120" placeholder="Skriv noget kort og sandt...">${escapeHtml(row.text)}</textarea>
+        <div class="onboard-card" style="padding:12px; opacity:.7;">
+          <div class="name-pill selected" style="pointer-events:none; display:inline-block; margin-bottom:6px;">${escapeHtml(m?m.name:'?')} ✓</div>
+          <p class="hint" style="margin:0;">${escapeHtml(a.text)}</p>
         </div>`;
     }).join('');
   }
 
+  function newRowHtml(row, i){
+    const targetOptions = remainingTargetsFor(i);
+    const pills = targetOptions.map(m=>`<div class="name-pill ${row.targetId===m.id?'selected':''}" data-row="${i}" data-target="${m.id}">${escapeHtml(m.name)}</div>`).join('');
+    return `
+      <div class="onboard-card" style="padding:12px;">
+        <p class="hint" style="margin:0 0 6px;">Om hvem?</p>
+        <div class="name-grid kl-target-grid" data-row="${i}">${pills}</div>
+        <textarea class="kl-text-input" data-row="${i}" rows="2" maxlength="120" placeholder="Skriv noget kort og sandt...">${escapeHtml(row.text)}</textarea>
+      </div>`;
+  }
+  function newRowsHtml(){ return newRows.map(newRowHtml).join(''); }
+
   openSheet(`
     <h2>🧑‍🤝‍🧑 Dit venneark</h2>
-    <p class="hint">Bruges senere i spillet til at gætte hvem der er hvem — kort og til punktet er bedst. Du kan altid rette det igen.</p>
-    <p class="hint" style="margin:14px 0 4px;">Om dig selv</p>
-    <textarea id="klSelf" rows="2" maxlength="120" placeholder="Skriv et kort, sandt udsagn om dig selv...">${existing ? escapeHtml(existing.self) : ''}</textarea>
-    <p class="hint" style="margin:14px 0 4px;">Om andre (mindst ${minRequired}, vælg selv hvem)</p>
-    <div id="klRows">${rowsHtml()}</div>
+    <p class="hint">Skriv korte, sande udsagn om medspillere — bruges senere i spillet til at gætte hvem der er hvem.</p>
+    ${savedRowsHtml()}
+    <p class="hint" style="margin:14px 0 4px;">${savedAbout.length ? 'Tilføj flere (valgfrit)' : `Om andre (mindst ${minRequired}, vælg selv hvem)`}</p>
+    <div id="klNewRows">${newRowsHtml()}</div>
     <button type="button" class="sheet-btn ghost" id="klAddRowBtn" style="margin-top:8px;">+ Tilføj endnu et udsagn</button>
     <button class="sheet-btn primary" id="klSubmitBtn" style="margin-top:14px;" disabled>Gem</button>
     <button class="sheet-btn ghost" id="klCancelBtn">Luk</button>
   `, ()=>{
     const submitBtn = document.getElementById('klSubmitBtn');
-    const selfInput = document.getElementById('klSelf');
-    function filledCount(){ return draft.filter(r=>r.targetId && r.text.trim()).length; }
+    function filledNewCount(){ return newRows.filter(r=>r.targetId && r.text.trim()).length; }
     function updateEnabled(){
-      const ok = !!selfInput.value.trim() && filledCount() >= minRequired;
+      const total = savedAbout.length + filledNewCount();
+      const ok = total >= minRequired;
       submitBtn.disabled = !ok;
-      submitBtn.textContent = ok ? 'Gem' : `Gem (${filledCount()}/${minRequired})`;
+      submitBtn.textContent = ok ? 'Gem' : `Gem (${total}/${minRequired})`;
     }
     function bindRows(){
-      document.querySelectorAll('.kl-target-select').forEach(el=>{
-        el.onchange = ()=>{ draft[+el.dataset.row].targetId = el.value; renderRowsInPlace(); };
+      document.querySelectorAll('.kl-target-grid .name-pill').forEach(el=>{
+        el.onclick = ()=>{ newRows[+el.dataset.row].targetId = el.dataset.target; renderRowsInPlace(); };
       });
       document.querySelectorAll('.kl-text-input').forEach(el=>{
-        el.oninput = ()=>{ draft[+el.dataset.row].text = el.value; updateEnabled(); };
-      });
-      document.querySelectorAll('.kl-remove-row').forEach(el=>{
-        el.onclick = ()=>{ draft.splice(+el.dataset.row, 1); renderRowsInPlace(); };
+        el.oninput = ()=>{ newRows[+el.dataset.row].text = el.value; updateEnabled(); };
       });
     }
     function renderRowsInPlace(){
-      document.getElementById('klRows').innerHTML = rowsHtml();
+      document.getElementById('klNewRows').innerHTML = newRowsHtml();
       bindRows();
       updateEnabled();
     }
-    selfInput.addEventListener('input', updateEnabled);
     bindRows();
     document.getElementById('klAddRowBtn').onclick = ()=>{
-      if(draft.length >= others.length){ toast('Du har allerede skrevet om alle i rummet'); return; }
-      draft.push({ targetId: '', text: '' });
+      if(savedAbout.length + newRows.length >= others.length){ toast('Du har allerede skrevet om alle i rummet'); return; }
+      newRows.push({ targetId: '', text: '' });
       renderRowsInPlace();
     };
     document.getElementById('klCancelBtn').onclick = closeSheet;
     submitBtn.onclick = async ()=>{
-      const selfText = selfInput.value.trim();
-      if(!selfText){ toast('Skriv mindst ét udsagn om dig selv'); return; }
-      const aboutTexts = draft.filter(r=>r.targetId && r.text.trim()).map(r=>({ targetId: r.targetId, text: r.text.trim() }));
+      const aboutTexts = [...savedAbout, ...newRows.filter(r=>r.targetId && r.text.trim()).map(r=>({ targetId: r.targetId, text: r.text.trim() }))];
       if(aboutTexts.length < minRequired){ toast(`Skriv om mindst ${minRequired} andre`); return; }
       lockSubmitBtn(submitBtn, 'Gemmer...');
       try{
-        const r = await api('brok', { action: 'personal', roomId, actorId: profile.memberId, selfText, aboutTexts });
+        const r = await api('brok', { action: 'personal', roomId, actorId: profile.memberId, aboutTexts });
         state = r.state;
         toast('Venneark gemt ✅');
         closeSheet();

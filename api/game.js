@@ -230,8 +230,6 @@ module.exports = async (req, res) => {
           const targets = cur.assigned[actorId];
           if (!targets) throw new ApiError(403, 'du er ikke en del af runde 0');
           if (cur.submitted[actorId]) throw new ApiError(409, 'du har allerede indsendt');
-          const selfText = (payload.selfText || '').toString().trim().slice(0, 120);
-          if (!selfText) throw new ApiError(400, 'skriv mindst ét udsagn om dig selv');
           const rawAbout = Array.isArray(payload.aboutTexts) ? payload.aboutTexts : [];
           const seenTargets = new Set();
           const about = [];
@@ -246,7 +244,7 @@ module.exports = async (req, res) => {
           if (!state.personalLayer) state.personalLayer = { entries: {} };
           const prevEntry = state.personalLayer.entries[actorId];
           const mergedAbout = mergeAboutEntries(prevEntry && prevEntry.about, about);
-          state.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: selfText, about: mergedAbout };
+          state.personalLayer.entries[actorId] = { submittedAt: Date.now(), about: mergedAbout };
           cur.submitted[actorId] = true;
           const stillPending = Object.keys(cur.assigned).filter(id => !cur.submitted[id]);
           if (!stillPending.length) {

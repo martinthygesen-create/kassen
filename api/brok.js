@@ -59,27 +59,26 @@ module.exports = async (req, res) => {
       return res.status(200).json({ state: redactStateFor(state, voterId), confirmed, free, double });
     }
 
-    // Vennekassens personlige lag: hver deltager skriver ét kort udsagn om
-    // sig selv (påkrævet) og FRIT VALGTE udsagn om andre — MINDST
-    // MIN_ABOUT_PER_PLAYER (se _lib/game.js), intet loft udover antal
-    // medspillere (Martins fund/ønske: "måske skal alle lave et minimum
-    // antal... og kan så tilføje flere" — erstatter den tidligere
-    // deterministiske round-robin-tildeling af præcis 2, hvor spilleren
-    // ikke selv valgte target). Fødes ind i "kendskab"/"hvemskrev"-
-    // rundetyperne, se MIN_ABOUT_FOR_KENDSKAB/collectAboutCandidates i
-    // _lib/game.js. mutateState (CAS), IKKE den simple getState/setState
-    // resten af filen bruger — flere medlemmer udfylder typisk laget
-    // samtidig lige efter de joiner, hvilket er netop det scenarie CAS
-    // beskytter imod (se api/admin.js's tilsvarende begrundelse for
-    // approveMember/rejectMember).
+    // Vennekassens personlige lag: hver deltager skriver FRIT VALGTE udsagn
+    // om andre — MINDST MIN_ABOUT_PER_PLAYER (se _lib/game.js), intet loft
+    // udover antal medspillere (Martins fund/ønske: "måske skal alle lave
+    // et minimum antal... og kan så tilføje flere" — erstatter den
+    // tidligere deterministiske round-robin-tildeling af præcis 2, hvor
+    // spilleren ikke selv valgte target). Fødes ind i "kendskab"/
+    // "hvemskrev"-rundetyperne, se MIN_ABOUT_FOR_KENDSKAB/
+    // collectAboutCandidates i _lib/game.js. Et tidligere obligatorisk
+    // "skriv om dig selv"-felt er fjernet helt (Martins fund: ingen
+    // rundetype nogensinde læste det, ren friktion uden formål). mutateState
+    // (CAS), IKKE den simple getState/setState resten af filen bruger —
+    // flere medlemmer udfylder typisk laget samtidig lige efter de joiner,
+    // hvilket er netop det scenarie CAS beskytter imod (se api/admin.js's
+    // tilsvarende begrundelse for approveMember/rejectMember).
     if (action === 'personal') {
-      const { actorId, selfText, aboutTexts } = req.body || {};
+      const { actorId, aboutTexts } = req.body || {};
       if (!actorId) return res.status(400).json({ error: 'mangler data' });
       const mutated = await mutateState(roomId, async (fresh) => {
         if (!fresh.members.find(m => m.id === actorId)) throw new ApiError(400, 'ukendt medlem');
         if (!fresh.personalLayer) fresh.personalLayer = { entries: {} };
-        const cleanSelf = (selfText || '').toString().trim().slice(0, 120);
-        if (!cleanSelf) throw new ApiError(400, 'skriv mindst ét udsagn om dig selv');
         const validTargetIds = new Set(fresh.members.map(m => m.id).filter(id => id !== actorId));
         const rawAbout = Array.isArray(aboutTexts) ? aboutTexts : [];
         const seenTargets = new Set();
@@ -107,7 +106,7 @@ module.exports = async (req, res) => {
         // udsagn fra runde 0 tæller med.
         const required = Math.min(MIN_ABOUT_PER_PLAYER, validTargetIds.size);
         if (mergedAbout.length < required) throw new ApiError(400, `skriv om mindst ${required} andre`);
-        fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), self: cleanSelf || (prevEntry && prevEntry.self) || '', about: mergedAbout };
+        fresh.personalLayer.entries[actorId] = { submittedAt: Date.now(), about: mergedAbout };
       });
       if (!mutated) return res.status(404).json({ error: 'ukendt brokkekasse' });
       return res.status(200).json({ state: redactStateFor(mutated.state, actorId) });
